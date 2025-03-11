@@ -10,9 +10,16 @@ from TweetNormalizer import normalizeTweet
 import torch.nn as nn
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
+
+# results when using the mean vector
+# Test MSE: 0.0779
+# Test MAE: 0.1548
+# Test results saved to test_results.csv
+
+
 # Load pre-trained BERTweet model
 class BERTweetSentimentRegressor(nn.Module):
-    def __init__(self, model_name="finiteautomata/bertweet-base-sentiment-analysis", output_type="mean"):
+    def __init__(self, model_name="finiteautomata/bertweet-base-sentiment-analysis", output_type="class"):
         super(BERTweetSentimentRegressor, self).__init__()
         self.output_type = output_type
         # Load pre-trained sentiment classification model
@@ -21,13 +28,16 @@ class BERTweetSentimentRegressor(nn.Module):
         # Replace classification head (3 classes) with a single regression output
         self.regressor = nn.Linear(self.bertweet.config.hidden_size, 1)
     
-    def forward(self, input_ids, attention_mask):
+    def forward(self, input_ids, attention_mask, labels=None):
         outputs = self.bertweet.roberta(input_ids=input_ids, attention_mask=attention_mask)
         if self.output_type=="mean":
             pooled_output = outputs.last_hidden_state.mean(dim=1)
         else:
             pooled_output = outputs.last_hidden_state[:, 0, :]  # Use [CLS] token representation
-        score = self.regressor(pooled_output)  # Output a single sentiment score
+        score = self.regressor(pooled_output).view(-1)  
+        # print('this is the shape of score:', score.shape)
+        # print('this is the shape of score.view(-1)', score.view(-1).shape)
+        # score = score.view(-1)
         return score
     
 if __name__ == "__main__":
