@@ -10,7 +10,6 @@ import re
 #get a sentence and filter stopwords
 class filter_stopwords:
     def __init__(self):
-      #  nltk.download('punkt_tab')
         nltk.download('stopwords')
         nltk.download('punkt_tab')
         nltk.download('punkt')
@@ -19,7 +18,7 @@ class filter_stopwords:
         self.stop_words = set(stopwords.words('english'))
 
     def filter_stopwords(self, sentence):
-        sentence1 = re.sub("https?:\/\/.*?.*[\s+]?","", sentence)
+        sentence1 = re.sub("http[s]?://\S+","", sentence)
         sentence1 = re.sub("@","", sentence1)
         tokens = word_tokenize(sentence1)
         #need to remove words that starts with 'http'
