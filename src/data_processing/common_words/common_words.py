@@ -5,7 +5,6 @@ from filter_stopwords import FilterStopwords
 # get date start and end
 
 class CommonWords:
-    
     def __init__(self, start_date, end_date, stock_name, df, min_count=15, filter_metric='average_score'):
         self.start_date = pd.Timestamp(start_date)  
         self.end_date = pd.Timestamp(end_date)      
@@ -29,30 +28,18 @@ class CommonWords:
         return self.end_date
     
     def calculate_words(self):
-        print(set(self.df['STOCK']))
+        # print(set(self.df['STOCK']))
         # filter by stock name and dates
         stock_tweets = self.df[self.df['STOCK'] == self.stock_name]
-        # print('-------------------------------')
-        # print(stock_tweets.tail())
-        
         stock_tweets = stock_tweets[(stock_tweets['DATE'] >= self.start_date) & (stock_tweets['DATE'] <= self.end_date)]
         stock_tweets.reset_index(inplace=True, drop=True)
         number_of_tweets = stock_tweets.shape[0]
         self.min_count = int(number_of_tweets * 0.01)
         print('min count:', self.min_count)
         print('-------------------------------')
-        # print(stock_tweets)
-        # get all tweets
-        # all_tweets = stock_tweets['TWEET']
-        # get all words
-        # print(stock_tweets.head())
         for idx, row in stock_tweets.iterrows():
             words = str(row['TWEET']).split()  
             score = row['TEXTBLOB_POLARITY']
-            
-            # uncomment to see the tweet without stop words removed
-            # words = row['TWEET'].split()
-            # print(words)
             # removing stopwords & punctuation
             words = self.stopword_filter.filter_stopwords(row['TWEET'])
             # print(words)
@@ -64,14 +51,13 @@ class CommonWords:
                     self.common_words[word]["total_score"] += score
                 else:
                     self.common_words[word] = {"counts": 1, "total_score": score}
-            # print()
             # if idx==5: break
-        # print(self.common_words)
         self.common_words_df = pd.DataFrame(self.common_words).T
         self.common_words_df = self.common_words_df.sort_values(by=["counts"], ascending=False)
         self.common_words_df["average_score"] = self.common_words_df["total_score"] / self.common_words_df["counts"]
-        # filtering by 
+        # filtering out uncommon words
         self.common_words_df = self.common_words_df[self.common_words_df["counts"] > self.min_count]
+        # sorting by filter metric
         return self.common_words_df.sort_values(by=[self.filter_metric], ascending=False)
         
 
