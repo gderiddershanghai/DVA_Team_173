@@ -19,7 +19,7 @@ class filter_stopwords:
         self.stop_words = set(stopwords.words('english'))
 
     def filter_stopwords(self, sentence):
-        sentence1 = re.sub("https?:\/\/.*?[\s+]","", sentence)
+        sentence1 = re.sub("https?:\/\/.*?.*[\s+]?","", sentence)
         sentence1 = re.sub("@","", sentence1)
         tokens = word_tokenize(sentence1)
         #need to remove words that starts with 'http'
