@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Metrics</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        h1 { color: #333; }
+        #metrics { font-size: 20px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Stock Metrics Dashboard</h1>
+    <div id="metrics">
+        <p>Beta: <span id="beta">Loading...</span></p>
+        <p>Alpha: <span id="alpha">Loading...</span></p>
+        <p>Sharpe Ratio: <span id="sharpe">Loading...</span></p>
+        <p>Treynor Ratio: <span id="treynor">Loading...</span></p>
+    </div>
+
+    <script>
+        async function fetchMetrics() {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/metrics");
+                const data = await response.json();
+                document.getElementById("beta").innerText = data.beta;
+                document.getElementById("alpha").innerText = data.alpha;
+                document.getElementById("sharpe").innerText = data.sharpe_ratio;
+                document.getElementById("treynor").innerText = data.treynor_ratio;
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        fetchMetrics(); // Load once
+        setInterval(fetchMetrics, 5000); // Refresh every 5 seconds
+    </script>
+</body>
+</html>
