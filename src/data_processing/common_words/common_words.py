@@ -3,7 +3,7 @@ from filter_stopwords import FilterStopwords
 
 
 # get date start and end
-
+# add a fp
 class CommonWords:
     def __init__(self, start_date, end_date, stock_name, df, min_count=15, filter_metric='average_score'):
         self.start_date = pd.Timestamp(start_date)  
@@ -28,7 +28,7 @@ class CommonWords:
         return self.end_date
     
     def calculate_words(self):
-        # print(set(self.df['STOCK']))
+        print(len(set(self.df['STOCK'])))
         # filter by stock name and dates
         stock_tweets = self.df[self.df['STOCK'] == self.stock_name]
         stock_tweets = stock_tweets[(stock_tweets['DATE'] >= self.start_date) & (stock_tweets['DATE'] <= self.end_date)]
@@ -40,6 +40,9 @@ class CommonWords:
         for idx, row in stock_tweets.iterrows():
             words = str(row['TWEET']).split()  
             score = row['TEXTBLOB_POLARITY']
+            # print('------BEFORE-------------------------')
+            # print(words)
+            # print('-------AFTER------------------------')
             # removing stopwords & punctuation
             words = self.stopword_filter.filter_stopwords(row['TWEET'])
             # print(words)
@@ -51,7 +54,7 @@ class CommonWords:
                     self.common_words[word]["total_score"] += score
                 else:
                     self.common_words[word] = {"counts": 1, "total_score": score}
-            # if idx==5: break
+            if idx==5: break
         self.common_words_df = pd.DataFrame(self.common_words).T
         self.common_words_df = self.common_words_df.sort_values(by=["counts"], ascending=False)
         self.common_words_df["average_score"] = self.common_words_df["total_score"] / self.common_words_df["counts"]
@@ -75,6 +78,7 @@ if __name__ == "__main__":
     # print(df.describe())
     # print(df.columns)
     filter_metric = "average_score"
+    # filter_metric = "total_score"
     stock_name = "Google"
     word_counter = CommonWords("2017-01-09", "2018-07-16", stock_name=stock_name, df=df,  min_count=15, filter_metric=filter_metric)
     common_words = word_counter.calculate_words()
