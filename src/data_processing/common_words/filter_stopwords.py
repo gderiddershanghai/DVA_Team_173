@@ -11,17 +11,16 @@ import re
 #get a sentence and filter stopwords
 class FilterStopwords:
     def __init__(self):
-      #  nltk.download('punkt_tab')
-        # nltk.download('stopwords')
-        # nltk.download('punkt_tab')
-        # nltk.download('punkt')
-        # nltk.download('wordnet')
-        # nltk.download('omw-1.4')
+        nltk.download('stopwords')
+        nltk.download('punkt_tab')
+        nltk.download('punkt')
+        nltk.download('wordnet')
+        nltk.download('omw-1.4')
         self.stop_words = set(stopwords.words('english'))
         self.punctuation_table = str.maketrans("", "", string.punctuation)
 
     def filter_stopwords(self, sentence):
-        sentence1 = re.sub("https?:\/\/.*?[\s+]","", sentence)
+        sentence1 = re.sub("http[s]?://\S+","", sentence)
         sentence1 = re.sub("@","", sentence1)
         # remove numbers
         sentence1 = re.sub(r"\S*\d+\S*", "", sentence1)
