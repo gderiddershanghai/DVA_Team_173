@@ -9,17 +9,47 @@
         h1 { color: #333; }
         #metrics { font-size: 20px; margin-top: 20px; }
     </style>
+
+
+
+
+    <script src= "components/lib/d3.v5.min.js"></script>
+     <script src="components/lib/d3-dsv.min.js"></script>
+     <script src="components/lib/d3-geo-projection.v2.min.js"></script>
+     <script src="components/lib/d3-legend.min.js"></script>
+     <script src="components/lib/d3-tip.min.js"></script>
+     <script src="components/lib/topojson.v2.min.js"></script>
+
 </head>
 <body>
-    <h1>Stock Metrics Dashboard</h1>
+    <!-- <h1>Stock Metrics Dashboard</h1>
     <div id="metrics">
         <p>Beta: <span id="beta">Loading...</span></p>
         <p>Alpha: <span id="alpha">Loading...</span></p>
         <p>Sharpe Ratio: <span id="sharpe">Loading...</span></p>
         <p>Treynor Ratio: <span id="treynor">Loading...</span></p>
-    </div>
+    </div> -->
+    
+<!-- 
+    <select id="parameter-select">
+        <option value="year">Year</option>
+        <option value="month">Month</option>
+        <option value="quarter">Quarter</option>
+      </select> -->
+      
+      <select id="year-select"></select>
 
-    <script>
+      <div id="chart">
+    </div>
+  <div id="tooltip" style="position: absolute; opacity: 0;"></div>
+    <!-- <svg width="600" height="400">
+        <circle cx="300" cy="200" r="50" fill="blue"></circle>
+    </svg> -->
+    
+    <script src="components/linechart.js"></script>
+    
+    <!-- <script>
+        
         async function fetchMetrics() {
             try {
                 const response = await fetch("http://127.0.0.1:8000/metrics");
@@ -34,7 +64,7 @@
         }
 
         fetchMetrics(); // Load once
-        setInterval(fetchMetrics, 5000); // Refresh every 5 seconds
-    </script>
+        setInterval(fetchMetrics, 5000); // Refresh every 5 seconds -->
+    <!-- </script> --> 
 </body>
 </html>
