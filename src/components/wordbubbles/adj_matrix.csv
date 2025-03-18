@@ -1,0 +1,11 @@
+go,Generation,Chart,free,available,back,iPhoneX,music,Cas,win
+go,6,0,0,1,2,0,0,0,0,0
+Generation,0,0,0,0,0,0,0,1,0,0
+Chart,0,0,13,0,0,0,0,0,0,0
+free,1,0,0,2,0,0,0,1,0,13
+available,2,0,0,0,0,0,0,0,0,0
+back,0,0,0,0,0,7,1,1,0,0
+iPhoneX,0,0,0,0,0,1,21,0,0,0
+music,0,1,0,1,0,1,0,1,0,0
+Cas,0,0,0,0,0,0,0,0,0,0
+win,0,0,0,13,0,0,0,0,0,2
