@@ -66,6 +66,7 @@ export const wordBubbles = () => {
             thickness: Math.sqrt(link.weight*50) 
         })).filter(link => link.source && link.target); 
 
+        
         console.log("Processed links:", processedLinks.length);
         console.log("Sample processed links:", processedLinks.slice(0, 5));
 
@@ -144,25 +145,25 @@ export const wordBubbles = () => {
                 .on('drag', dragged)
                 .on('end', dragended))
                   // MOUSE EVENTS for tooltip:
-  .on("mouseover", (event, d) => {
-    tooltip
-      .style("opacity", 0.95)
-      .html(`
-        <div>
-          <strong>${d.word}</strong><br />
-          Counts: ${d.counts}<br/>
-          Sentiment Score: ${d.average_score.toFixed(2)}
-        </div>
-      `);
-  })
-  .on("mousemove", (event) => {
-    tooltip
-      .style("left", event.pageX + 10 + "px")
-      .style("top", event.pageY + 10 + "px");
-  })
-  .on("mouseout", () => {
-    tooltip.style("opacity", 0);
-  });
+            .on("mouseover", (event, d) => {
+                tooltip
+                .style("opacity", 0.95)
+                .html(`
+                    <div>
+                    <strong>${d.word}</strong><br />
+                    Counts: ${d.counts}<br/>
+                    Sentiment Score: ${d.average_score.toFixed(2)}
+                    </div>
+                `);
+            })
+            .on("mousemove", (event) => {
+                tooltip
+                .style("left", event.pageX + 10 + "px")
+                .style("top", event.pageY + 10 + "px");
+            })
+            .on("mouseout", () => {
+                tooltip.style("opacity", 0);
+            });
                 
             nodes
                 .append("circle")
