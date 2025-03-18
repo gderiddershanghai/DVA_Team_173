@@ -45,7 +45,7 @@ async function main() {
     });
     
   
-      // Create the chart instance
+      // make chart
       const bubbles = wordBubbles()
         .width(width)
         .height(height)
