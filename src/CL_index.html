@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Word Cloud</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        h1 { color: #333; }
+        #word-cloud { margin-top: 20px; }
+        #tooltip {
+            position: absolute;
+            background: white;
+            padding: 8px;
+            border: 1px solid black;
+            display: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stock Sentiment Word Cloud</h1>
+    <div id="word-cloud"></div>
+    <div id="tooltip"></div>
+
+    <script src="components/wordbubbles.js"></script>
+</body>
+</html>
