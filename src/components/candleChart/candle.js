@@ -1,25 +1,3 @@
-// Create a search bar with suggestion dropdown for stock tickers.
-const tickers = ["AAPL", "IVDA", "NVDA", "TLSA"];
-
-// Insert search bar at the top of the body.
-const searchDiv = d3.select("body").insert("div", ":first-child")
-    .attr("id", "searchBar")
-    .style("margin", "20px");
-
-searchDiv.append("input")
-    .attr("type", "text")
-    .attr("placeholder", "Search Stock Ticker")
-    .attr("id", "tickerSearch")
-    .attr("list", "tickers");
-
-searchDiv.append("datalist")
-    .attr("id", "tickers")
-    .selectAll("option")
-    .data(tickers)
-    .enter()
-    .append("option")
-    .attr("value", d => d);
-
 // Function to load and render the chart for a given stock ticker.
 function loadChart(ticker) {
     // Remove any existing chart.
@@ -37,14 +15,13 @@ function loadChart(ticker) {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     d3.csv(`../../../toy_data/stock_data/${ticker}.csv`, d => {
-            // Parse date and convert prices to numbers.
             const dateStr = d.Date.split(" ")[0];
             return {
-                    date: d3.timeParse("%Y-%m-%d")(dateStr),
-                    open: +d.Open,
-                    high: +d.High,
-                    low: +d.Low,
-                    close: +d.Close
+                date: d3.timeParse("%Y-%m-%d")(dateStr),
+                open: +d.Open,
+                high: +d.High,
+                low: +d.Low,
+                close: +d.Close
             };
     }).then(data => {
             // Sort data and filter dates after December 31, 2020.
@@ -92,7 +69,7 @@ function loadChart(ticker) {
                     const candleX = x(d.date);
                     const candleWidth = x.bandwidth();
 
-                    // Draw the wick.
+                    // Wick.
                     svg.append("line")
                         .attr("x1", candleX + candleWidth / 2)
                         .attr("x2", candleX + candleWidth / 2)
@@ -100,7 +77,7 @@ function loadChart(ticker) {
                         .attr("y2", y(d.low))
                         .attr("stroke", color);
 
-                    // Draw the candle body.
+                    // Candle body.
                     svg.append("rect")
                         .attr("x", candleX)
                         .attr("y", y(Math.max(d.open, d.close)))
@@ -108,13 +85,58 @@ function loadChart(ticker) {
                         .attr("height", Math.abs(y(d.open) - y(d.close)))
                         .attr("fill", color);
             });
+
+            // --- Add Brush Slider on the x-axis ---
+            const brush = d3.brushX()
+                .extent([[0, 0], [width, height]])
+                .on("brush end", brushed);
+
+            svg.append("g")
+                .attr("class", "brush")
+                .call(brush);
+
+            // Function to add gray mask outside the brushed area.
+            function brushed({selection}) {
+                // Clear any existing masks.
+                svg.selectAll(".mask").remove();
+
+                if (selection) {
+                    // Left mask: covers from the left edge to the start of the selection.
+                    svg.append("rect")
+                        .attr("class", "mask")
+                        .attr("x", 0)
+                        .attr("y", 0)
+                        .attr("width", selection[0])
+                        .attr("height", height)
+                        .attr("fill", "gray")
+                        .attr("fill-opacity", 0.5);
+
+                    // Right mask: covers from the end of the selection to the right edge.
+                    svg.append("rect")
+                        .attr("class", "mask")
+                        .attr("x", selection[1])
+                        .attr("y", 0)
+                        .attr("width", width - selection[1])
+                        .attr("height", height)
+                        .attr("fill", "gray")
+                        .attr("fill-opacity", 0.5);
+                    
+                    // Optionally, get the selected dates by mapping pixel values to the closest ticks.
+                    // For further analysis, you might use the selection to filter your data.
+                    const selectedDates = x.domain().filter(d => {
+                        const pos = x(d) + x.bandwidth()/2;
+                        return pos >= selection[0] && pos <= selection[1];
+                    });
+                    console.log("Selected dates: ", selectedDates);
+                }
+            }
     });
 }
 
 // Initially load the chart for "AAPL".
 loadChart("AAPL");
 
-// When a new ticker is selected from the search bar, reload the chart.
+// Reload the chart when a new ticker is selected.
 d3.select("#tickerSearch").on("change", function() {
     const ticker = this.value.toUpperCase();
     loadChart(ticker);
