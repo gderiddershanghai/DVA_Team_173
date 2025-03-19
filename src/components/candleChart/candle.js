@@ -1,7 +1,6 @@
-// Create a search bar with suggestion dropdown for stock tickers.
 const tickers = ["AAPL", "IVDA", "NVDA", "TLSA"];
 
-// Insert search bar at the top of the body.
+// Insert search bar with dropdown suggestions
 const searchDiv = d3.select("body").insert("div", ":first-child")
     .attr("id", "searchBar")
     .style("margin", "20px");
@@ -20,12 +19,30 @@ searchDiv.append("datalist")
     .append("option")
     .attr("value", d => d);
 
+// Add toggles for moving averages
+d3.select("body").insert("div", ":first-child")
+    .attr("id", "maToggles")
+    .selectAll("label")
+    .data([
+        { id: "ma7", label: "7-Day MA", color: "blue" },
+        { id: "ma30", label: "1-Month MA", color: "orange" },
+        { id: "ma90", label: "3-Month MA", color: "purple" }
+    ])
+    .enter()
+    .append("label")
+    .html(d => `<input type='checkbox' id='toggle-${d.id}' checked> ${d.label}`)
+    .each(function(d) {
+        d3.select(this).select("input").on("change", function() {
+            d3.select(`#${d.id}-line`).style("display", this.checked ? "block" : "none");
+        });
+    });
+
 // Function to load and render the chart for a given stock ticker.
 function loadChart(ticker) {
     // Remove any existing chart.
     d3.select("svg").remove();
 
-    const margin = { top: 20, right: 20, bottom: 50, left: 50 };
+    const margin = { top: 50, right: 20, bottom: 50, left: 50 };
     const width = 800 - margin.left - margin.right;
     const height = 500 - margin.top - margin.bottom;
 
@@ -37,85 +54,103 @@ function loadChart(ticker) {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     d3.csv(`../../../toy_data/stock_data/${ticker}.csv`, d => {
-            // Parse date and convert prices to numbers.
-            const dateStr = d.Date.split(" ")[0];
-            return {
-                    date: d3.timeParse("%Y-%m-%d")(dateStr),
-                    open: +d.Open,
-                    high: +d.High,
-                    low: +d.Low,
-                    close: +d.Close
-            };
+        return {
+            date: d3.timeParse("%Y-%m-%d")(d.Date.split(" ")[0]),
+            open: +d.Open,
+            high: +d.High,
+            low: +d.Low,
+            close: +d.Close
+        };
     }).then(data => {
-            // Sort data and filter dates after December 31, 2020.
-            data.sort((a, b) => a.date - b.date);
-            data = data.filter(d => d.date > new Date("2020-12-31"));
+        data.sort((a, b) => a.date - b.date);
+        data = data.filter(d => d.date > new Date("2020-12-31"));
 
-            // Aggregate data by week.
-            const grouped = d3.group(data, d => d3.timeWeek.floor(d.date));
-            const weeklyData = Array.from(grouped, ([weekStart, values]) => ({
-                    date: weekStart,
-                    open: values[0].open,
-                    close: values[values.length - 1].close,
-                    high: d3.max(values, d => d.high),
-                    low: d3.min(values, d => d.low)
-            }));
+        // Aggregate data by week.
+        const grouped = d3.group(data, d => d3.timeWeek.floor(d.date));
+        const weeklyData = Array.from(grouped, ([weekStart, values]) => ({
+            date: weekStart,
+            open: values[0].open,
+            close: values[values.length - 1].close,
+            high: d3.max(values, d => d.high),
+            low: d3.min(values, d => d.low)
+        }));
 
-            // Create scales.
-            const x = d3.scaleBand()
-                .domain(weeklyData.map(d => d.date))
-                .range([0, width])
-                .padding(0.3);
+        // Moving averages calculation
+        function movingAverage(data, days) {
+            return data.map((d, i) => {
+                if (i < days - 1) return null;
+                const slice = data.slice(i - days + 1, i + 1);
+                return {
+                    date: d.date,
+                    avg: d3.mean(slice, v => v.close)
+                };
+            }).filter(d => d);
+        }
 
-            const y = d3.scaleLinear()
-                .domain([d3.min(weeklyData, d => d.low), d3.max(weeklyData, d => d.high)])
-                .range([height, 0])
-                .nice();
+        const ma7 = movingAverage(weeklyData, 7);
+        const ma30 = movingAverage(weeklyData, 30);
+        const ma90 = movingAverage(weeklyData, 90);
 
-            // X Axis with quarterly tick formatting.
-            svg.append("g")
-                .attr("transform", `translate(0, ${height})`)
-                .call(d3.axisBottom(x)
-                    .tickValues(x.domain().filter(d => d.getMonth() % 3 === 0 && d.getDate() <= 7))
-                    .tickFormat(d3.timeFormat("%b %d, %Y")))
-                .selectAll("text")
-                .attr("transform", "rotate(-45)")
-                .style("text-anchor", "end");
+        const x = d3.scaleBand()
+            .domain(weeklyData.map(d => d.date))
+            .range([0, width])
+            .padding(0.3);
 
-            // Y Axis.
-            svg.append("g")
-                .call(d3.axisLeft(y));
+        const y = d3.scaleLinear()
+            .domain([d3.min(weeklyData, d => d.low), d3.max(weeklyData, d => d.high)])
+            .range([height, 0])
+            .nice();
 
-            // Draw weekly candles.
-            weeklyData.forEach(d => {
-                    const color = d.open > d.close ? "red" : "green";
-                    const candleX = x(d.date);
-                    const candleWidth = x.bandwidth();
+        const xAxis = d3.axisBottom(x)
+            .tickValues(x.domain().filter(d => d.getMonth() % 3 === 0 && d.getDate() <= 7))
+            .tickFormat(d3.timeFormat("%b %d, %Y"));
+        
+        svg.append("g").attr("transform", `translate(0, ${height})`).call(xAxis);
+        svg.append("g").call(d3.axisLeft(y));
 
-                    // Draw the wick.
-                    svg.append("line")
-                        .attr("x1", candleX + candleWidth / 2)
-                        .attr("x2", candleX + candleWidth / 2)
-                        .attr("y1", y(d.high))
-                        .attr("y2", y(d.low))
-                        .attr("stroke", color);
+        // Draw weekly candlesticks
+        weeklyData.forEach(d => {
+            const color = d.open > d.close ? "red" : "green";
+            const candleX = x(d.date);
+            const candleWidth = x.bandwidth();
 
-                    // Draw the candle body.
-                    svg.append("rect")
-                        .attr("x", candleX)
-                        .attr("y", y(Math.max(d.open, d.close)))
-                        .attr("width", candleWidth)
-                        .attr("height", Math.abs(y(d.open) - y(d.close)))
-                        .attr("fill", color);
-            });
+            svg.append("line")
+                .attr("x1", candleX + candleWidth / 2)
+                .attr("x2", candleX + candleWidth / 2)
+                .attr("y1", y(d.high))
+                .attr("y2", y(d.low))
+                .attr("stroke", color);
+
+            svg.append("rect")
+                .attr("x", candleX)
+                .attr("y", y(Math.max(d.open, d.close)))
+                .attr("width", candleWidth)
+                .attr("height", Math.abs(y(d.open) - y(d.close)))
+                .attr("fill", color);
+        });
+
+        // Line generators for moving averages
+        function drawLine(data, color, id) {
+            const line = d3.line().x(d => x(d.date) + x.bandwidth() / 2).y(d => y(d.avg));
+            svg.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", color)
+                .attr("stroke-width", 2)
+                .attr("d", line)
+                .attr("id", id + "-line")
+                .style("display", "block");
+        }
+
+        drawLine(ma7, "blue", "ma7");
+        drawLine(ma30, "orange", "ma30");
+        drawLine(ma90, "purple", "ma90");
     });
 }
 
-// Initially load the chart for "AAPL".
 loadChart("AAPL");
-
-// When a new ticker is selected from the search bar, reload the chart.
-d3.select("#tickerSearch").on("change", function() {
-    const ticker = this.value.toUpperCase();
-    loadChart(ticker);
+d3.select("#tickerSearch").on("input", function() {
+    if (tickers.includes(this.value.toUpperCase())) {
+        loadChart(this.value.toUpperCase());
+    }
 });
