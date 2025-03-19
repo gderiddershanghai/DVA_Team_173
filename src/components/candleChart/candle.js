@@ -36,7 +36,7 @@ function loadChart(ticker) {
         .append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    d3.csv(`stock_data/${ticker}.csv`, d => {
+    d3.csv(`../../../toy_data/stock_data/${ticker}.csv`, d => {
             // Parse date and convert prices to numbers.
             const dateStr = d.Date.split(" ")[0];
             return {
