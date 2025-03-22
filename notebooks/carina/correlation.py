@@ -92,7 +92,7 @@ def plot_correlation_heatmap(correlations):
 # Example Usage
 if __name__ == "__main__":
     # Replace with actual path
-    filepath = "stocks.csv"  
+    filepath = "/kaggle/input/sp-500-stocks/sp500_stocks.csv"  
     df = load_stock_data(filepath)
     
     # Compute correlation for a specific stock pair within a date range
