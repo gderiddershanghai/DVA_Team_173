@@ -57,7 +57,18 @@ def compute_correlation_for_pair(df, stock1, stock2, start_date, end_date):
     # Filter for the specified stocks
     filtered_df = df[df['Symbol'].isin([stock1, stock2])]
     
+    # Pivot the data
+    if filtered_df.empty:
+        return {'Empty DF Stock 1': stock1, 'Empty DF Stock 2': stock2, 'Correlation': None}
     
+    data_pivoted = filtered_df.pivot(index='Date', columns='Symbol', values='Close')
+    
+    # Calculate PEARSON correlation
+    if stock1 in data_pivoted.columns and stock2 in data_pivoted.columns:
+        correlation = data_pivoted[stock1].corr(data_pivoted[stock2])
+        return {'Stock 1': stock1, 'Stock 2': stock2, 'Correlation': round(correlation, 2)}
+    else:
+        return {'Stock 1': stock1, 'Stock 2': stock2, 'Correlation': None}
     
 
 # Example Usage
