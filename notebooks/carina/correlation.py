@@ -12,14 +12,29 @@ def load_stock_data(filepath):
 
 # Compute Correlation for a Specific Pair of Stocks within a Date Range
 def compute_correlation_for_pair(df, stock1, stock2, start_date, end_date):
+    
+
     # Ensure 'Date' is in datetime format
     df['Date'] = pd.to_datetime(df['Date'])
     
+    # Check if the date range is valid
+    dataset_start_date = df['Date'].min()
+    dataset_end_date = df['Date'].max()
+    
+    if start_date < dataset_start_date or end_date > dataset_end_date:
+        return {
+            'message': f"Invalid date range. The dataset date range is from {dataset_start_date} to {dataset_end_date}."
+        }
+    
     # Filter data by date range
     df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
-
-
-
+    
+    # msg to infor m the user that the date range is valid
+    # return {
+    #     'message': "Date range is valid. Proceeding with correlation computation."
+    # }
+    
+    
 
     # Check if both stock symbols exist in the data
     all_symbols = set(df['Symbol'])
