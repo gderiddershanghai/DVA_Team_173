@@ -12,15 +12,38 @@ def load_stock_data(filepath):
 
 # Compute Correlation for a Specific Pair of Stocks within a Date Range
 def compute_correlation_for_pair(df, stock1, stock2, start_date, end_date):
-    df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
-    filtered_df = df[df['Stock Ticker'].isin([stock1, stock2])]
-    data_pivoted = filtered_df.pivot(index='Date', columns='Stock Ticker', values='Close Price')
+    # Ensure 'Date' is in datetime format
+    df['Date'] = pd.to_datetime(df['Date'])
     
-    if stock1 in data_pivoted.columns and stock2 in data_pivoted.columns:
-        correlation = data_pivoted[stock1].corr(data_pivoted[stock2])
-        return {'Stock 1': stock1, 'Stock 2': stock2, 'Correlation': round(correlation, 1)}
-    else:
-        return {'Stock 1': stock1, 'Stock 2': stock2, 'Correlation': None}
+    # Filter data by date range
+    df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+
+
+
+
+    # Check if both stock symbols exist in the data
+    all_symbols = set(df['Symbol'])
+    missing_symbols = [symbol for symbol in [stock1, stock2] if symbol not in all_symbols]
+    
+    if missing_symbols:
+        return {
+            'Stock 1': stock1,
+            'Stock 2': stock2,
+            'Correlation': None,
+            'Missing Symbols': missing_symbols
+        }
+
+
+    
+    # Check if symbols exist in the data
+    if not set([stock1, stock2]).issubset(set(df['Symbol'])):
+        return {'Not Available Stock 1': stock1, 'Not Available Stock 2': stock2, 'Correlation': None}
+    
+    # Filter for the specified stocks
+    filtered_df = df[df['Symbol'].isin([stock1, stock2])]
+    
+    
+    
 
 # Example Usage
 if __name__ == "__main__":
