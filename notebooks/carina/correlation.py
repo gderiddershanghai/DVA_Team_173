@@ -70,6 +70,24 @@ def compute_correlation_for_pair(df, stock1, stock2, start_date, end_date):
     else:
         return {'Stock 1': stock1, 'Stock 2': stock2, 'Correlation': None}
     
+    
+    ########## Visualize Correlation Heatmap
+    # takes in json correlation result from above and plots a heatmap.
+def plot_correlation_heatmap(correlations):
+    # Convert correlations list to DataFrame
+    df_corr = pd.DataFrame(correlations)
+    
+    # Ensure pivot table is valid
+    try:
+        heatmap_data = df_corr.pivot('Stock 1', 'Stock 2', 'Correlation')
+    except Exception as e:
+        raise ValueError(f"Error creating heatmap pivot table: {e}")
+    
+    # Plot the heatmap
+    fig = px.imshow(heatmap_data, color_continuous_scale='RdBu_r', title='Stock Correlation Heatmap')
+    fig.update_layout(title_x=0.5)  # Center the title
+    fig.show()
+
 
 # Example Usage
 if __name__ == "__main__":
