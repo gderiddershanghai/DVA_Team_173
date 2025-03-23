@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stock Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div id="dashboard">
+    <!-- Top Row -->
+    <div id="top-row">
+      <!-- Left: Candle Chart with Search Bar and Date Range Sliders -->
+      <div id="candle-container">
+        <div id="controls">
+          <div class="search-container">
+            <input type="text" id="searchTicker" placeholder="Enter Stock Ticker">
+            <div id="stockSuggestions" class="suggestion-dropdown"></div>
+          </div>
+          <span id="stockName">Stock Name</span>
+          <span id="priceRange">Low: -- High: --</span>
+          
+          <!-- Moving Average Controls -->
+          <div class="ma-controls">
+            <label class="toggle">
+              <input type="checkbox" id="maToggle">
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Moving Avg</span>
+            </label>
+            <div class="ma-options">
+              <label>
+                <input type="radio" name="maType" value="7day" checked>
+                7 Days
+              </label>
+              <label>
+                <input type="radio" name="maType" value="30day">
+                30 Days
+              </label>
+              <label>
+                <input type="radio" name="maType" value="60day">
+                60 Days
+              </label>
+            </div>
+          </div>
+        </div>
+        <div id="candleChart"></div>
+        <div id="date-sliders">
+          <input type="range" id="startDate" min="0" max="100" value="10">
+          <input type="range" id="endDate" min="0" max="100" value="90">
+        </div>
+      </div>
+      <!-- Right: Performance Comparison Table -->
+      <div id="performance-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>Rank</th>
+              <th>SP500 Average</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Sample data; later data will be fetched from FastAPI -->
+            <tr>
+              <td>Alpha</td>
+              <td>5</td>
+              <td>0.5</td>
+            </tr>
+            <tr>
+              <td>Beta</td>
+              <td>12</td>
+              <td>1.0</td>
+            </tr>
+            <tr>
+              <td>Sharpe Ratio</td>
+              <td>8</td>
+              <td>0.8</td>
+            </tr>
+            <tr>
+              <td>Treynor Ratio</td>
+              <td>3</td>
+              <td>0.3</td>
+            </tr>
+          </tbody>
+        </table>
+        <!-- Reserve for FastAPI integration -->
+        <!-- 
+        fetch('/api/performance')
+          .then(response => response.json())
+          .then(data => { ... update table ... });
+        -->
+      </div>
+    </div>
+    <!-- Bottom Row -->
+    <div id="bottom-row">
+      <!-- Left: Correlation Section -->
+      <div id="correlation-container">
+        <div id="correlation-info">
+          <span id="mostCorrelated">Most Correlated: Stock A (Score: 0.95)</span>
+          <span id="leastCorrelated">Least Correlated: Stock B (Score: -0.45)</span>
+        </div>
+        <div id="correlationChart"></div>
+        <!-- FastAPI integration sample -->
+        <!-- 
+        fetch('/api/correlation')
+          .then(response => response.json())
+          .then(data => { ... update correlation graphs ... });
+        -->
+      </div>
+      <!-- Right: Sentiment Analysis Bubbles -->
+      <div id="sentiment-container">
+        <div id="sentimentChart"></div>
+        <!-- FastAPI integration sample -->
+        <!-- 
+        fetch('/api/sentiment')
+          .then(response => response.json())
+          .then(data => { ... update sentiment bubbles ... });
+        -->
+      </div>
+    </div>
+  </div>
+  <!-- Include d3.js -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
