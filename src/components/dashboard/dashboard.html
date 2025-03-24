@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="dashboard-grid">
+    <!-- Stock info section -->
+    <div class="grid-item stock-info">
+      <div class="search-container">
+        <input type="text" id="searchTicker" placeholder="Search by ticker or company name...">
+        <div id="stockSuggestions"></div>
+      </div>
+      <div>
+        <h2 id="stockName">Sample Stock (SMPL)</h2>
+        <p id="priceRange">Price Range: $100 - $200</p>
+      </div>
+    </div>
+    
+    <!-- Chart section -->
+    <div class="grid-item chart-container">
+      <div id="candleChart"></div>
+      
+      <!-- Date range slider -->
+      <div class="date-range-container">
+        <div id="date-range-slider-container">
+          <div id="date-range-slider">
+            <div class="slider-range"></div>
+            <div id="startHandle" class="slider-handle start-handle"></div>
+            <div id="endHandle" class="slider-handle end-handle"></div>
+          </div>
+          <div id="startLabel" class="date-label">Jan 2020</div>
+          <div id="endLabel" class="date-label">Dec 2022</div>
+        </div>
+      </div>
+      
+      <!-- Moving average controls -->
+      <div class="ma-controls">
+        <label>
+          <input type="checkbox" id="maToggle"> Show Moving Average
+        </label>
+        <div class="ma-options">
+          <label class="ma-option">
+            <input type="radio" name="maType" value="7day" checked> 7 Day
+          </label>
+          <label class="ma-option">
+            <input type="radio" name="maType" value="30day"> 30 Day
+          </label>
+          <label class="ma-option">
+            <input type="radio" name="maType" value="60day"> 60 Day
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Performance metrics -->
+    <div class="grid-item performance">
+      <h3>Performance Metrics</h3>
+      <table id="performance-table" style="width:100%">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Alpha</td>
+            <td>0.5</td>
+            <td>0.2</td>
+          </tr>
+          <tr>
+            <td>Beta</td>
+            <td>1.2</td>
+            <td>0.7</td>
+          </tr>
+          <tr>
+            <td>Sharpe</td>
+            <td>0.8</td>
+            <td>0.5</td>
+          </tr>
+          <tr>
+            <td>Volatility</td>
+            <td>15%</td>
+            <td>0.4</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Correlation chart -->
+    <div class="grid-item correlation">
+      <h3>Correlation with Market</h3>
+      <p id="mostCorrelated">Most Correlated: -</p>
+      <p id="leastCorrelated">Least Correlated: -</p>
+      <div id="correlationChart"></div>
+    </div>
+    
+    <!-- Sentiment analysis -->
+    <div class="grid-item sentiment">
+      <h3>Sentiment Analysis</h3>
+      <div id="sentimentChart"></div>
+    </div>
+  </div>
+  
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html> 

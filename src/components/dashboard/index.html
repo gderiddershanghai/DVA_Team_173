@@ -44,8 +44,16 @@
         </div>
         <div id="candleChart"></div>
         <div id="date-sliders">
-          <input type="range" id="startDate" min="0" max="100" value="10">
-          <input type="range" id="endDate" min="0" max="100" value="90">
+          <div id="date-range-slider">
+            <div class="slider-track"></div>
+            <div class="slider-range"></div>
+            <div class="slider-handle start-handle" id="startHandle"></div>
+            <div class="slider-handle end-handle" id="endHandle"></div>
+          </div>
+          <div class="slider-labels">
+            <span id="startLabel">Jan 2020</span>
+            <span id="endLabel">Dec 2022</span>
+          </div>
         </div>
       </div>
       <!-- Right: Performance Comparison Table -->
