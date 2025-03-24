@@ -4,3 +4,10 @@ weights
 models
 data_full
 bertweet_regressor
+lib
+TSLA.csv
+CL_index.html
+convert_csv_to_json.py
+
+word_cloud_data.json
+app.py
