@@ -46,13 +46,23 @@ function drawCandleChart(data, selectedStartIdx, selectedEndIdx) {
     volume: d.volume ? +d.volume : 0
   }));
   
-  // Filter data between 2020 and 2022
+  // Filter data to show 2020 and later (no upper year limit)
   const filteredData = formattedData.filter(d => 
-    d.date.getFullYear() >= 2020 && d.date.getFullYear() <= 2022
+    d.date.getFullYear() >= 2020
   );
   
   // Sort by date
   filteredData.sort((a, b) => a.date - b.date);
+  
+  // Check if we have data to display
+  if (filteredData.length === 0) {
+    console.error("No data to display in the selected date range");
+    return;
+  }
+  
+  // Ensure valid indices
+  selectedStartIdx = Math.max(0, Math.min(selectedStartIdx, filteredData.length - 1));
+  selectedEndIdx = Math.max(0, Math.min(selectedEndIdx, filteredData.length - 1));
   
   // Set up scales for the full date range
   const xScale = d3.scaleBand()
@@ -144,7 +154,7 @@ function drawCandleChart(data, selectedStartIdx, selectedEndIdx) {
         .duration(200)
         .style("opacity", .9);
       tooltip.html(`
-        <strong>Date:</strong> ${formatDate(d.date)}<br>
+        <strong>Week of:</strong> ${formatDate(d.date)}<br>
         <strong>Open:</strong> $${d.open.toFixed(2)}<br>
         <strong>High:</strong> $${d.high.toFixed(2)}<br>
         <strong>Low:</strong> $${d.low.toFixed(2)}<br>
@@ -293,89 +303,109 @@ function drawCandleChart(data, selectedStartIdx, selectedEndIdx) {
     .attr("pointer-events", "none");
 }
 
-// Sample realistic candle chart data with OHLC values for 2020-2022
-const generateRealisticData = () => {
-  const data = [];
-  let date = new Date(2020, 0, 5); // Jan 5, 2020 (Sunday)
-  let close = 150;
+// Function to filter data between 2020 and latest available date
+function filterDataByDateRange(data) {
+  return data.filter(d => 
+    d.date.getFullYear() >= 2020
+  );
+}
+
+// Function to aggregate daily data into weekly candles
+function aggregateToWeekly(dailyData) {
+  if (!dailyData || dailyData.length === 0) return [];
   
-  // Create weekly data points for 2020-2022
-  while (date <= new Date(2022, 11, 25)) {
-    // Generate realistic price movements with some volatility
-    const volatility = Math.random() * 0.2 + 0.05; // 5-25% volatility
-    const changePercent = (Math.random() - 0.5) * volatility;
+  // Sort by date first to ensure proper aggregation
+  const sortedData = [...dailyData].sort((a, b) => a.date - b.date);
+  
+  // Group by week
+  const weeklyData = [];
+  let currentWeek = [];
+  let currentWeekNum = -1;
+  
+  sortedData.forEach(day => {
+    // Get week number (Sunday-based)
+    const weekNum = d3.timeWeek.count(d3.timeYear(day.date), day.date);
+    const year = day.date.getFullYear();
+    const weekKey = `${year}-${weekNum}`;
     
-    // Weekly open is previous close
-    const open = close;
-    // Random high/low with realistic ranges
-    const upMove = Math.abs(Math.random() * open * 0.08);
-    const downMove = Math.abs(Math.random() * open * 0.08);
-    const high = Math.max(open, open * (1 + changePercent)) + upMove;
-    const low = Math.min(open, open * (1 + changePercent)) - downMove;
-    // New close
-    close = open * (1 + changePercent);
-    
-    // Add volume (shares traded) - in millions
-    const volumeBase = Math.random() * 10 + 5; // 5-15 million base
-    const volume = Math.floor(volumeBase * 1000000 * (1 + Math.random() * 0.5));
-    
-    data.push({
-      date: date.toISOString().split('T')[0],
-      open: +open.toFixed(2),
-      high: +high.toFixed(2),
-      low: +low.toFixed(2),
-      close: +close.toFixed(2),
-      volume: volume
-    });
-    
-    // Move to next week
-    date.setDate(date.getDate() + 7);
+    if (weekKey !== currentWeekNum) {
+      // Start new week
+      if (currentWeek.length > 0) {
+        // Calculate OHLC for the completed week
+        const weekData = {
+          date: currentWeek[currentWeek.length - 1].date, // Use last day of week as the date
+          open: currentWeek[0].open,
+          high: d3.max(currentWeek, d => d.high),
+          low: d3.min(currentWeek, d => d.low),
+          close: currentWeek[currentWeek.length - 1].close,
+          volume: d3.sum(currentWeek, d => d.volume)
+        };
+        weeklyData.push(weekData);
+      }
+      // Start new week
+      currentWeek = [day];
+      currentWeekNum = weekKey;
+    } else {
+      // Add to current week
+      currentWeek.push(day);
+    }
+  });
+  
+  // Add the last week if there's data
+  if (currentWeek.length > 0) {
+    const weekData = {
+      date: currentWeek[currentWeek.length - 1].date, // Use last day of week as the date
+      open: currentWeek[0].open,
+      high: d3.max(currentWeek, d => d.high),
+      low: d3.min(currentWeek, d => d.low),
+      close: currentWeek[currentWeek.length - 1].close,
+      volume: d3.sum(currentWeek, d => d.volume)
+    };
+    weeklyData.push(weekData);
   }
   
-  return data;
-};
+  return weeklyData;
+}
 
-const sampleCandleData = generateRealisticData();
-// TODO: Add function to get real data from saved csv files
+// Load and parse CSV data
+async function loadStockData(symbol) {
+  try {
+    const response = await fetch(`/toy_data/stock_data/${symbol}.csv`);
+    const csvText = await response.text();
+    const dailyData = d3.csvParse(csvText, d => ({
+      date: parseDate(d.Date.split(' ')[0]), // Extract just the date part
+      open: +d.Open,
+      high: +d.High,
+      low: +d.Low,
+      close: +d.Close,
+      volume: +d.Volume,
+      dividends: +d.Dividends,
+      stockSplits: +d['Stock Splits']
+    }));
+    
+    // Sort by date
+    dailyData.sort((a, b) => a.date - b.date);
+    
+    // Filter for data from 2020 onwards
+    const filteredData = filterDataByDateRange(dailyData);
+    
+    // Aggregate to weekly data
+    return aggregateToWeekly(filteredData);
+  } catch (error) {
+    console.error(`Error loading data for ${symbol}:`, error);
+    return null;
+  }
+}
 
 // Initialize price range display with full data range
-d3.select("#stockName").text("Sample Stock (SMPL)");
-d3.select("#priceRange").text("Low: $" + d3.min(sampleCandleData, d => d.low).toFixed(2) + 
-                             ", High: $" + d3.max(sampleCandleData, d => d.high).toFixed(2));
+let currentStockData = null;
 
 // Realistic stock data with company names for dropdown
-// TODO: make a list of stocks from the data we have
 const stocksDatabase = [
   { symbol: "AAPL", name: "Apple Inc." },
-  { symbol: "MSFT", name: "Microsoft Corporation" },
-  { symbol: "AMZN", name: "Amazon.com Inc." },
-  { symbol: "GOOGL", name: "Alphabet Inc. Class A" },
-  { symbol: "GOOG", name: "Alphabet Inc. Class C" },
-  { symbol: "META", name: "Meta Platforms Inc." },
-  { symbol: "TSLA", name: "Tesla Inc." },
   { symbol: "NVDA", name: "NVIDIA Corporation" },
-  { symbol: "BRK.A", name: "Berkshire Hathaway Inc. Class A" },
-  { symbol: "BRK.B", name: "Berkshire Hathaway Inc. Class B" },
-  { symbol: "JPM", name: "JPMorgan Chase & Co." },
-  { symbol: "JNJ", name: "Johnson & Johnson" },
-  { symbol: "UNH", name: "UnitedHealth Group Inc." },
-  { symbol: "V", name: "Visa Inc." },
-  { symbol: "HD", name: "Home Depot Inc." },
-  { symbol: "PG", name: "Procter & Gamble Co." },
-  { symbol: "MA", name: "Mastercard Inc." },
-  { symbol: "BAC", name: "Bank of America Corp." },
-  { symbol: "XOM", name: "Exxon Mobil Corporation" },
-  { symbol: "AVGO", name: "Broadcom Inc." },
-  { symbol: "CVX", name: "Chevron Corporation" },
-  { symbol: "ADBE", name: "Adobe Inc." },
-  { symbol: "CRM", name: "Salesforce Inc." },
-  { symbol: "PFE", name: "Pfizer Inc." },
-  { symbol: "NFLX", name: "Netflix Inc." },
-  { symbol: "CSCO", name: "Cisco Systems Inc." },
-  { symbol: "LLY", name: "Eli Lilly and Company" },
-  { symbol: "COST", name: "Costco Wholesale Corporation" },
-  { symbol: "DIS", name: "Walt Disney Co." },
-  { symbol: "ABT", name: "Abbott Laboratories" }
+  { symbol: "TLSA", name: "Tesla Inc." },
+  { symbol: "IVDA", name: "Iveda Solutions Inc." }
 ];
 
 // Initialize slider
@@ -423,10 +453,13 @@ function initializeSlider() {
     
     updateSliderPositions();
     updateDateLabels();
-    updateDashboard();
   });
   
   document.addEventListener('mouseup', function() {
+    if (isDraggingStart || isDraggingEnd) {
+      // Only update dashboard when dragging stops
+      updateDashboard();
+    }
     isDraggingStart = false;
     isDraggingEnd = false;
   });
@@ -443,36 +476,49 @@ function updateSliderPositions() {
 
 // Update date labels based on slider positions
 function updateDateLabels() {
-  const totalDataPoints = sampleCandleData.length;
+  if (!currentStockData) return;
+  
+  const totalDataPoints = currentStockData.length;
   const startIndex = Math.floor(startPercent / 100 * (totalDataPoints - 1));
   const endIndex = Math.floor(endPercent / 100 * (totalDataPoints - 1));
   
-  const startDateObj = parseDate(sampleCandleData[startIndex].date);
-  const endDateObj = parseDate(sampleCandleData[endIndex].date);
+  const startDateObj = currentStockData[startIndex].date;
+  const endDateObj = currentStockData[endIndex].date;
   
   d3.select('#startLabel').text(formatMonthYear(startDateObj));
   d3.select('#endLabel').text(formatMonthYear(endDateObj));
 }
 
 // Create update function to refresh the dashboard components
-function updateDashboard() {
+async function updateDashboard() {
   // Get current values from the search bar
-  const ticker = d3.select("#searchTicker").property("value").toUpperCase() || "SMPL";
+  const ticker = d3.select("#searchTicker").property("value").toUpperCase() || "AAPL";
+  
+  // Load stock data if not already loaded or if ticker changed
+  if (!currentStockData || currentStockData.symbol !== ticker) {
+    const data = await loadStockData(ticker);
+    if (!data) {
+      console.error("Failed to load stock data");
+      return;
+    }
+    currentStockData = data;
+    currentStockData.symbol = ticker;
+  }
   
   // Calculate start and end indices based on slider positions
-  const totalWeeks = sampleCandleData.length;
-  const startIndex = Math.floor(startPercent / 100 * (totalWeeks - 1));
-  const endIndex = Math.floor(endPercent / 100 * (totalWeeks - 1));
+  const totalDataPoints = currentStockData.length;
+  const startIndex = Math.floor(startPercent / 100 * (totalDataPoints - 1));
+  const endIndex = Math.floor(endPercent / 100 * (totalDataPoints - 1));
   
   // Get the selected date range for display in the info
-  const selectedData = sampleCandleData.slice(startIndex, endIndex + 1);
+  const selectedData = currentStockData.slice(startIndex, endIndex + 1);
   
   // Get stock info
   const stockInfo = stocksDatabase.find(stock => stock.symbol === ticker) || 
-                    { symbol: ticker, name: "Sample Stock" };
+                    { symbol: ticker, name: "Unknown Stock" };
   
   // Update the chart - showing all data but highlighting the selected portion
-  drawCandleChart(sampleCandleData, startIndex, endIndex);
+  drawCandleChart(currentStockData, startIndex, endIndex);
   
   // Update stock info display with stats from the selected range
   d3.select("#stockName").text(`${stockInfo.name} (${stockInfo.symbol})`);
