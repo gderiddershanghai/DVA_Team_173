@@ -17,7 +17,7 @@ class CommonWords:
         # min count should be dynamic, maybe a percentage of the total tweets?
         self.min_count = min_count
         self.filter_metric = filter_metric
-        self.stopword_filter = FilterStopwords()
+        self.stopword_filter = FilterStopwords() # do this before
         
         ########################## how often do words appear together? ##########################
         # these will be the vertices
@@ -52,11 +52,7 @@ class CommonWords:
                 matrix[i, j] = stats['counts']
                 matrix[j, i] = stats['counts']  
         self.A = pd.DataFrame(matrix, index=word_list, columns=word_list)
-        return self.A
-
-    
-    
-    
+        return self.A   
     
     def calculate_words(self):
         print(len(set(self.df['STOCK'])))
