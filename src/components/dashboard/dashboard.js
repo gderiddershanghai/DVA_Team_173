@@ -13,6 +13,11 @@ const formatDate = d3.timeFormat("%b %d, %Y");
 const formatMonthYear = d3.timeFormat("%b %Y");
 const parseDate = d3.timeParse("%Y-%m-%d");
 
+// Define chart date range constants
+const DISPLAY_START_DATE = new Date(2017, 0, 1); // Jan 1, 2017
+const DISPLAY_END_DATE = new Date(2020, 6, 31); // Jul 31, 2020
+const CALCULATION_DAYS_BEFORE = 90; // Data for calculation: 90 days before display start
+
 // Create SVG for the candle chart
 const candleSvg = d3.select("#candleChart")
   .append("svg")
@@ -26,33 +31,22 @@ const tooltip = d3.select("body").append("div")
   .style("opacity", 0);
 
 // Range slider variables
-let startPercent = 10;
-let endPercent = 90;
+let startPercent = 0; // Start at beginning of display range
+let endPercent = 100; // End at end of display range
 let isDraggingStart = false;
 let isDraggingEnd = false;
 
+// Store both daily and weekly data
+let currentDailyData = null;
+let currentWeeklyData = null;
+
 // Create a proper candle chart - always showing all data
-function drawCandleChart(data, selectedStartIdx, selectedEndIdx) {
+function drawCandleChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx) {
   // Clear previous chart
   candleSvg.selectAll("*").remove();
   
-  // Format dates and ensure numerical values
-  const formattedData = data.map(d => ({
-    date: typeof d.date === 'string' ? parseDate(d.date) : d.date,
-    open: +d.open,
-    high: +d.high,
-    low: +d.low,
-    close: +d.close,
-    volume: d.volume ? +d.volume : 0
-  }));
-  
-  // Filter data to show 2020 and later (no upper year limit)
-  const filteredData = formattedData.filter(d => 
-    d.date.getFullYear() >= 2020
-  );
-  
-  // Sort by date
-  filteredData.sort((a, b) => a.date - b.date);
+  // Format dates and ensure numerical values (weeklyData is already formatted)
+  const filteredData = weeklyData;
   
   // Check if we have data to display
   if (filteredData.length === 0) {
@@ -227,7 +221,7 @@ function drawCandleChart(data, selectedStartIdx, selectedEndIdx) {
   
   // Calculate and draw moving averages if showMovingAverages is enabled
   const showingMA = d3.select("#maToggle").property("checked");
-  if (showingMA) {
+  if (showingMA && dailyData) {
     const maType = d3.select('input[name="maType"]:checked').property("value");
     let period;
     let color;
@@ -237,12 +231,16 @@ function drawCandleChart(data, selectedStartIdx, selectedEndIdx) {
         period = 7;
         color = "#2196F3"; // Blue
         break;
+      case "14day":
+        period = 14;
+        color = "#4CAF50"; // Green
+        break;
       case "30day":
         period = 30;
         color = "#FF9800"; // Orange
         break;
-      case "60day":
-        period = 60;
+      case "90day":
+        period = 90;
         color = "#9C27B0"; // Purple
         break;
       default:
@@ -250,15 +248,36 @@ function drawCandleChart(data, selectedStartIdx, selectedEndIdx) {
         color = "#2196F3";
     }
     
-    // Calculate moving average
-    const maData = [];
-    for (let i = period - 1; i < filteredData.length; i++) {
-      const sum = filteredData.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val.close, 0);
-      maData.push({
-        date: filteredData[i].date,
+    // Filter daily data to match display range
+    const displayDailyData = dailyData.filter(d => 
+      d.date >= DISPLAY_START_DATE && d.date <= DISPLAY_END_DATE
+    );
+    
+    // Calculate moving average on daily data
+    const dailyMA = [];
+    for (let i = period - 1; i < displayDailyData.length; i++) {
+      const sum = displayDailyData.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val.close, 0);
+      dailyMA.push({
+        date: displayDailyData[i].date,
         value: sum / period
       });
     }
+    
+    // Map daily MA to weekly points 
+    // Find closest MA point to each weekly candle
+    const maData = filteredData.map(weekData => {
+      // Find the closest daily MA point to this week's end date
+      const closestMA = dailyMA.reduce((closest, current) => {
+        const currentDiff = Math.abs(current.date - weekData.date);
+        const closestDiff = Math.abs(closest.date - weekData.date);
+        return currentDiff < closestDiff ? current : closest;
+      }, dailyMA[0]);
+      
+      return {
+        date: weekData.date,
+        value: closestMA.value
+      };
+    });
     
     // Draw moving average line
     const line = d3.line()
@@ -303,10 +322,14 @@ function drawCandleChart(data, selectedStartIdx, selectedEndIdx) {
     .attr("pointer-events", "none");
 }
 
-// Function to filter data between 2020 and latest available date
+// Function to filter data for display and calculation
 function filterDataByDateRange(data) {
+  // Calculate the date 90 days before display start
+  const calculationStartDate = new Date(DISPLAY_START_DATE);
+  calculationStartDate.setDate(calculationStartDate.getDate() - CALCULATION_DAYS_BEFORE);
+  
   return data.filter(d => 
-    d.date.getFullYear() >= 2020
+    d.date >= calculationStartDate && d.date <= DISPLAY_END_DATE
   );
 }
 
@@ -386,11 +409,27 @@ async function loadStockData(symbol) {
     // Sort by date
     dailyData.sort((a, b) => a.date - b.date);
     
-    // Filter for data from 2020 onwards
-    const filteredData = filterDataByDateRange(dailyData);
+    // Filter for data within our display range plus calculation period
+    const filteredDailyData = filterDataByDateRange(dailyData);
+    
+    // Store filtered daily data for MA calculations
+    currentDailyData = filteredDailyData;
     
     // Aggregate to weekly data
-    return aggregateToWeekly(filteredData);
+    const weeklyData = aggregateToWeekly(filteredDailyData);
+    
+    // Filter weekly data to match display range
+    const displayWeeklyData = weeklyData.filter(d => 
+      d.date >= DISPLAY_START_DATE && d.date <= DISPLAY_END_DATE
+    );
+    
+    // Store for later use with sliders
+    currentWeeklyData = displayWeeklyData;
+    
+    return {
+      daily: filteredDailyData,
+      weekly: displayWeeklyData
+    };
   } catch (error) {
     console.error(`Error loading data for ${symbol}:`, error);
     return null;
@@ -476,17 +515,20 @@ function updateSliderPositions() {
 
 // Update date labels based on slider positions
 function updateDateLabels() {
-  if (!currentStockData) return;
+  if (!currentWeeklyData) return;
   
-  const totalDataPoints = currentStockData.length;
+  const totalDataPoints = currentWeeklyData.length;
   const startIndex = Math.floor(startPercent / 100 * (totalDataPoints - 1));
   const endIndex = Math.floor(endPercent / 100 * (totalDataPoints - 1));
   
-  const startDateObj = currentStockData[startIndex].date;
-  const endDateObj = currentStockData[endIndex].date;
-  
-  d3.select('#startLabel').text(formatMonthYear(startDateObj));
-  d3.select('#endLabel').text(formatMonthYear(endDateObj));
+  if (startIndex >= 0 && startIndex < totalDataPoints && 
+      endIndex >= 0 && endIndex < totalDataPoints) {
+    const startDateObj = currentWeeklyData[startIndex].date;
+    const endDateObj = currentWeeklyData[endIndex].date;
+    
+    d3.select('#startLabel').text(formatMonthYear(startDateObj));
+    d3.select('#endLabel').text(formatMonthYear(endDateObj));
+  }
 }
 
 // Create update function to refresh the dashboard components
@@ -503,22 +545,26 @@ async function updateDashboard() {
     }
     currentStockData = data;
     currentStockData.symbol = ticker;
+    
+    // Store the weekly and daily data
+    currentWeeklyData = data.weekly;
+    currentDailyData = data.daily;
   }
   
   // Calculate start and end indices based on slider positions
-  const totalDataPoints = currentStockData.length;
+  const totalDataPoints = currentWeeklyData.length;
   const startIndex = Math.floor(startPercent / 100 * (totalDataPoints - 1));
   const endIndex = Math.floor(endPercent / 100 * (totalDataPoints - 1));
   
   // Get the selected date range for display in the info
-  const selectedData = currentStockData.slice(startIndex, endIndex + 1);
+  const selectedData = currentWeeklyData.slice(startIndex, endIndex + 1);
   
   // Get stock info
   const stockInfo = stocksDatabase.find(stock => stock.symbol === ticker) || 
                     { symbol: ticker, name: "Unknown Stock" };
   
   // Update the chart - showing all data but highlighting the selected portion
-  drawCandleChart(currentStockData, startIndex, endIndex);
+  drawCandleChart(currentWeeklyData, currentDailyData, startIndex, endIndex);
   
   // Update stock info display with stats from the selected range
   d3.select("#stockName").text(`${stockInfo.name} (${stockInfo.symbol})`);
