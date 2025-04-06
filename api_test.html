@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stock API Tester</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: inline-block;
+      width: 100px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      overflow: auto;
+      max-height: 500px;
+    }
+    .error {
+      color: red;
+      background-color: #ffeeee;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    .timing {
+      background-color: #e0f7fa;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+    }
+    select {
+      padding: 5px;
+      width: 150px;
+    }
+    .presets {
+      margin-bottom: 20px;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Stock Calculation API Tester</h1>
+  
+  <div class="presets">
+    <h3>Quick Select:</h3>
+    <select id="presetTicker">
+      <option value="">Select a stock...</option>
+      <option value="AAPL">Apple (AAPL)</option>
+      <option value="MSFT">Microsoft (MSFT)</option>
+      <option value="GOOGL">Google (GOOGL)</option>
+      <option value="AMZN">Amazon (AMZN)</option>
+      <option value="TSLA">Tesla (TSLA)</option>
+      <option value="META">Meta (META)</option>
+      <option value="JPM">JP Morgan (JPM)</option>
+      <option value="V">Visa (V)</option>
+      <option value="SPY">S&P 500 (SPY)</option>
+    </select>
+  </div>
+  
+  <div class="form-group">
+    <label for="ticker">Ticker:</label>
+    <input type="text" id="ticker" value="AAPL" required>
+    <span id="tickerError" class="error" style="display: none;">Please enter a valid ticker</span>
+  </div>
+  
+  <div class="form-group">
+    <label for="startDate">Start Date:</label>
+    <input type="date" id="startDate" value="2019-01-01" required>
+  </div>
+  
+  <div class="form-group">
+    <label for="endDate">End Date:</label>
+    <input type="date" id="endDate" value="2019-12-31" required>
+    <span id="dateError" class="error" style="display: none;">End date must be after start date</span>
+  </div>
+  
+  <button id="testButton">Calculate</button>
+  
+  <div id="loadingIndicator" style="display: none; margin-top: 15px;">
+    <p>Loading... This may take a few moments.</p>
+  </div>
+  
+  <div id="resultsContainer" style="margin-top: 20px; display: none;">
+    <h2>Results:</h2>
+    <div id="timingInfo" class="timing">
+      <div id="clientTiming"></div>
+    </div>
+    <div id="apiError" class="error" style="display: none;"></div>
+    <pre id="results"></pre>
+  </div>
+
+  <script>
+    // Set default dates if not already set
+    if (!document.getElementById('startDate').value) {
+      const lastYear = new Date();
+      lastYear.setFullYear(lastYear.getFullYear() - 1);
+      document.getElementById('startDate').value = lastYear.toISOString().split('T')[0];
+    }
+    
+    if (!document.getElementById('endDate').value) {
+      const today = new Date();
+      document.getElementById('endDate').value = today.toISOString().split('T')[0];
+    }
+    
+    // Handle preset selection
+    document.getElementById('presetTicker').addEventListener('change', (e) => {
+      if (e.target.value) {
+        document.getElementById('ticker').value = e.target.value;
+      }
+    });
+    
+    // Input validation
+    function validateInputs() {
+      let isValid = true;
+      const ticker = document.getElementById('ticker').value.trim();
+      const startDate = new Date(document.getElementById('startDate').value);
+      const endDate = new Date(document.getElementById('endDate').value);
+      
+      // Validate ticker
+      if (!ticker) {
+        document.getElementById('tickerError').style.display = 'inline';
+        isValid = false;
+      } else {
+        document.getElementById('tickerError').style.display = 'none';
+      }
+      
+      // Validate dates
+      if (endDate <= startDate) {
+        document.getElementById('dateError').style.display = 'inline';
+        isValid = false;
+      } else {
+        document.getElementById('dateError').style.display = 'none';
+      }
+      
+      return isValid;
+    }
+    
+    document.getElementById('testButton').addEventListener('click', async () => {
+      // Validate inputs before proceeding
+      if (!validateInputs()) {
+        return;
+      }
+      
+      const ticker = document.getElementById('ticker').value.trim();
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const resultsElement = document.getElementById('results');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const resultsContainer = document.getElementById('resultsContainer');
+      const clientTiming = document.getElementById('clientTiming');
+      const apiError = document.getElementById('apiError');
+      const testButton = document.getElementById('testButton');
+      
+      // Reset displays
+      apiError.style.display = 'none';
+      
+      // Disable button while loading
+      testButton.disabled = true;
+      testButton.textContent = 'Calculating...';
+      
+      // Show loading indicator
+      loadingIndicator.style.display = 'block';
+      resultsContainer.style.display = 'none';
+      
+      const startTime = performance.now();
+      
+      try {
+        const response = await fetch('http://localhost:8000/api/calculate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            stock_ticker: ticker,
+            start_date: startDate,
+            end_date: endDate
+          })
+        });
+        
+        // Hide loading indicator
+        loadingIndicator.style.display = 'none';
+        resultsContainer.style.display = 'block';
+        
+        const endTime = performance.now();
+        const clientTime = (endTime - startTime) / 1000;
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          apiError.style.display = 'block';
+          
+          try {
+            // Try to parse error as JSON
+            const errorJson = JSON.parse(errorText);
+            apiError.innerHTML = `<strong>API Error (${response.status}):</strong><br>${errorJson.detail || errorText}`;
+          } catch (e) {
+            // If it's not JSON, display as is
+            apiError.innerHTML = `<strong>API Error (${response.status}):</strong><br>${errorText}`;
+          }
+          
+          resultsElement.textContent = '';
+          clientTiming.innerHTML = '';
+          
+          throw new Error(`Server returned ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Display client-side timing information
+        clientTiming.innerHTML = `
+          <strong>Request Time:</strong> ${clientTime.toFixed(2)} seconds
+        `;
+        
+        resultsElement.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        // Hide loading indicator, show results container with error
+        loadingIndicator.style.display = 'none';
+        
+        if (!apiError.style.display || apiError.style.display === 'none') {
+          apiError.style.display = 'block';
+          apiError.innerHTML = `<strong>Error:</strong> ${error.message}`;
+        }
+        
+        console.error('API Error:', error);
+      } finally {
+        // Re-enable the button
+        testButton.disabled = false;
+        testButton.textContent = 'Calculate';
+      }
+    });
+  </script>
+</body>
+</html> 
