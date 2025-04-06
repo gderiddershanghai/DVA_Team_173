@@ -1,37 +1,28 @@
 import pandas as pd
-from .filter_stopwords import FilterStopwords # change if not using juptyer notebook
-# from filter_stopwords import FilterStopwords
+from .filter_stopwordsv2 import FilterStopwords  # adjust import if needed
 
-def clean_tweets(df):
+def clean_tweets(df: pd.DataFrame, verbose: bool = True, test_mode: bool = False) -> pd.DataFrame:
     """
     Clean tweets in a DataFrame and return the DataFrame with a new column of cleaned tweets.
-    
+
     Parameters:
-    df (pandas.DataFrame): DataFrame containing a 'TWEET' column
-    
+    df (pandas.DataFrame): DataFrame containing a 'Tweet' column
+    verbose (bool): Whether to print processing progress
+    test_mode (bool): Whether to run a test batch upon initializing the filter
+
     Returns:
     pandas.DataFrame: Original DataFrame with an additional 'cleaned_tweet' column
     """
-    # Create a copy of the DataFrame to avoid modifying the original
-    result_df = df.copy()
-    
-    # Initialize the stopword filter
-    stopword_filter = FilterStopwords()
-    
-    # Apply cleaning to each tweet and store in new column
-    result_df['cleaned_tweet'] = result_df['Tweet'].apply(
-        lambda x: stopword_filter.filter_stopwords(str(x))
-    )
-    
-    return result_df
 
-# if __name__ == "__main__":
-#     # Example usage
-#     fp = "/home/ginger/code/gderiddershanghai/DVA_Team_173/data_full/processed/IEEE/top.csv"
-#     df = pd.read_csv(fp)
-    
-#     # Clean the tweets
-#     cleaned_df = clean_tweets(df)
-    
-#     # Print first few rows to verify
-#     print(cleaned_df[['TWEET', 'cleaned_tweet']].head())
+    result_df = df.copy()
+
+    if 'Tweet' not in result_df.columns:
+        raise ValueError("DataFrame must contain a 'Tweet' column.")
+
+    stopword_filter = FilterStopwords(test_mode=test_mode)
+
+    tweets = result_df['Tweet'].fillna("").astype(str).tolist()
+    cleaned = stopword_filter.filter_many(tweets, verbose=verbose)
+
+    result_df['cleaned_tweet'] = cleaned
+    return result_df
