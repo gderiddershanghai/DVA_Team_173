@@ -189,15 +189,90 @@
   #date-sliders {
     position: absolute;
     bottom: 20px;
-    left: 20px;
-    right: 20px;
     z-index: 2;
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
   }
   
-  #date-sliders input[type="range"] {
-    width: 45%;
+  /* Custom range slider */
+  #date-range-slider {
+    position: relative;
+    height: 10px;
+    margin: 10px 0;
+    width: 100%;
+  }
+  
+  .slider-track {
+    position: absolute;
+    height: 6px;
+    width: 100%;
+    background-color: #ddd;
+    border-radius: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  
+  .slider-range {
+    position: absolute;
+    height: 6px;
+    background-color: #2196F3;
+    border-radius: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  
+  .slider-handle {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background-color: #fff;
+    border: 2px solid #2196F3;
+    border-radius: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 3;
+  }
+  
+  .slider-handle:hover,
+  .slider-handle:active {
+    background-color: #e6f2ff;
+  }
+  
+  .start-handle {
+    left: 10%;
+  }
+  
+  .end-handle {
+    left: 90%;
+  }
+  
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+  }
+  
+  /* Shaded area on chart for unselected regions */
+  .chart-shade {
+    fill: rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+  }
+  
+  .chart-shade-left, .chart-shade-right {
+    fill: rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+  }
+  
+  /* Selection indicator */
+  .selection-indicator {
+    stroke: #2196F3;
+    stroke-width: 2;
+    stroke-dasharray: 5,5;
+    fill: none;
+    pointer-events: none;
   }
   
   /* Table styling */

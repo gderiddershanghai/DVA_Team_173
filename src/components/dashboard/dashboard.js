@@ -1,5 +1,8 @@
 // Set up dimensions for different components
-const margin = {top: 20, right: 20, bottom: 30, left: 50};
+const candleMargin = {top: 100, right: 20, bottom: 50, left: 50};
+const tableMargin = {top: 20, right: 20, bottom: 20, left: 20};
+const correlationMargin = {top: 20, right: 20, bottom: 20, left: 20};
+const sentimentMargin = {top: 20, right: 20, bottom: 20, left: 20};
 const candleWidth = 900, candleHeight = 600;
 const tableWidth = 300, tableHeight = 600;
 const correlationWidth = 900, correlationHeight = 300;
@@ -7,7 +10,13 @@ const sentimentWidth = 300, sentimentHeight = 300;
 
 // Format date for display
 const formatDate = d3.timeFormat("%b %d, %Y");
+const formatMonthYear = d3.timeFormat("%b %Y");
 const parseDate = d3.timeParse("%Y-%m-%d");
+
+// Define chart date range constants
+const DISPLAY_START_DATE = new Date(2017, 0, 1); // Jan 1, 2017
+const DISPLAY_END_DATE = new Date(2020, 6, 31); // Jul 31, 2020
+const CALCULATION_DAYS_BEFORE = 90; // Data for calculation: 90 days before display start
 
 // Create SVG for the candle chart
 const candleSvg = d3.select("#candleChart")
@@ -21,33 +30,38 @@ const tooltip = d3.select("body").append("div")
   .attr("class", "tooltip")
   .style("opacity", 0);
 
-// Create a proper candle chart
-function drawCandleChart(data) {
+// Range slider variables
+let startPercent = 0; // Start at beginning of display range
+let endPercent = 100; // End at end of display range
+let isDraggingStart = false;
+let isDraggingEnd = false;
+
+// Store both daily and weekly data
+let currentDailyData = null;
+let currentWeeklyData = null;
+
+// Create a proper candle chart - always showing all data
+function drawCandleChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx) {
   // Clear previous chart
   candleSvg.selectAll("*").remove();
   
-  // Format dates and ensure numerical values
-  const formattedData = data.map(d => ({
-    date: typeof d.date === 'string' ? parseDate(d.date) : d.date,
-    open: +d.open,
-    high: +d.high,
-    low: +d.low,
-    close: +d.close,
-    volume: d.volume ? +d.volume : 0
-  }));
+  // Format dates and ensure numerical values (weeklyData is already formatted)
+  const filteredData = weeklyData;
   
-  // Filter data between 2020 and 2022
-  const filteredData = formattedData.filter(d => 
-    d.date.getFullYear() >= 2020 && d.date.getFullYear() <= 2022
-  );
+  // Check if we have data to display
+  if (filteredData.length === 0) {
+    console.error("No data to display in the selected date range");
+    return;
+  }
   
-  // Sort by date
-  filteredData.sort((a, b) => a.date - b.date);
+  // Ensure valid indices
+  selectedStartIdx = Math.max(0, Math.min(selectedStartIdx, filteredData.length - 1));
+  selectedEndIdx = Math.max(0, Math.min(selectedEndIdx, filteredData.length - 1));
   
-  // Set up scales
+  // Set up scales for the full date range
   const xScale = d3.scaleBand()
     .domain(filteredData.map(d => d.date))
-    .range([margin.left, candleWidth - margin.right])
+    .range([candleMargin.left, candleWidth - candleMargin.right])
     .padding(0.2);
   
   const yScale = d3.scaleLinear()
@@ -55,17 +69,43 @@ function drawCandleChart(data) {
       d3.min(filteredData, d => d.low) * 0.99,
       d3.max(filteredData, d => d.high) * 1.01
     ])
-    .range([candleHeight - margin.bottom, margin.top]);
+    .range([candleHeight - candleMargin.bottom, candleMargin.top]);
+  
+  // Store quarters we've already seen to avoid duplicate ticks
+  const seenQuarters = new Set();
+  
+  // Function to determine if a date is the first occurrence of a quarter start month
+  const isFirstQuarterOccurrence = (date) => {
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    
+    // Check if it's a quarter start month (Jan, Apr, Jul, Oct)
+    if (month % 3 === 0) {
+      const quarterKey = `${year}-${month}`;
+      
+      // If we haven't seen this quarter yet, mark it and return true
+      if (!seenQuarters.has(quarterKey)) {
+        seenQuarters.add(quarterKey);
+        return true;
+      }
+    }
+    
+    return false;
+  };
   
   // Create x-axis with better date formatting
   const xAxis = d3.axisBottom(xScale)
-    .tickValues(xScale.domain().filter((d, i) => i % 8 === 0))
-    .tickFormat(d => formatDate(d));
+    .tickValues(
+      filteredData
+        .map(d => d.date)
+        .filter(date => isFirstQuarterOccurrence(date))
+    )
+    .tickFormat(d => formatMonthYear(d));
   
   // Add X axis
   candleSvg.append("g")
     .attr("class", "x-axis")
-    .attr("transform", `translate(0,${candleHeight - margin.bottom})`)
+    .attr("transform", `translate(0,${candleHeight - candleMargin.bottom})`)
     .call(xAxis)
     .selectAll("text")
     .style("text-anchor", "end")
@@ -76,28 +116,28 @@ function drawCandleChart(data) {
   // Add Y axis
   candleSvg.append("g")
     .attr("class", "y-axis")
-    .attr("transform", `translate(${margin.left},0)`)
+    .attr("transform", `translate(${candleMargin.left},0)`)
     .call(d3.axisLeft(yScale));
   
   // Add grid lines
   candleSvg.append("g")
     .attr("class", "grid")
-    .attr("transform", `translate(0,${candleHeight - margin.bottom})`)
+    .attr("transform", `translate(0,${candleHeight - candleMargin.bottom})`)
     .call(d3.axisBottom(xScale)
       .tickValues([])
-      .tickSize(-(candleHeight - margin.top - margin.bottom))
+      .tickSize(-(candleHeight - candleMargin.top - candleMargin.bottom))
       .tickFormat("")
     );
   
   candleSvg.append("g")
     .attr("class", "grid")
-    .attr("transform", `translate(${margin.left},0)`)
+    .attr("transform", `translate(${candleMargin.left},0)`)
     .call(d3.axisLeft(yScale)
-      .tickSize(-(candleWidth - margin.left - margin.right))
+      .tickSize(-(candleWidth - candleMargin.left - candleMargin.right))
       .tickFormat("")
     );
-    
-  // Add candlesticks
+  
+  // Add candlesticks for all data
   const candles = candleSvg.selectAll(".candle")
     .data(filteredData)
     .enter()
@@ -108,7 +148,7 @@ function drawCandleChart(data) {
         .duration(200)
         .style("opacity", .9);
       tooltip.html(`
-        <strong>Date:</strong> ${formatDate(d.date)}<br>
+        <strong>Week of:</strong> ${formatDate(d.date)}<br>
         <strong>Open:</strong> $${d.open.toFixed(2)}<br>
         <strong>High:</strong> $${d.high.toFixed(2)}<br>
         <strong>Low:</strong> $${d.low.toFixed(2)}<br>
@@ -145,9 +185,43 @@ function drawCandleChart(data) {
     .attr("stroke", "#000")
     .attr("stroke-width", 1);
   
-  // Calculate moving averages if showMovingAverages is enabled
+  // Add shaded regions for unselected areas based on the slider positions
+  const startDate = filteredData[selectedStartIdx].date;
+  const endDate = filteredData[selectedEndIdx].date;
+  
+  // Create a clipping path for the selected region to make it stand out
+  candleSvg.append("defs")
+    .append("clipPath")
+    .attr("id", "selected-region")
+    .append("rect")
+    .attr("x", xScale(startDate))
+    .attr("y", candleMargin.top)
+    .attr("width", xScale(endDate) + xScale.bandwidth() - xScale(startDate))
+    .attr("height", candleHeight - candleMargin.top - candleMargin.bottom);
+  
+  // Left shade (before start handle)
+  if (selectedStartIdx > 0) {
+    candleSvg.append("rect")
+      .attr("class", "chart-shade-left")
+      .attr("x", candleMargin.left)
+      .attr("y", candleMargin.top)
+      .attr("width", xScale(startDate) - candleMargin.left)
+      .attr("height", candleHeight - candleMargin.top - candleMargin.bottom);
+  }
+  
+  // Right shade (after end handle)
+  if (selectedEndIdx < filteredData.length - 1) {
+    candleSvg.append("rect")
+      .attr("class", "chart-shade-right")
+      .attr("x", xScale(endDate) + xScale.bandwidth())
+      .attr("y", candleMargin.top)
+      .attr("width", (candleWidth - candleMargin.right) - (xScale(endDate) + xScale.bandwidth()))
+      .attr("height", candleHeight - candleMargin.top - candleMargin.bottom);
+  }
+  
+  // Calculate and draw moving averages if showMovingAverages is enabled
   const showingMA = d3.select("#maToggle").property("checked");
-  if (showingMA) {
+  if (showingMA && dailyData) {
     const maType = d3.select('input[name="maType"]:checked').property("value");
     let period;
     let color;
@@ -157,12 +231,16 @@ function drawCandleChart(data) {
         period = 7;
         color = "#2196F3"; // Blue
         break;
+      case "14day":
+        period = 14;
+        color = "#4CAF50"; // Green
+        break;
       case "30day":
         period = 30;
         color = "#FF9800"; // Orange
         break;
-      case "60day":
-        period = 60;
+      case "90day":
+        period = 90;
         color = "#9C27B0"; // Purple
         break;
       default:
@@ -170,15 +248,36 @@ function drawCandleChart(data) {
         color = "#2196F3";
     }
     
-    // Calculate moving average
-    const maData = [];
-    for (let i = period - 1; i < filteredData.length; i++) {
-      const sum = filteredData.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val.close, 0);
-      maData.push({
-        date: filteredData[i].date,
+    // Filter daily data to match display range
+    const displayDailyData = dailyData.filter(d => 
+      d.date >= DISPLAY_START_DATE && d.date <= DISPLAY_END_DATE
+    );
+    
+    // Calculate moving average on daily data
+    const dailyMA = [];
+    for (let i = period - 1; i < displayDailyData.length; i++) {
+      const sum = displayDailyData.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val.close, 0);
+      dailyMA.push({
+        date: displayDailyData[i].date,
         value: sum / period
       });
     }
+    
+    // Map daily MA to weekly points 
+    // Find closest MA point to each weekly candle
+    const maData = filteredData.map(weekData => {
+      // Find the closest daily MA point to this week's end date
+      const closestMA = dailyMA.reduce((closest, current) => {
+        const currentDiff = Math.abs(current.date - weekData.date);
+        const closestDiff = Math.abs(closest.date - weekData.date);
+        return currentDiff < closestDiff ? current : closest;
+      }, dailyMA[0]);
+      
+      return {
+        date: weekData.date,
+        value: closestMA.value
+      };
+    });
     
     // Draw moving average line
     const line = d3.line()
@@ -208,126 +307,269 @@ function drawCandleChart(data) {
       .attr("font-size", "10px")
       .text(`${period} Day MA`);
   }
+  
+  // Highlight the selected range with a border or indicator
+  candleSvg.append("rect")
+    .attr("class", "selection-indicator")
+    .attr("x", xScale(startDate))
+    .attr("y", candleMargin.top)
+    .attr("width", xScale(endDate) + xScale.bandwidth() - xScale(startDate))
+    .attr("height", candleHeight - candleMargin.top - candleMargin.bottom)
+    .attr("fill", "none")
+    .attr("stroke", "#2196F3")
+    .attr("stroke-width", 2)
+    .attr("stroke-dasharray", "5,5")
+    .attr("pointer-events", "none");
 }
 
-// Sample realistic candle chart data with OHLC values for 2020-2022
-const generateRealisticData = () => {
-  const data = [];
-  let date = new Date(2020, 0, 5); // Jan 5, 2020 (Sunday)
-  let close = 150;
+// Function to filter data for display and calculation
+function filterDataByDateRange(data) {
+  // Calculate the date 90 days before display start
+  const calculationStartDate = new Date(DISPLAY_START_DATE);
+  calculationStartDate.setDate(calculationStartDate.getDate() - CALCULATION_DAYS_BEFORE);
   
-  // Create weekly data points for 2020-2022
-  while (date <= new Date(2022, 11, 25)) {
-    // Generate realistic price movements with some volatility
-    const volatility = Math.random() * 0.2 + 0.05; // 5-25% volatility
-    const changePercent = (Math.random() - 0.5) * volatility;
+  return data.filter(d => 
+    d.date >= calculationStartDate && d.date <= DISPLAY_END_DATE
+  );
+}
+
+// Function to aggregate daily data into weekly candles
+function aggregateToWeekly(dailyData) {
+  if (!dailyData || dailyData.length === 0) return [];
+  
+  // Sort by date first to ensure proper aggregation
+  const sortedData = [...dailyData].sort((a, b) => a.date - b.date);
+  
+  // Group by week
+  const weeklyData = [];
+  let currentWeek = [];
+  let currentWeekNum = -1;
+  
+  sortedData.forEach(day => {
+    // Get week number (Sunday-based)
+    const weekNum = d3.timeWeek.count(d3.timeYear(day.date), day.date);
+    const year = day.date.getFullYear();
+    const weekKey = `${year}-${weekNum}`;
     
-    // Weekly open is previous close
-    const open = close;
-    // Random high/low with realistic ranges
-    const upMove = Math.abs(Math.random() * open * 0.08);
-    const downMove = Math.abs(Math.random() * open * 0.08);
-    const high = Math.max(open, open * (1 + changePercent)) + upMove;
-    const low = Math.min(open, open * (1 + changePercent)) - downMove;
-    // New close
-    close = open * (1 + changePercent);
-    
-    // Add volume (shares traded) - in millions
-    const volumeBase = Math.random() * 10 + 5; // 5-15 million base
-    const volume = Math.floor(volumeBase * 1000000 * (1 + Math.random() * 0.5));
-    
-    data.push({
-      date: date.toISOString().split('T')[0],
-      open: +open.toFixed(2),
-      high: +high.toFixed(2),
-      low: +low.toFixed(2),
-      close: +close.toFixed(2),
-      volume: volume
-    });
-    
-    // Move to next week
-    date.setDate(date.getDate() + 7);
+    if (weekKey !== currentWeekNum) {
+      // Start new week
+      if (currentWeek.length > 0) {
+        // Calculate OHLC for the completed week
+        const weekData = {
+          date: currentWeek[currentWeek.length - 1].date, // Use last day of week as the date
+          open: currentWeek[0].open,
+          high: d3.max(currentWeek, d => d.high),
+          low: d3.min(currentWeek, d => d.low),
+          close: currentWeek[currentWeek.length - 1].close,
+          volume: d3.sum(currentWeek, d => d.volume)
+        };
+        weeklyData.push(weekData);
+      }
+      // Start new week
+      currentWeek = [day];
+      currentWeekNum = weekKey;
+    } else {
+      // Add to current week
+      currentWeek.push(day);
+    }
+  });
+  
+  // Add the last week if there's data
+  if (currentWeek.length > 0) {
+    const weekData = {
+      date: currentWeek[currentWeek.length - 1].date, // Use last day of week as the date
+      open: currentWeek[0].open,
+      high: d3.max(currentWeek, d => d.high),
+      low: d3.min(currentWeek, d => d.low),
+      close: currentWeek[currentWeek.length - 1].close,
+      volume: d3.sum(currentWeek, d => d.volume)
+    };
+    weeklyData.push(weekData);
   }
   
-  return data;
-};
+  return weeklyData;
+}
 
-const sampleCandleData = generateRealisticData();
+// Load and parse CSV data
+async function loadStockData(symbol) {
+  try {
+    const response = await fetch(`/toy_data/stock_data/${symbol}.csv`);
+    const csvText = await response.text();
+    const dailyData = d3.csvParse(csvText, d => ({
+      date: parseDate(d.Date.split(' ')[0]), // Extract just the date part
+      open: +d.Open,
+      high: +d.High,
+      low: +d.Low,
+      close: +d.Close,
+      volume: +d.Volume,
+      dividends: +d.Dividends,
+      stockSplits: +d['Stock Splits']
+    }));
+    
+    // Sort by date
+    dailyData.sort((a, b) => a.date - b.date);
+    
+    // Filter for data within our display range plus calculation period
+    const filteredDailyData = filterDataByDateRange(dailyData);
+    
+    // Store filtered daily data for MA calculations
+    currentDailyData = filteredDailyData;
+    
+    // Aggregate to weekly data
+    const weeklyData = aggregateToWeekly(filteredDailyData);
+    
+    // Filter weekly data to match display range
+    const displayWeeklyData = weeklyData.filter(d => 
+      d.date >= DISPLAY_START_DATE && d.date <= DISPLAY_END_DATE
+    );
+    
+    // Store for later use with sliders
+    currentWeeklyData = displayWeeklyData;
+    
+    return {
+      daily: filteredDailyData,
+      weekly: displayWeeklyData
+    };
+  } catch (error) {
+    console.error(`Error loading data for ${symbol}:`, error);
+    return null;
+  }
+}
 
-// Update stock name and price range display 
-d3.select("#stockName").text("Sample Stock (SMPL)");
-d3.select("#priceRange").text("Low: $" + d3.min(sampleCandleData, d => d.low).toFixed(2) + 
-                             ", High: $" + d3.max(sampleCandleData, d => d.high).toFixed(2));
+// Initialize price range display with full data range
+let currentStockData = null;
 
 // Realistic stock data with company names for dropdown
 const stocksDatabase = [
   { symbol: "AAPL", name: "Apple Inc." },
-  { symbol: "MSFT", name: "Microsoft Corporation" },
-  { symbol: "AMZN", name: "Amazon.com Inc." },
-  { symbol: "GOOGL", name: "Alphabet Inc. Class A" },
-  { symbol: "GOOG", name: "Alphabet Inc. Class C" },
-  { symbol: "META", name: "Meta Platforms Inc." },
-  { symbol: "TSLA", name: "Tesla Inc." },
   { symbol: "NVDA", name: "NVIDIA Corporation" },
-  { symbol: "BRK.A", name: "Berkshire Hathaway Inc. Class A" },
-  { symbol: "BRK.B", name: "Berkshire Hathaway Inc. Class B" },
-  { symbol: "JPM", name: "JPMorgan Chase & Co." },
-  { symbol: "JNJ", name: "Johnson & Johnson" },
-  { symbol: "UNH", name: "UnitedHealth Group Inc." },
-  { symbol: "V", name: "Visa Inc." },
-  { symbol: "HD", name: "Home Depot Inc." },
-  { symbol: "PG", name: "Procter & Gamble Co." },
-  { symbol: "MA", name: "Mastercard Inc." },
-  { symbol: "BAC", name: "Bank of America Corp." },
-  { symbol: "XOM", name: "Exxon Mobil Corporation" },
-  { symbol: "AVGO", name: "Broadcom Inc." },
-  { symbol: "CVX", name: "Chevron Corporation" },
-  { symbol: "ADBE", name: "Adobe Inc." },
-  { symbol: "CRM", name: "Salesforce Inc." },
-  { symbol: "PFE", name: "Pfizer Inc." },
-  { symbol: "NFLX", name: "Netflix Inc." },
-  { symbol: "CSCO", name: "Cisco Systems Inc." },
-  { symbol: "LLY", name: "Eli Lilly and Company" },
-  { symbol: "COST", name: "Costco Wholesale Corporation" },
-  { symbol: "DIS", name: "Walt Disney Co." },
-  { symbol: "ABT", name: "Abbott Laboratories" }
+  { symbol: "TLSA", name: "Tesla Inc." },
+  { symbol: "IVDA", name: "Iveda Solutions Inc." }
 ];
 
+// Initialize slider
+function initializeSlider() {
+  // Adjust slider width to match the chart's plotting area width
+  const sliderContainer = document.getElementById('date-sliders');
+  if (sliderContainer) {
+    sliderContainer.style.width = `${candleWidth - candleMargin.left - candleMargin.right}px`;
+    sliderContainer.style.marginLeft = `${candleMargin.left}px`;
+    sliderContainer.style.marginRight = `${candleMargin.right}px`;
+  }
+  
+  // Set initial handle positions
+  updateSliderPositions();
+  
+  // Set initial date labels
+  updateDateLabels();
+  
+  // Add event listeners for the slider handles
+  const startHandle = document.getElementById('startHandle');
+  const endHandle = document.getElementById('endHandle');
+  const sliderTrack = document.getElementById('date-range-slider');
+  
+  startHandle.addEventListener('mousedown', function(e) {
+    isDraggingStart = true;
+    e.preventDefault();
+  });
+  
+  endHandle.addEventListener('mousedown', function(e) {
+    isDraggingEnd = true;
+    e.preventDefault();
+  });
+  
+  document.addEventListener('mousemove', function(e) {
+    if (!isDraggingStart && !isDraggingEnd) return;
+    
+    const sliderRect = sliderTrack.getBoundingClientRect();
+    const newPercent = Math.min(100, Math.max(0, ((e.clientX - sliderRect.left) / sliderRect.width) * 100));
+    
+    if (isDraggingStart) {
+      startPercent = Math.min(endPercent - 5, newPercent);
+    } else if (isDraggingEnd) {
+      endPercent = Math.max(startPercent + 5, newPercent);
+    }
+    
+    updateSliderPositions();
+    updateDateLabels();
+  });
+  
+  document.addEventListener('mouseup', function() {
+    if (isDraggingStart || isDraggingEnd) {
+      // Only update dashboard when dragging stops
+      updateDashboard();
+    }
+    isDraggingStart = false;
+    isDraggingEnd = false;
+  });
+}
+
+// Update slider handle positions and range display
+function updateSliderPositions() {
+  d3.select('.start-handle').style('left', `${startPercent}%`);
+  d3.select('.end-handle').style('left', `${endPercent}%`);
+  d3.select('.slider-range')
+    .style('left', `${startPercent}%`)
+    .style('width', `${endPercent - startPercent}%`);
+}
+
+// Update date labels based on slider positions
+function updateDateLabels() {
+  if (!currentWeeklyData) return;
+  
+  const totalDataPoints = currentWeeklyData.length;
+  const startIndex = Math.floor(startPercent / 100 * (totalDataPoints - 1));
+  const endIndex = Math.floor(endPercent / 100 * (totalDataPoints - 1));
+  
+  if (startIndex >= 0 && startIndex < totalDataPoints && 
+      endIndex >= 0 && endIndex < totalDataPoints) {
+    const startDateObj = currentWeeklyData[startIndex].date;
+    const endDateObj = currentWeeklyData[endIndex].date;
+    
+    d3.select('#startLabel').text(formatMonthYear(startDateObj));
+    d3.select('#endLabel').text(formatMonthYear(endDateObj));
+  }
+}
+
 // Create update function to refresh the dashboard components
-function updateDashboard() {
-  // Get current values from the search bar and date sliders
-  const ticker = d3.select("#searchTicker").property("value").toUpperCase() || "SMPL";
-  const startVal = parseInt(d3.select("#startDate").property("value"));
-  const endVal = parseInt(d3.select("#endDate").property("value"));
+async function updateDashboard() {
+  // Get current values from the search bar
+  const ticker = d3.select("#searchTicker").property("value").toUpperCase() || "AAPL";
   
-  // Calculate start and end indices based on slider values
-  const totalWeeks = sampleCandleData.length;
-  const startIndex = Math.floor(startVal / 100 * (totalWeeks - 1));
-  const endIndex = Math.floor(endVal / 100 * (totalWeeks - 1));
+  // Load stock data if not already loaded or if ticker changed
+  if (!currentStockData || currentStockData.symbol !== ticker) {
+    const data = await loadStockData(ticker);
+    if (!data) {
+      console.error("Failed to load stock data");
+      return;
+    }
+    currentStockData = data;
+    currentStockData.symbol = ticker;
+    
+    // Store the weekly and daily data
+    currentWeeklyData = data.weekly;
+    currentDailyData = data.daily;
+  }
   
-  // Filter data based on slider positions
-  const dataToShow = sampleCandleData.slice(startIndex, endIndex + 1);
+  // Calculate start and end indices based on slider positions
+  const totalDataPoints = currentWeeklyData.length;
+  const startIndex = Math.floor(startPercent / 100 * (totalDataPoints - 1));
+  const endIndex = Math.floor(endPercent / 100 * (totalDataPoints - 1));
   
-  // In a real implementation, you'd fetch data from an API:
-  // fetch(`/api/stock?ticker=${ticker}&start=${startVal}&end=${endVal}`)
-  //   .then(response => response.json())
-  //   .then(data => {
-  //       drawCandleChart(data.candles);
-  //       d3.select("#stockName").text(data.stockName);
-  //       d3.select("#priceRange").text(`Low: ${data.low}, High: ${data.high}`);
-  //   });
+  // Get the selected date range for display in the info
+  const selectedData = currentWeeklyData.slice(startIndex, endIndex + 1);
   
   // Get stock info
   const stockInfo = stocksDatabase.find(stock => stock.symbol === ticker) || 
-                    { symbol: ticker, name: "Sample Stock" };
+                    { symbol: ticker, name: "Unknown Stock" };
   
-  // Update the chart
-  drawCandleChart(dataToShow);
+  // Update the chart - showing all data but highlighting the selected portion
+  drawCandleChart(currentWeeklyData, currentDailyData, startIndex, endIndex);
   
-  // Update stock info display
+  // Update stock info display with stats from the selected range
   d3.select("#stockName").text(`${stockInfo.name} (${stockInfo.symbol})`);
-  d3.select("#priceRange").text("Low: $" + d3.min(dataToShow, d => d.low).toFixed(2) + 
-                               ", High: $" + d3.max(dataToShow, d => d.high).toFixed(2));
+  d3.select("#priceRange").text("Selected: $" + d3.min(selectedData, d => d.low).toFixed(2) + 
+                               " - $" + d3.max(selectedData, d => d.high).toFixed(2));
   
   // Update performance table (sample update)
   d3.selectAll("#performance-table tbody tr").each(function(d, i) {
@@ -344,8 +586,8 @@ function updateDashboard() {
   corrSvg.enter()
     .append("svg")
     .merge(corrSvg)
-    .attr("width", correlationWidth - margin.right - margin.left)
-    .attr("height", correlationHeight - margin.top - margin.bottom)
+    .attr("width", correlationWidth - correlationMargin.right - correlationMargin.left)
+    .attr("height", correlationHeight - correlationMargin.top - correlationMargin.bottom)
     .style("background-color", "#eef")
     .selectAll("*").remove();
   
@@ -361,15 +603,15 @@ function updateDashboard() {
   d3.select("#sentimentChart").selectAll("*").remove();
   const sentimentSvg = d3.select("#sentimentChart")
     .append("svg")
-    .attr("width", sentimentWidth - margin.right - margin.left)
-    .attr("height", sentimentHeight - margin.top - margin.bottom)
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+    .attr("width", sentimentWidth - sentimentMargin.right - sentimentMargin.left)
+    .attr("height", sentimentHeight - sentimentMargin.top - sentimentMargin.bottom)
+    .attr("transform", `translate(${sentimentMargin.left},${sentimentMargin.top})`);
     
   // Create force simulation for bubble layout
   const simulation = d3.forceSimulation(sentimentData)
     .force("charge", d3.forceManyBody().strength(5))
-    .force("center", d3.forceCenter((sentimentWidth - margin.right - margin.left) / 2, 
-                                    (sentimentHeight - margin.top - margin.bottom) / 2))
+    .force("center", d3.forceCenter((sentimentWidth - sentimentMargin.right - sentimentMargin.left) / 2, 
+                                    (sentimentHeight - sentimentMargin.top - sentimentMargin.bottom) / 2))
     .force("collision", d3.forceCollide().radius(d => d.value))
     .stop();
   
@@ -390,8 +632,6 @@ function updateDashboard() {
 
 // Attach event listeners for interactivity
 d3.select("#searchTicker").on("input", handleSearchInput);
-d3.select("#startDate").on("input", updateDashboard);
-d3.select("#endDate").on("input", updateDashboard);
 d3.select("#maToggle").on("change", updateDashboard);
 d3.selectAll('input[name="maType"]').on("change", updateDashboard);
 
@@ -444,7 +684,7 @@ function handleSearchInput() {
 }
 
 // Initialize the dashboard
-drawCandleChart(sampleCandleData);
+initializeSlider();
 updateDashboard();
 
 // Close dropdown when clicking outside
