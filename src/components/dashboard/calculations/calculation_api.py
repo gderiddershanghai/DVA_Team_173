@@ -289,7 +289,7 @@ async def calculate(request: StockRequest):
         
         for ticker in STOCK_TICKERS:
             # Skip the requested stock - we already calculated its metrics
-            if ticker == request.stock_ticker:
+            if ticker == request.stock_ticker or ticker == "SPY":
                 continue
                 
             try:
@@ -358,11 +358,3 @@ async def calculate(request: StockRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
-
-
-
-
-
-
