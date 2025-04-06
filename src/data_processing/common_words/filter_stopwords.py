@@ -18,7 +18,28 @@ class FilterStopwords:
         nltk.download('omw-1.4')
         self.stop_words = set(stopwords.words('english'))
         self.punctuation_table = str.maketrans("", "", string.punctuation)
-
+        
+        # Just in case, filtering out company names and tickers
+        self.company_names = {
+            'jpmorgan', 'chase',  'cisco', 
+            'comcast', 'exxon', 'mobil', 'verizon',  'inc', 'walmart',
+            'paypal', 'holdings', 
+             'boeing',  'nike', 'merck',
+            'at&t', 'kroger', 'pepsico', 'pfizer', 'intel', 
+            'oracle', 'netflix', 'mcdonalds', 'amazon', 'ford',
+            'alphabet',  'mastercard', 'procter', 'gamble',
+            'meta', 'chevron', 'apple', 'walt', 'disney', 'starbucks',
+            'microsoft', 'johnson', 'costco',
+            'coca', 'cola', 'tesla'}
+        
+        self.tickers = {
+            'unh', 'xom', 'meta', 'aapl', 'googl', 'nke', 'jnj', 'amzn', 'f', 'dis',
+            'ma', 'ups', 'bac', 'v', 'ba', 'intc', 'pg', 'nflx', 'tsla', 'ko', 'mcd',
+            'ibm', 'hd', 'cvx', 'vz', 'cmcsa', 'csco', 'cost', 'kr', 'msft', 'jpm',
+            'wmt', 'pypl', 't', 'sbux', 'pfe', 'pep', 'mrk', 'orcl', 'amd'}
+        self.words_to_filter = self.stop_words.union(self.company_names).union(self.tickers)
+        
+        
     def filter_stopwords(self, sentence):
         sentence1 = re.sub("http[s]?://\S+","", sentence)
         sentence1 = re.sub("@","", sentence1)
@@ -29,8 +50,9 @@ class FilterStopwords:
         tokens = word_tokenize(sentence1)
         cleaned_tokens = [word.translate(self.punctuation_table) for word in tokens]
         #need to remove words that starts with 'http'
-        return [word for word in cleaned_tokens if word.lower() not in self.stop_words and word.strip()]
-
+        # return [word for word in cleaned_tokens if word.lower() not in self.stop_words and word.strip()]
+        return [word for word in cleaned_tokens 
+                if word.lower() not in self.words_to_filter and word.strip()]
 
 #to use function
 #df[col1] = df.apply(lambda x: filter_stopwords(x['col1']),axis=1)

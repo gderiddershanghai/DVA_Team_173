@@ -8,13 +8,24 @@ export const wordBubbles = () => {
     const processData = (rawData) => {
         if (!rawData) return [];
         
+        // Find min and max counts for better scaling
+        const minCount = Math.min(...rawData.map(d => d.counts));
+        const maxCount = Math.max(...rawData.map(d => d.counts));
+        //////////////////////////////////////////////
+        // change the sizes here
+        // Create a more compressed scale for radius
+        const radiusScale = d3.scaleSqrt()
+        .domain([minCount, maxCount])
+        .range([10, 60]); 
+        //////////////////////////////////////////////////
+        
         rawData.forEach(d => {
-            d.radius = Math.sqrt(d.counts) * 5;
+            d.radius = radiusScale(d.counts);
           
-            // const sign = Math.random() < 0.5 ? -1 : 1;
-            const sign=1
-            d.charge = sign * Math.pow(d.radius, 1.15);
-          });
+            const sign = 1;
+            // Scale charge based on radius but cap it for very large nodes
+            d.charge = sign * Math.min(Math.pow(d.radius, 1.15), -300);
+        });
         
         const minScore = Math.min(...rawData.map(d => d.average_score));
         const maxScore = Math.max(...rawData.map(d => d.average_score));
@@ -25,13 +36,10 @@ export const wordBubbles = () => {
         
         return rawData;
     };
-        const minWeight = 1;
-        const maxWeight = 25;
-        const linkColorScale = d3.scaleLinear()
-        .domain([minWeight, maxWeight])
-        .range(["#a2d5c6", "#316879"]); 
     
-    
+    // Will be set dynamically based on data
+    let minWeight = 1;
+    let maxWeight = 25;
     
     const my = (selection) => {
         // Process the data
@@ -39,16 +47,16 @@ export const wordBubbles = () => {
         processedData.forEach(d => {
             d.x = Math.random() * width;
             d.y = Math.random() * height;
-          });
+        });
 
-          const centerX = width / 2;
-          const centerY = height / 2;
-          processedData.forEach((d, i) => {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        processedData.forEach((d, i) => {
             const angle = (i / processedData.length) * 2 * Math.PI;
-            const r = width * 0.73; // radius from center
+            const r = width * 0.4; // Reduced radius from center for better initial layout
             d.x = centerX + r * Math.cos(angle);
             d.y = centerY + r * Math.sin(angle);
-          });
+        });
 
         // Create map of words
         const wordMap = {};
@@ -59,14 +67,44 @@ export const wordBubbles = () => {
         console.log("Word map keys:", Object.keys(wordMap));
         console.log("First few links before processing:", links.slice(0, 5));
         
-        const processedLinks = links.map(link => ({
-            source: wordMap[link.source],
-            target: wordMap[link.target],
-            weight: link.weight,
-            thickness: Math.sqrt(link.weight*50) 
-        })).filter(link => link.source && link.target); 
+        // Get min and max weights for better scaling
+        const linkWeights = links.map(link => link.weight);
+        const minWeight = Math.min(...linkWeights);
+        const maxWeight = Math.max(...linkWeights);
 
+
+        const minCount = Math.min(...processedData.map(d => d.counts));
+        const maxCount = Math.max(...processedData.map(d => d.counts));
+
+        console.log("Max count:", maxCount);
+        const threshold = Math.round(maxWeight * 0.005); // 0.75 percent of max count
+
+
+
+
+        // Create a more compressed scale for link thickness
+        const linkThicknessScale = d3.scaleSqrt()
+        .domain([threshold, maxWeight])
+        .range([0.5, 6]);
+
+
+            /////////////////////////////////////////////////////////////////////////////
+            // const maxCount = Math.max(...processedData.map(d => d.counts));
+            // console.log("Max count:", maxCount);
+            // const threshold = maxWeight * 0.0075; // 0.75 percent of max count
+            
+            const processedLinks = links.map(link => ({
+                source: wordMap[link.source],
+                target: wordMap[link.target],
+                weight: link.weight,
+                thickness: linkThicknessScale(link.weight)
+            })).filter(link => link.source && link.target && link.weight >= threshold);
         
+        // Create link color scale based on actual data
+        const linkColorScale = d3.scaleLinear()
+            .domain([threshold, maxWeight])
+            .range(["#a2d5c6", "#316879"]);
+
         console.log("Processed links:", processedLinks.length);
         console.log("Sample processed links:", processedLinks.slice(0, 5));
 
@@ -83,57 +121,32 @@ export const wordBubbles = () => {
             .duration(1500)      
             .ease(d3.easeCubicOut);
 
-
-        const minCount = Math.min(...processedData.map(d => d.counts));
-        const maxCount = Math.max(...processedData.map(d => d.counts));
+        // const minCount = Math.min(...processedData.map(d => d.counts));
+        // const maxCount = Math.max(...processedData.map(d => d.counts));
         
         const simulation = d3.forceSimulation(processedData)
             .force('link', d3.forceLink(processedLinks).id(d => d.word)
-                .distance(d => 250 + d.source.radius + d.target.radius))
-                
-            .force('charge', d3.forceManyBody().strength(d => d.charge))
+                // More consistent distance calculation
+                .distance(d => 100 + Math.min(d.source.radius + d.target.radius, 100)))
+            .force('charge', d3.forceManyBody().strength(d => Math.min(d.charge, -300)))
             .force('center', d3.forceCenter(width / 2, height / 2))
-            .force('x', d3.forceX().strength(0.05))
-            .force('y', d3.forceY().strength(0.15))
-            .force('collision', d3.forceCollide().radius(d => d.radius + 25))
+            .force('x', d3.forceX().strength(0.08))
+            .force('y', d3.forceY().strength(0.18))
+            .force('collision', d3.forceCollide().radius(d => d.radius + 15))
             .alphaTarget(0.01)
-            .alphaDecay(0.001)
+            .alphaDecay(0.002)
             .on('tick', ticked);
-            
-        // const link = svg.append("g")
-        // .attr("class", "links")
-        // .selectAll("line")
-        // .data(processedLinks)
-        // .enter()
-        // .append("line")        
-        // .style("stroke", d => {
-        //     const minWeight = 5;
-        //     const maxWeight = 50;
-        //     return d3.interpolateBlues(2*d.weight / maxWeight);
-        //   })
-        // .style("stroke-width", d => Math.sqrt(d.weight))
-        // .style("opacity", 0)
-        // .transition(t)
-        // .delay((d, i) => i * 10)
-        // .style("stroke-opacity", 0.68)
 
         const link = svg
-        .append("g")
-        .attr("class", "links")
-        .selectAll("line")
-        .data(processedLinks)
-        .enter()
-        .append("line")
-        // .style("stroke", (d) => {
-        //   const maxWeight = 50;
-        //   return d3.interpolateBlues((2 * d.weight) / maxWeight);
-        // })
-        .style("stroke", d => linkColorScale(d.weight))
-
-        .style("stroke-width", (d) => Math.sqrt(d.weight))
-        .style("stroke-opacity", 0.68);
-
-
+            .append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(processedLinks)
+            .enter()
+            .append("line")
+            .style("stroke", d => linkColorScale(d.weight))
+            .style("stroke-width", d => d.thickness)
+            .style("stroke-opacity", 0.68);
 
         const nodes = svg.selectAll('.node')
             .data(processedData)
@@ -144,56 +157,60 @@ export const wordBubbles = () => {
                 .on('start', dragstarted)
                 .on('drag', dragged)
                 .on('end', dragended))
-                  // MOUSE EVENTS for tooltip:
+            // MOUSE EVENTS for tooltip:
             .on("mouseover", (event, d) => {
                 tooltip
-                .style("opacity", 0.95)
-                .html(`
-                    <div>
-                    <strong>${d.word}</strong><br />
-                    Counts: ${d.counts}<br/>
-                    Sentiment Score: ${d.average_score.toFixed(2)}
-                    </div>
-                `);
+                    .style("opacity", 0.95)
+                    .html(`
+                        <div>
+                        <strong>${d.word}</strong><br />
+                        Counts: ${d.counts}<br/>
+                        Sentiment Score: ${d.average_score.toFixed(2)}
+                        </div>
+                    `);
             })
             .on("mousemove", (event) => {
                 tooltip
-                .style("left", event.pageX + 10 + "px")
-                .style("top", event.pageY + 10 + "px");
+                    .style("left", event.pageX + 10 + "px")
+                    .style("top", event.pageY + 10 + "px");
             })
             .on("mouseout", () => {
                 tooltip.style("opacity", 0);
             });
                 
-            nodes
-                .append("circle")
-                .attr("r", 0) // Start collapsed
-                .style("fill", (d) => colorScale(d.color_value))
-                .style("stroke", "#333")
-                .style("stroke-width", 1)
-                .transition(t)
-                .delay((d, i) => i * 100) 
-                .attr("r", (d) => d.radius);
-            
-            nodes
-                .append("text")
-                .text(d => d.word)
-                .attr("text-anchor", "middle")
-                .attr("dy", ".3em")
-                .style("font-size", d => Math.min(d.radius * 0.8, 14) + "px")
-                .style("font-weight", "bold")
-                .style("pointer-events", "none")
-                .style("fill", "white")
-                .style("opacity", 0)   
-                .transition(t)
-                .delay((d, i) => i * 100 + 100) 
-                .style("opacity", 1);
-            
+        nodes
+            .append("circle")
+            .attr("r", 0) // Start collapsed
+            .style("fill", (d) => colorScale(d.color_value))
+            .style("stroke", "#333")
+            .style("stroke-width", 1)
+            .transition(t)
+            .delay((d, i) => i * 100) 
+            .attr("r", (d) => d.radius);
+        
+        nodes
+            .append("text")
+            .text(d => d.word)
+            .attr("text-anchor", "middle")
+            .attr("dy", ".3em")
+            .style("font-size", d => Math.min(d.radius * 0.5, 25) + "px")
+            .style("font-weight", "bold")
+            .style("pointer-events", "none")
+            .style("fill", "white")
+            .style("opacity", 0)   
+            .transition(t)
+            .delay((d, i) => i * 100 + 100) 
+            .style("opacity", 1);
+        
         // Add a color gradient legend
-        const legendWidth = 200;
+        const legendWidth = 250;
         const legendHeight = 20;
-        const legendX = width - legendWidth - 20;
+        const legendX = width - legendWidth - margin.right;
+        //// CHANGE THE SIZES
         const legendY = 20;
+        const sizeLegendY = legendY + legendHeight + 50;
+        const linkLegendY = sizeLegendY + 100; 
+        
         
         // Create color gradient for legend
         const defs = svg.append('defs');
@@ -217,60 +234,84 @@ export const wordBubbles = () => {
             .attr('class', 'legend');
             
         ////////////////////// color legend //////////////////////
-        const xLocation = legendX - margin.right
+        const xLocation = legendX +50
         legend.append('text')
-            .attr('x', xLocation+15)
+            .attr('x', xLocation + 55)
             .attr('y', legendY - 5)
             .text('Word Mean Sentiment Score')
+            // .style('text-anchor', 'right')
             .style('font-weight', 'bold')
             .style('font-size', '12px')
             
         legend.append('rect')
             .attr('x', xLocation)
             .attr('y', legendY)
-            .attr('width', legendWidth)
+            .attr('width', legendWidth-25)
             .attr('height', legendHeight)
             .style('fill', 'url(#viridis-gradient)');
             
         
-        legend.append('text')
-            .attr('x', xLocation)
-            .attr('y', legendY + legendHeight + 15)
+            legend.append('text')
+            .attr('x', legendX+50)
+            .attr('y', legendY + legendHeight + 25) // Increase from 15 to 25
             .text(`(Negative)`)
             .style('font-size', '10px');
             
         legend.append('text')
-            .attr('x', xLocation + legendWidth)
-            .attr('y', legendY + legendHeight + 15)
+            .attr('x', legendX + legendWidth+25)
+            .attr('y', legendY + legendHeight + 25) // Increase from 15 to 25
             .text(`(Positive)`)
             .style('text-anchor', 'end')
             .style('font-size', '10px');
+        
             
         
-        const sizeLegendY = legendY + legendHeight + 40;
+        // const sizeLegendY = legendY + legendHeight + 40;
         
         legend.append('text')
-            .attr('x', xLocation+15)
-            .attr('y', sizeLegendY +4)
-            .text('Word Frequency (Counts)')
-            .style('font-weight', 'bold')
-            .style('fill', 'black')
-            .style('font-size', '12px');
+        .attr('x', xLocation+15)
+        .attr('y', sizeLegendY +4)
+        .style('font-weight', 'bold')
+        .style('fill', 'black')
+        .style('font-size', '12px')
+        .selectAll('tspan')
+        .data(['Word Frequency', '(Legend bubbles shown at 1:3 scale)'])
+        .enter()
+        .append('tspan')
+        .attr('x', xLocation+15)
+        .attr('dy', (d, i) => i * 15)  // Adjust line spacing as needed
+        .text(d => d);
+    
+
+
+
             
-        const sizeStops = [minCount, (minCount + maxCount) / 2, maxCount];
+        // Use nicer round numbers for size legend
+        const sizeStops = [
+            minCount,
+            Math.round((minCount + maxCount) / 2),
+            maxCount
+        ];
+        
+        // Use the same scale as for the actual nodes
+        const radiusScale = d3.scaleSqrt()
+            .domain([minCount, maxCount])
+            .range([5, 40]);
+            
         sizeStops.forEach((count, i) => {
-            const radius = Math.sqrt(count) * 2;
-            const cx = xLocation + 25 + i * 65;
-            const cy = sizeLegendY + 30;
+            const radius = radiusScale(count);
+            const cx = xLocation + 25 + i * 85; // Increase from 65 to 85
+            const cy = sizeLegendY + 45; 
             
+            const legendScaleFactor = 1/2;
             // Add circle
             legend.append('circle')
-                .attr('cx', cx)
-                .attr('cy', cy)
-                .attr('r', radius)
-                .style('fill', 'black')
-                .style('stroke', 'black')
-                .style('stroke-width', 1);
+            .attr('cx', cx)
+            .attr('cy', cy)
+            .attr('r', radius * legendScaleFactor)
+            .style('fill', 'black')
+            .style('stroke', 'black')
+            .style('stroke-width', 1);
                 
             legend.append('text')
                 .attr('x', cx)
@@ -280,46 +321,56 @@ export const wordBubbles = () => {
                 .style('font-size', '10px');
         });
 
-        const linkLegendY = sizeLegendY + 80;
+        // const linkLegendY = sizeLegendY + 80;
 
         legend.append('text')
-            .attr('x', legendX)
-            .attr('y', linkLegendY + 15)
-            .text('Co-occurrence Frequency')
-            .style('font-weight', 'bold')
-            .style('font-size', '12px');
+        .attr('x', xLocation+45)
+        .attr('y', linkLegendY + 25)
+        .text('Co-occurrence Frequency')
+        .style('font-weight', 'bold')
+        .style('font-size', '12px');
+    
+    // Add an explanatory note
+    legend.append('text')
+        .attr('x', xLocation+15)
+        .attr('y', linkLegendY + 40)
+        .text('(Link thickness shows frequency of word pairs)')
+        .style('font-size', '10px')
+        .style('font-style', 'italic');
+    
             
-            const linkWeights = processedLinks.map(d => d.weight);
-            const minWeight = Math.min(...linkWeights);
-            const maxWeight = Math.max(...linkWeights);
-            
-
-            const linkWidthScale = d3.scaleSqrt()
-                .domain([minWeight, maxWeight])
-                .range([1, 8]);  // cahnge mx if needed
-            
-            const linkStops = [minWeight, (minWeight + maxWeight) / 2, maxWeight];
-            linkStops.forEach((weight, i) => {
-                const thickness = linkWidthScale(weight);  
-                const color = linkColorScale(weight);  
-                const y = linkLegendY + i * 20;
-            
-                legend.append('line')
-                    .attr('x1', xLocation+25)
-                    .attr('y1', y + 35 )
-                    .attr('x2', xLocation + 150)
-                    .attr('y2', y+35 )
-                    .attr('stroke', color)  
-                    .attr('stroke-width', thickness);
-            
-                // Add weight label
-                legend.append('text')
-                    .attr('x', xLocation + 10)
-                    .attr('y', y + 40)
-                    .text(Math.round(weight))
-                    .style('font-size', '10px');
-            });
-
+        // Use the same scale as for the actual links
+        const linkWidthScale = d3.scaleSqrt()
+            .domain([minWeight, maxWeight])
+            .range([0.5, 6]);
+        
+        // Use nicer round numbers for link legend
+        const linkStops = [
+            threshold,
+            Math.round((threshold + maxWeight) / 2),
+            maxWeight
+        ];
+        
+        linkStops.forEach((weight, i) => {
+            const thickness = linkWidthScale(weight);  
+            const color = linkColorScale(weight);  
+            const y = linkLegendY + i * 25;
+        
+            legend.append('line')
+                .attr('x1', xLocation+55)
+                .attr('y1', y + 55 )
+                .attr('x2', xLocation + 200)
+                .attr('y2', y+55 )
+                .attr('stroke', color)  
+                .attr('stroke-width', thickness);
+        
+            // Add weight label
+            legend.append('text')
+                .attr('x', xLocation +20)
+                .attr('y', y + 60)
+                .text(Math.round(weight))
+                .style('font-size', '10px');
+        });
 
         function ticked() {
             // Update node positions (unchanged from before)
@@ -337,9 +388,9 @@ export const wordBubbles = () => {
               .attr("y1", d => d.source.y)
               .attr("x2", d => d.target.x)
               .attr("y2", d => d.target.y);
-          }
+        }
         
-        ////// tooltop
+        ////// tooltip
         // Create the tooltip
         const tooltip = d3
                 .select("body")
@@ -353,10 +404,6 @@ export const wordBubbles = () => {
                 .style("border-radius", "4px")
                 .style("pointer-events", "none")
                 .style("opacity", 0);
-
-
-
-
 
         // Drag functions
         function dragstarted(event, d) {
@@ -393,8 +440,6 @@ export const wordBubbles = () => {
             }
         }
     };
-
-    
     
     my.width = function(_) {
         return arguments.length ? ((width = +_), my) : width;
