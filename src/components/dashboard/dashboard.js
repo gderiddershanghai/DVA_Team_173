@@ -18,6 +18,13 @@ const DISPLAY_START_DATE = new Date(2017, 0, 1); // Jan 1, 2017
 const DISPLAY_END_DATE = new Date(2020, 6, 31); // Jul 31, 2020
 const CALCULATION_DAYS_BEFORE = 90; // Data for calculation: 90 days before display start
 
+// API configuration
+const API_BASE_URL = "http://localhost:8000";
+
+// Store date strings for API calls
+const apiStartDate = "2017-01-01";
+const apiEndDate = "2020-07-31";
+
 // Create SVG for the candle chart
 const candleSvg = d3.select("#candleChart")
   .append("svg")
@@ -39,6 +46,89 @@ let isDraggingEnd = false;
 // Store both daily and weekly data
 let currentDailyData = null;
 let currentWeeklyData = null;
+
+// Store API data
+let performanceData = null;
+let correlationData = null;
+
+// Function to check if stock data is available
+async function checkStockData() {
+  try {
+    console.log("Checking stock data availability...");
+    const response = await fetch(`${API_BASE_URL}/api/check-stock-data`);
+    const data = await response.json();
+    
+    console.log("Stock data check:", data);
+    
+    if (!data.success) {
+      console.error("Stock data check failed:", data.message);
+    } else {
+      console.log(`Found ${data.stocks.length} stock files in ${data.directory}`);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error checking stock data:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+// Function to fetch stock data info from API
+async function fetchStockData(symbol) {
+  try {
+    console.log(`Fetching stock data info for ${symbol}...`);
+    const url = `${API_BASE_URL}/api/stock-data/${symbol}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    console.log("Stock data info:", data);
+    
+    if (!data.success) {
+      console.error(`Error fetching ${symbol} data:`, data.message);
+    } else {
+      console.log(`Successfully loaded ${symbol} data with ${data.rows} rows`);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error fetching stock data:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+// Function to fetch performance metrics from API
+async function fetchPerformanceMetrics(symbol) {
+  try {
+    console.log(`Fetching performance metrics for ${symbol}...`);
+    const url = `${API_BASE_URL}/api/performance?symbol=${symbol}&start_date=${apiStartDate}&end_date=${apiEndDate}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    console.log("Performance metrics:", data);
+    performanceData = data;
+    return data;
+  } catch (error) {
+    console.error("Error fetching performance metrics:", error);
+    return null;
+  }
+}
+
+// Function to fetch correlation data from API
+async function fetchCorrelationData(symbol) {
+  try {
+    console.log(`Fetching correlation data for ${symbol}...`);
+    const url = `${API_BASE_URL}/api/correlation?symbol=${symbol}&start_date=${apiStartDate}&end_date=${apiEndDate}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    console.log("Correlation data:", data);
+    correlationData = data;
+    return data;
+  } catch (error) {
+    console.error("Error fetching correlation data:", error);
+    return null;
+  }
+}
 
 // Create a proper candle chart - always showing all data
 function drawCandleChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx) {
@@ -393,6 +483,18 @@ function aggregateToWeekly(dailyData) {
 // Load and parse CSV data
 async function loadStockData(symbol) {
   try {
+    // First verify the stock data through our API
+    const apiData = await fetchStockData(symbol);
+    
+    if (!apiData.success) {
+      console.error(`Failed to verify ${symbol} data through API`);
+      // Fall back to direct CSV loading if API fails
+      console.log("Falling back to direct CSV loading");
+    } else {
+      console.log(`API confirmed ${symbol} data is available with ${apiData.rows} rows`);
+    }
+    
+    // Continue with original CSV loading logic for displaying the chart
     const response = await fetch(`/toy_data/stock_data/${symbol}.csv`);
     const csvText = await response.text();
     const dailyData = d3.csvParse(csvText, d => ({
@@ -533,6 +635,9 @@ function updateDateLabels() {
 
 // Create update function to refresh the dashboard components
 async function updateDashboard() {
+  // Check stock data availability first
+  await checkStockData();
+  
   // Get current values from the search bar
   const ticker = d3.select("#searchTicker").property("value").toUpperCase() || "AAPL";
   
@@ -549,6 +654,10 @@ async function updateDashboard() {
     // Store the weekly and daily data
     currentWeeklyData = data.weekly;
     currentDailyData = data.daily;
+    
+    // Fetch performance and correlation data from FastAPI
+    fetchPerformanceMetrics(ticker);
+    fetchCorrelationData(ticker);
   }
   
   // Calculate start and end indices based on slider positions
@@ -571,15 +680,15 @@ async function updateDashboard() {
   d3.select("#priceRange").text("Selected: $" + d3.min(selectedData, d => d.low).toFixed(2) + 
                                " - $" + d3.max(selectedData, d => d.high).toFixed(2));
   
-  // Update performance table (sample update)
+  // Update performance table with placeholder values
   d3.selectAll("#performance-table tbody tr").each(function(d, i) {
-    d3.select(this).select("td:nth-child(2)").text(Math.floor(Math.random()*50));
-    d3.select(this).select("td:nth-child(3)").text((Math.random()).toFixed(2));
+    d3.select(this).select("td:nth-child(2)").text("N/A");
+    d3.select(this).select("td:nth-child(3)").text("N/A");
   });
   
-  // Update correlation section (sample update)
-  d3.select("#mostCorrelated").text("Most Correlated: Stock A (Score: " + (0.8 + Math.random()*0.2).toFixed(2) + ")");
-  d3.select("#leastCorrelated").text("Least Correlated: Stock B (Score: " + (-0.5 + Math.random()*0.1).toFixed(2) + ")");
+  // Update correlation section with placeholder values
+  d3.select("#mostCorrelated").text("Most Correlated: Data from API needed");
+  d3.select("#leastCorrelated").text("Least Correlated: Data from API needed");
   
   // For the correlation graph, you would update an SVG within #correlationChart.
   const corrSvg = d3.select("#correlationChart").selectAll("svg").data([null]);
