@@ -1,3 +1,5 @@
+# checked
+# not out code - copied from the BERTweet repository
 from emoji import demojize
 from nltk.tokenize import TweetTokenizer
 
