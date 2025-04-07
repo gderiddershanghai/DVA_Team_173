@@ -2,7 +2,9 @@ import pandas as pd
 # from filter_stopwords import FilterStopwords # no longer needed
 from itertools import combinations
 import numpy as np
-from collections import defaultdict
+from collections import Counter, defaultdict
+import time
+
 import json
 import os
 
@@ -31,7 +33,8 @@ class CommonWords:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found for ticker '{self.ticker}': {file_path}")
         
-        df = pd.read_csv(file_path, converters={"Tweet_Words": eval})
+        df = pd.read_csv(file_path, converters={"Tweet_Words": eval}, usecols=["Tweet_Words", "Created_at", "Score"])
+
         df["Created_at"] = pd.to_datetime(df["Created_at"], utc=True)
         return df
 
@@ -51,6 +54,9 @@ class CommonWords:
 
         self.min_count = max(1, int(num_tweets * self.min_count_percentage))
 
+        word_counts = Counter()
+        word_scores = defaultdict(float)
+
         for row in tweets.itertuples(index=False):
             words = row.Tweet_Words
             score = row.Score
@@ -59,15 +65,22 @@ class CommonWords:
                 continue
 
             unique_words = set(words)
-            for word in unique_words:
-                if word not in self.common_words:
-                    self.common_words[word] = {"counts": 0, "total_score": 0.0}
-                self.common_words[word]["counts"] += 1
-                self.common_words[word]["total_score"] += score
+            word_counts.update(unique_words)
 
-            for w1, w2 in combinations(sorted(unique_words), 2):
+            for word in unique_words:
+                word_scores[word] += score
+
+            for w1, w2 in combinations(unique_words, 2):
+                if w1 > w2:
+                    w1, w2 = w2, w1
                 self.cooccurrence[w1][w2] += 1
-                self.cooccurrence[w2][w1] += 1
+
+        # after the loop: merge word_counts and scores
+        self.common_words = {
+            word: {"counts": count, "total_score": word_scores[word]}
+            for word, count in word_counts.items()
+        }
+
 
         self._save_outputs(output_dir)
 
@@ -92,6 +105,7 @@ class CommonWords:
 
 
         selected_words = set(top_words["word"]) | set(bottom_words["word"])
+        print(selected_words)
         matrix_json = {
             w1: {w2: count for w2, count in neighbors.items() if w2 in selected_words}
             for w1, neighbors in self.cooccurrence.items() if w1 in selected_words}
@@ -112,18 +126,45 @@ if __name__ == "__main__":
     input_dir = "/home/ginger/code/gderiddershanghai/DVA_Team_173/data_full/cleaned_tweet_data"
     output_dir = "/home/ginger/code/gderiddershanghai/DVA_Team_173/src/components/wordbubbles/tmp_data"
 
-    analyzer = CommonWords(
-        ticker="GOOGL",
-        data_dir=input_dir,
-        start_date="2017-01-01",
-        end_date="2021-12-31",
-        min_count_percentage=0.01,
-        top_n_words=8,
-        filter_metric="average_score"
-    )
-    print("Calculating common words and co-occurrences...")
-    analyzer.calculate(output_dir=output_dir)
-    print("Done")
+    tickers = [
+    "TSLA", "AAPL", "AMZN", "GOOGL", "MSFT", "F", "DIS", "META", "NKE", "NFLX",
+    "INTC", "JPM", "PG", "T", "SBUX", "WMT", "PYPL", "BAC", "PFE", "V",
+    "XOM", "JNJ", "AMD", "PEP", "MCD", "VZ", "KO", "BA", "MA", "MRK",
+    "UNH", "HD", "CMCSA", "IBM", "COST", "CVX", "ORCL", "UPS", "CSCO", "KR"]
+    for ticker in tickers:
+        print(f"Processing {ticker}...")
+        analyzer = CommonWords(
+            ticker=ticker,
+            data_dir=input_dir,
+            start_date="2017-01-01",
+            end_date="2021-12-31",
+            min_count_percentage=0.01,
+            top_n_words=8,
+            filter_metric="average_score"
+        )
+        start_time = time.time()
+
+        analyzer.calculate(output_dir=output_dir)
+
+        end_time = time.time()
+        elapsed = end_time - start_time
+        print(f"✅ Done in {elapsed:.2f} seconds.")
+    # analyzer = CommonWords(
+    #     ticker=tickers,
+    #     data_dir=input_dir,
+    #     start_date="2017-01-01",
+    #     end_date="2021-12-31",
+    #     min_count_percentage=0.01,
+    #     top_n_words=8,
+    #     filter_metric="average_score"
+    # )
+    # start_time = time.time()
+
+    # analyzer.calculate(output_dir=output_dir)
+
+    # end_time = time.time()
+    # elapsed = end_time - start_time
+    # print(f"✅ Done in {elapsed:.2f} seconds.")
 
 
 

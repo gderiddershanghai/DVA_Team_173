@@ -52,6 +52,9 @@
         
         async function fetchMetrics() {
             try {
+                // what if the TA opens on a different port?
+                // maybe save json locally in a folder and read it here
+                // or use a relative path to the json file
                 const response = await fetch("http://127.0.0.1:8000/metrics");
                 const data = await response.json();
                 document.getElementById("beta").innerText = data.beta;
