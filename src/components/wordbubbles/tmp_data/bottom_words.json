@@ -1,50 +1,50 @@
 [
   {
-    "word":"sell",
-    "counts":3746,
-    "total_score":-1595.3520854768,
-    "average_score":-0.4258814964
+    "word":"hurt",
+    "counts":6,
+    "total_score":-2.0,
+    "average_score":-0.3333333333
   },
   {
-    "word":"short",
-    "counts":4469,
-    "total_score":-1707.3091162069,
-    "average_score":-0.3820338143
+    "word":"customers",
+    "counts":10,
+    "total_score":-1.9555555556,
+    "average_score":-0.1955555556
   },
   {
-    "word":"trump",
-    "counts":3362,
-    "total_score":-453.6761597176,
-    "average_score":-0.1349423438
+    "word":"krogercripples",
+    "counts":16,
+    "total_score":-2.75,
+    "average_score":-0.171875
   },
   {
-    "word":"shares",
-    "counts":5593,
-    "total_score":-701.6021292913,
-    "average_score":-0.1254428981
+    "word":"bad",
+    "counts":6,
+    "total_score":-1.0142857143,
+    "average_score":-0.169047619
   },
   {
-    "word":"china",
-    "counts":3522,
-    "total_score":-232.0912061145,
-    "average_score":-0.0658975599
+    "word":"loudest",
+    "counts":7,
+    "total_score":-1.05,
+    "average_score":-0.15
   },
   {
-    "word":"facebook",
-    "counts":8011,
-    "total_score":-288.2112089063,
-    "average_score":-0.0359769328
+    "word":"sec",
+    "counts":7,
+    "total_score":-1.05,
+    "average_score":-0.15
   },
   {
-    "word":"patent",
-    "counts":8803,
-    "total_score":-291.5251512812,
-    "average_score":-0.0331165684
+    "word":"stadiums",
+    "counts":7,
+    "total_score":-1.05,
+    "average_score":-0.15
   },
   {
-    "word":"youtube",
-    "counts":4355,
-    "total_score":-133.8615689498,
-    "average_score":-0.0307374441
+    "word":"chain",
+    "counts":6,
+    "total_score":-0.875,
+    "average_score":-0.1458333333
   }
 ]

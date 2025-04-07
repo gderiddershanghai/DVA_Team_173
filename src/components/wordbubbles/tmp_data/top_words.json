@@ -1,50 +1,50 @@
 [
   {
-    "word":"great",
-    "counts":3058,
-    "total_score":2551.5109904529,
-    "average_score":0.8343724625
+    "word":"chart",
+    "counts":8,
+    "total_score":6.5209047794,
+    "average_score":0.8151130974
   },
   {
-    "word":"best",
-    "counts":3236,
-    "total_score":2554.0639676903,
-    "average_score":0.7892657502
+    "word":"fa",
+    "counts":6,
+    "total_score":4.5778395273,
+    "average_score":0.7629732545
   },
   {
-    "word":"swing",
-    "counts":3395,
-    "total_score":2661.2349600603,
-    "average_score":0.7838689131
+    "word":"value",
+    "counts":8,
+    "total_score":6.0764732361,
+    "average_score":0.7595591545
   },
   {
-    "word":"profit",
-    "counts":3571,
-    "total_score":2745.27721963,
-    "average_score":0.7687698739
+    "word":"raised",
+    "counts":6,
+    "total_score":4.373696804,
+    "average_score":0.7289494673
   },
   {
-    "word":"option",
-    "counts":11010,
-    "total_score":8438.0543853187,
-    "average_score":0.7663991267
+    "word":"dividend",
+    "counts":6,
+    "total_score":3.8376715928,
+    "average_score":0.6396119321
   },
   {
-    "word":"trades",
-    "counts":10949,
-    "total_score":8224.2817530781,
-    "average_score":0.7511445569
+    "word":"trading",
+    "counts":10,
+    "total_score":5.9244119674,
+    "average_score":0.5924411967
   },
   {
-    "word":"sign",
-    "counts":8489,
-    "total_score":6282.5841506948,
-    "average_score":0.7400853046
+    "word":"p",
+    "counts":6,
+    "total_score":3.546605587,
+    "average_score":0.5911009312
   },
   {
-    "word":"free",
-    "counts":28339,
-    "total_score":20670.9393120308,
-    "average_score":0.7294166806
+    "word":"investing",
+    "counts":21,
+    "total_score":12.1512176879,
+    "average_score":0.5786294137
   }
 ]

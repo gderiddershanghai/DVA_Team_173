@@ -39,6 +39,9 @@ df = df.rename(columns={'Stock_Ticker': 'Ticker'})
 # rename the ticker for the following stocks:
 # FB -> META
 # GOOG -> GOOGL
+
+# consolidated company name and ticker is the column in the original file
+# that has the full name of the company and the ticker
 df.loc[df['Ticker'] == 'FB', 'Ticker'] = 'META'
 df.loc[df['Ticker'] == 'GOOG', 'Ticker'] = 'GOOGL'
 
