@@ -1,62 +1,122 @@
 [
   {
-    "word":"swing",
-    "counts":3360,
-    "total_score":2654.7523521853,
-    "average_score":0.7901048667
+    "word":"sexual",
+    "counts":618,
+    "total_score":112.4811081049,
+    "average_score":0.1820082655
   },
   {
-    "word":"sign",
-    "counts":8472,
-    "total_score":6283.6481533264,
-    "average_score":0.7416959577
+    "word":"credible",
+    "counts":531,
+    "total_score":85.5674005855,
+    "average_score":0.1611438806
   },
   {
-    "word":"guides",
-    "counts":10488,
-    "total_score":7623.4512509578,
-    "average_score":0.7268736891
+    "word":"assault",
+    "counts":802,
+    "total_score":99.7491023329,
+    "average_score":0.1243754393
   },
   {
-    "word":"active",
-    "counts":10815,
-    "total_score":7765.6169685503,
-    "average_score":0.7180413286
+    "word":"first",
+    "counts":436,
+    "total_score":53.3078987887,
+    "average_score":0.1222658229
   },
   {
-    "word":"try",
-    "counts":12609,
-    "total_score":8542.6016862662,
-    "average_score":0.677500332
+    "word":"wants",
+    "counts":331,
+    "total_score":37.9999064304,
+    "average_score":0.1148033427
   },
   {
-    "word":"top",
-    "counts":7052,
-    "total_score":4667.4528012958,
-    "average_score":0.6618622804
+    "word":"thank",
+    "counts":299,
+    "total_score":29.5761297499,
+    "average_score":0.0989168219
   },
   {
-    "word":"miss",
-    "counts":7070,
-    "total_score":4372.1747748724,
-    "average_score":0.6184122737
+    "word":"assaulted",
+    "counts":486,
+    "total_score":45.110791847,
+    "average_score":0.0928205594
   },
   {
-    "word":"offering",
-    "counts":4313,
-    "total_score":2634.3790346324,
-    "average_score":0.6107996834
+    "word":"made",
+    "counts":346,
+    "total_score":31.7350396825,
+    "average_score":0.0917197679
   },
   {
-    "word":"gild",
-    "counts":4515,
-    "total_score":2745.0205530152,
-    "average_score":0.6079779741
+    "word":"years",
+    "counts":435,
+    "total_score":37.5928496976,
+    "average_score":0.0864203441
   },
   {
-    "word":"room",
-    "counts":4856,
-    "total_score":2945.1824516682,
-    "average_score":0.6065037998
+    "word":"w",
+    "counts":410,
+    "total_score":35.2919535095,
+    "average_score":0.0860779354
+  },
+  {
+    "word":"forward",
+    "counts":559,
+    "total_score":48.0677532017,
+    "average_score":0.085988825
+  },
+  {
+    "word":"testimony",
+    "counts":559,
+    "total_score":47.7243062956,
+    "average_score":0.0853744299
+  },
+  {
+    "word":"story",
+    "counts":657,
+    "total_score":52.2166894218,
+    "average_score":0.0794774573
+  },
+  {
+    "word":"senator",
+    "counts":329,
+    "total_score":25.3664580327,
+    "average_score":0.0771016961
+  },
+  {
+    "word":"brett",
+    "counts":1140,
+    "total_score":86.8797786762,
+    "average_score":0.0762103322
+  },
+  {
+    "word":"saying",
+    "counts":301,
+    "total_score":21.4386056999,
+    "average_score":0.0712246037
+  },
+  {
+    "word":"judge",
+    "counts":1056,
+    "total_score":74.8180698842,
+    "average_score":0.070850445
+  },
+  {
+    "word":"let",
+    "counts":488,
+    "total_score":33.8055760387,
+    "average_score":0.0692737214
+  },
+  {
+    "word":"hearing",
+    "counts":983,
+    "total_score":67.4340691253,
+    "average_score":0.0686002738
+  },
+  {
+    "word":"please",
+    "counts":426,
+    "total_score":29.1077578671,
+    "average_score":0.0683280701
   }
 ]

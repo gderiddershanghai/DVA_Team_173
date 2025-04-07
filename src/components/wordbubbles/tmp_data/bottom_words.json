@@ -1,62 +1,122 @@
 [
   {
+    "word":"alleged",
+    "counts":322,
+    "total_score":2.8662445887,
+    "average_score":0.0089013807
+  },
+  {
+    "word":"democrats",
+    "counts":477,
+    "total_score":8.833997114,
+    "average_score":0.0185199101
+  },
+  {
+    "word":"lying",
+    "counts":382,
+    "total_score":9.2853057359,
+    "average_score":0.0243070831
+  },
+  {
+    "word":"gop",
+    "counts":543,
+    "total_score":16.5226758658,
+    "average_score":0.0304285007
+  },
+  {
+    "word":"show",
+    "counts":368,
+    "total_score":11.7115597944,
+    "average_score":0.0318248907
+  },
+  {
+    "word":"ms",
+    "counts":378,
+    "total_score":12.1284478484,
+    "average_score":0.0320858409
+  },
+  {
+    "word":"remember",
+    "counts":588,
+    "total_score":21.4420794483,
+    "average_score":0.0364661215
+  },
+  {
+    "word":"republicans",
+    "counts":631,
+    "total_score":24.2229365079,
+    "average_score":0.038388172
+  },
+  {
+    "word":"news",
+    "counts":362,
+    "total_score":14.5442739126,
+    "average_score":0.0401775522
+  },
+  {
+    "word":"google",
+    "counts":1266,
+    "total_score":51.238538961,
+    "average_score":0.0404727796
+  },
+  {
     "word":"trump",
-    "counts":3293,
-    "total_score":-440.7462142965,
-    "average_score":-0.1338433691
+    "counts":655,
+    "total_score":27.8182960558,
+    "average_score":0.042470681
   },
   {
-    "word":"china",
-    "counts":3511,
-    "total_score":-236.2459925825,
-    "average_score":-0.0672873804
-  },
-  {
-    "word":"faang",
-    "counts":2879,
-    "total_score":-119.8888218954,
-    "average_score":-0.0416425224
+    "word":"breaking",
+    "counts":443,
+    "total_score":18.9399022968,
+    "average_score":0.0427537298
   },
   {
     "word":"facebook",
-    "counts":8090,
-    "total_score":-281.2836275588,
-    "average_score":-0.0347692988
+    "counts":1865,
+    "total_score":81.0982954845,
+    "average_score":0.0434843407
   },
   {
-    "word":"patent",
-    "counts":8803,
-    "total_score":-290.5047105053,
-    "average_score":-0.0330006487
-  },
-  {
-    "word":"youtube",
-    "counts":4405,
-    "total_score":-133.944825763,
-    "average_score":-0.0304074519
+    "word":"h",
+    "counts":291,
+    "total_score":12.7178318903,
+    "average_score":0.0437038897
   },
   {
     "word":"says",
-    "counts":2878,
-    "total_score":-42.7545551322,
-    "average_score":-0.0148556481
+    "counts":1242,
+    "total_score":55.8144436749,
+    "average_score":0.0449391656
   },
   {
-    "word":"ip",
-    "counts":8922,
-    "total_score":-43.7657787558,
-    "average_score":-0.0049053776
+    "word":"sen",
+    "counts":423,
+    "total_score":19.0529901696,
+    "average_score":0.04504253
   },
   {
-    "word":"tech",
-    "counts":19967,
-    "total_score":66.8185192818,
-    "average_score":0.0033464476
+    "word":"fbi",
+    "counts":954,
+    "total_score":45.6136678541,
+    "average_score":0.047813069
   },
   {
-    "word":"research",
-    "counts":10397,
-    "total_score":56.5911811165,
-    "average_score":0.0054430298
+    "word":"grassley",
+    "counts":557,
+    "total_score":27.4007524651,
+    "average_score":0.0491934515
+  },
+  {
+    "word":"vote",
+    "counts":469,
+    "total_score":23.3253915645,
+    "average_score":0.0497343104
+  },
+  {
+    "word":"person",
+    "counts":319,
+    "total_score":15.9533874459,
+    "average_score":0.050010619
   }
 ]
