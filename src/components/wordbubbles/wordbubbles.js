@@ -193,8 +193,11 @@ export const wordBubbles = () => {
             .text(d => d.word)
             .attr("text-anchor", "middle")
             .attr("dy", ".3em")
-            .style("font-size", d => Math.min(d.radius * 0.5, 25) + "px")
+            // .style("font-size", d => Math.min(d.radius * 0.5, 25) + "px")
+            // .style("font-weight", "bold")
+            .style("font-size", d => d.word.length > 8 ? "9px" : Math.min(d.radius * 0.5, 25) + "px")
             .style("font-weight", "bold")
+
             .style("pointer-events", "none")
             .style("fill", "white")
             .style("opacity", 0)   

@@ -1,50 +1,62 @@
 [
   {
-    "word":"hurt",
-    "counts":6,
-    "total_score":-2.0,
-    "average_score":-0.3333333333
+    "word":"trump",
+    "counts":3293,
+    "total_score":-440.7462142965,
+    "average_score":-0.1338433691
   },
   {
-    "word":"customers",
-    "counts":10,
-    "total_score":-1.9555555556,
-    "average_score":-0.1955555556
+    "word":"china",
+    "counts":3511,
+    "total_score":-236.2459925825,
+    "average_score":-0.0672873804
   },
   {
-    "word":"krogercripples",
-    "counts":16,
-    "total_score":-2.75,
-    "average_score":-0.171875
+    "word":"faang",
+    "counts":2879,
+    "total_score":-119.8888218954,
+    "average_score":-0.0416425224
   },
   {
-    "word":"bad",
-    "counts":6,
-    "total_score":-1.0142857143,
-    "average_score":-0.169047619
+    "word":"facebook",
+    "counts":8090,
+    "total_score":-281.2836275588,
+    "average_score":-0.0347692988
   },
   {
-    "word":"loudest",
-    "counts":7,
-    "total_score":-1.05,
-    "average_score":-0.15
+    "word":"patent",
+    "counts":8803,
+    "total_score":-290.5047105053,
+    "average_score":-0.0330006487
   },
   {
-    "word":"sec",
-    "counts":7,
-    "total_score":-1.05,
-    "average_score":-0.15
+    "word":"youtube",
+    "counts":4405,
+    "total_score":-133.944825763,
+    "average_score":-0.0304074519
   },
   {
-    "word":"stadiums",
-    "counts":7,
-    "total_score":-1.05,
-    "average_score":-0.15
+    "word":"says",
+    "counts":2878,
+    "total_score":-42.7545551322,
+    "average_score":-0.0148556481
   },
   {
-    "word":"chain",
-    "counts":6,
-    "total_score":-0.875,
-    "average_score":-0.1458333333
+    "word":"ip",
+    "counts":8922,
+    "total_score":-43.7657787558,
+    "average_score":-0.0049053776
+  },
+  {
+    "word":"tech",
+    "counts":19967,
+    "total_score":66.8185192818,
+    "average_score":0.0033464476
+  },
+  {
+    "word":"research",
+    "counts":10397,
+    "total_score":56.5911811165,
+    "average_score":0.0054430298
   }
 ]
