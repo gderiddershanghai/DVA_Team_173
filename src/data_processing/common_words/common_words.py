@@ -167,49 +167,49 @@ if __name__ == "__main__":
     output_dir = "/home/ginger/code/gderiddershanghai/DVA_Team_173/src/components/wordbubbles/tmp_data"
 
     tickers = [
-    "TSLA", "AAPL", "AMZN", "GOOGL", "MSFT", "F", "DIS", "META", "NKE", "NFLX",
+    "TSLA", "AAPL", "AMZN", "GOOGL", "MSFT", "DIS", "META", "NKE", "NFLX",
     "INTC", "JPM", "PG", "T", "SBUX", "WMT", "PYPL", "BAC", "PFE", "V",
     "XOM", "JNJ", "AMD", "PEP", "MCD", "VZ", "KO", "BA", "MA", "MRK",
-    "UNH", "HD", "CMCSA", "IBM", "COST", "CVX", "ORCL", "UPS", "CSCO", "KR"]
-    # for ticker in tickers:
-    #     print(f"Processing {ticker}...")
-    #     analyzer = CommonWords(
-    #         ticker=ticker,
-    #         data_dir=input_dir,
-    #         start_date="2017-01-01",
-    #         end_date="2021-12-31",
-    #         min_count_percentage=0.01,
-    #         top_n_words=20,
-    #         filter_metric="average_score"
-    #     )
-    #     start_time = time.time()
+    "UNH", "HD", "CMCSA", "IBM", "COST", "CVX", "ORCL", "UPS", "CSCO", "KR", "F"]
+    for ticker in tickers:
+        print(f"Processing {ticker}...")
+        analyzer = CommonWords(
+            ticker=ticker,
+            data_dir=input_dir,
+            start_date="2017-01-01",
+            end_date="2021-12-31",
+            min_count_percentage=0.01,
+            top_n_words=20,
+            filter_metric="average_score"
+        )
+        start_time = time.time()
 
-    #     analyzer.calculate(output_dir=output_dir)
+        analyzer.calculate(output_dir=output_dir)
 
-    #     end_time = time.time()
-    #     elapsed = end_time - start_time
-    #     print(f"✅ Done in {elapsed:.2f} seconds.")
+        end_time = time.time()
+        elapsed = end_time - start_time
+        print(f"✅ Done in {elapsed:.2f} seconds.")
         
         
         #########################################
-    idx = 3
-    print(tickers[idx])
-    analyzer = CommonWords(
-        ticker=tickers[idx],
-        data_dir=input_dir,
-        start_date="2017-01-01",
-        end_date="2021-12-31",
-        min_count_percentage=0.01,
-        top_n_words=10,
-        filter_metric="average_score"
-    )
-    start_time = time.time()
+    # idx = 1
+    # print(tickers[idx])
+    # analyzer = CommonWords(
+    #     ticker=tickers[idx],
+    #     data_dir=input_dir,
+    #     start_date="2017-01-01",
+    #     end_date="2021-12-31",
+    #     min_count_percentage=0.01,
+    #     top_n_words=10,
+    #     filter_metric="average_score"
+    # )
+    # start_time = time.time()
 
-    analyzer.calculate(output_dir=output_dir)
+    # analyzer.calculate(output_dir=output_dir)
 
-    end_time = time.time()
-    elapsed = end_time - start_time
-    print(f"✅ Done in {elapsed:.2f} seconds.")
+    # end_time = time.time()
+    # elapsed = end_time - start_time
+    # print(f"✅ Done in {elapsed:.2f} seconds.")
 
 
 

@@ -71,7 +71,7 @@ export const wordBubbles = () => {
         const linkWeights = links.map(link => link.weight);
         const minWeight = Math.min(...linkWeights);
         const maxWeight = Math.max(...linkWeights);
-
+ 
 
         const minCount = Math.min(...processedData.map(d => d.counts));
         const maxCount = Math.max(...processedData.map(d => d.counts));
@@ -113,8 +113,33 @@ export const wordBubbles = () => {
             .attr('width', width)
             .attr('height', height);
         
-        const colorScale = d3.scaleSequential(d3.interpolateViridis)
-            .domain([0, 1]);
+
+            // const colorScale = d3.scaleSequential()
+            // .domain([-1, 1])
+            // .interpolator(d3.interpolateBlues);
+            // const colorScale = d3.scaleLinear()
+            // .domain([-1, -0.5, 0, 0.5, 1])
+            // .range(["#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba"]);
+          
+            // const colorScale = d3.scaleDiverging()
+            // .domain([-1, 0, 1])
+            // .interpolator(d3.interpolatePuOr);
+            // const colorScale = d3.scaleDiverging()
+            // .domain([-1, 0, 1])
+            // .interpolator(d3.interpolatePRGn);
+            // const colorScale = d3.scaleDiverging()
+            // .domain([-1, 0, 1])
+            // .interpolator(d3.interpolateRdBu);
+
+            const colorScale = d3.scaleLinear()
+            .domain([-1, -0.5, 0, 0.5, 1])
+            .range(["#c0392b", "#e74c3c", "#ecf0f1", "#27ae60", "#2ecc71"]);
+          
+
+          
+
+        // const colorScale = d3.scaleSequential(d3.interpolateViridis)
+        //     .domain([0, 1]);
             
         const t = d3
             .transition()
