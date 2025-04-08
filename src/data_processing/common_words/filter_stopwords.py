@@ -24,7 +24,8 @@ class FilterStopwords:
             'walmart', 'paypal', 'holdings', 'boeing', 'nike', 'merck', 'at&t', 'kroger',
             'pepsico', 'pfizer', 'intel', 'oracle', 'netflix', 'mcdonalds', 'amazon', 'ford',
             'alphabet', 'mastercard', 'procter', 'gamble', 'meta', 'chevron', 'apple', 'walt',
-            'disney', 'starbucks', 'microsoft', 'johnson', 'costco', 'coca', 'cola', 'tesla'
+            'disney', 'starbucks', 'microsoft', 'johnson', 'costco', 'coca', 'cola', 'tesla', 'twrt',
+            'TWTR', 'FB', 'GM', 'GOOG', 'Try', 'another'
         }
         self.tickers = {
             'unh', 'xom', 'meta', 'aapl', 'googl', 'nke', 'jnj', 'amzn', 'f', 'dis',
@@ -77,7 +78,8 @@ class FilterStopwords:
             'tweets', 'rt', 'follow', 'following', 'follower', 'followers', 'post', 'posts',
             'posting', 'posted', 'user', 'users', 'account', 'accounts', 'am', 'pm', 'vs',
             'via', 'per', 'new', 'now', 'next', 'last', 'ago', 'yet', 'still', 'ever',
-            'even', 'also', 'too', 'very', 'quite', 'like', 'said'
+            'even', 'also', 'too', 'very', 'quite', 'like', 'said', 'made', 'come', 'first',
+            'put', 'coming', 'something', 'hey', 'stockmarket', 'stock', 'stocks',
         }
 
         # Create a unified stopword set (forcing everything to lower-case)
@@ -98,7 +100,7 @@ class FilterStopwords:
         if token.startswith("@"):
             return "@user"
         elif token.startswith("http") or token.startswith("www"):
-            return "httpurl"  # Already lower-case for consistency
+            return ""  # Already lower-case for consistency
         elif len(token) == 1:
             return demojize(token)
         elif token in {"’"}:
@@ -113,7 +115,8 @@ class FilterStopwords:
             return ""
         text = text.replace("’", "'").replace("…", "...")
         tokens = self.tokenizer.tokenize(text)
-        normalized = " ".join([self._normalize_token(t) for t in tokens])
+        normalized = " ".join([self._normalize_token(t) for t in tokens if self._normalize_token(t)])
+
         # Adjust common contractions and spacing
         normalized = normalized.replace("cannot ", "can not ")
         normalized = normalized.replace("n't ", " n't ")

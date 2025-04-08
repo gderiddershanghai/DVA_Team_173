@@ -4,6 +4,7 @@ export const wordBubbles = () => {
     let data;
     let links = [];
     let margin = { top: 20, right: 50, bottom: 20, left: 20 };
+    let minScore, maxScore; // Define these at the module level
 
     const processData = (rawData) => {
         if (!rawData) return [];
@@ -11,13 +12,11 @@ export const wordBubbles = () => {
         // Find min and max counts for better scaling
         const minCount = Math.min(...rawData.map(d => d.counts));
         const maxCount = Math.max(...rawData.map(d => d.counts));
-        //////////////////////////////////////////////
-        // change the sizes here
+        
         // Create a more compressed scale for radius
         const radiusScale = d3.scaleSqrt()
-        .domain([minCount, maxCount])
-        .range([15, 70]); 
-        //////////////////////////////////////////////////
+            .domain([minCount, maxCount])
+            .range([15, 70]); 
         
         rawData.forEach(d => {
             d.radius = radiusScale(d.counts);
@@ -27,8 +26,8 @@ export const wordBubbles = () => {
             d.charge = sign * Math.min(Math.pow(d.radius, 1.15), -300);
         });
         
-        const minScore = Math.min(...rawData.map(d => d.average_score));
-        const maxScore = Math.max(...rawData.map(d => d.average_score));
+        minScore = Math.min(...rawData.map(d => d.average_score));
+        maxScore = Math.max(...rawData.map(d => d.average_score));
         
         rawData.forEach(d => {
             d.color_value = (d.average_score - minScore) / (maxScore - minScore);
@@ -71,34 +70,23 @@ export const wordBubbles = () => {
         const linkWeights = links.map(link => link.weight);
         const minWeight = Math.min(...linkWeights);
         const maxWeight = Math.max(...linkWeights);
- 
 
         const minCount = Math.min(...processedData.map(d => d.counts));
         const maxCount = Math.max(...processedData.map(d => d.counts));
 
         console.log("Max count:", maxCount);
-        const threshold = Math.round(maxWeight * 0.005); // 0.75 percent of max count
-
-
-
-
-        // Create a more compressed scale for link thickness
+        const threshold = Math.round(maxWeight * 0.005); // 0.5 percent of max weight
+        
         const linkThicknessScale = d3.scaleSqrt()
-        .domain([threshold, maxWeight])
-        .range([0.5, 6]);
-
-
-            /////////////////////////////////////////////////////////////////////////////
-            // const maxCount = Math.max(...processedData.map(d => d.counts));
-            // console.log("Max count:", maxCount);
-            // const threshold = maxWeight * 0.0075; // 0.75 percent of max count
+            .domain([threshold, maxWeight])
+            .range([0.5, 6]);
             
-            const processedLinks = links.map(link => ({
-                source: wordMap[link.source],
-                target: wordMap[link.target],
-                weight: link.weight,
-                thickness: linkThicknessScale(link.weight)
-            })).filter(link => link.source && link.target && link.weight >= threshold);
+        const processedLinks = links.map(link => ({
+            source: wordMap[link.source],
+            target: wordMap[link.target],
+            weight: link.weight,
+            thickness: linkThicknessScale(link.weight)
+        })).filter(link => link.source && link.target && link.weight >= threshold);
         
         // Create link color scale based on actual data
         const linkColorScale = d3.scaleLinear()
@@ -113,47 +101,16 @@ export const wordBubbles = () => {
             .attr('width', width)
             .attr('height', height);
         
-
-            // const colorScale = d3.scaleSequential()
-            // .domain([-1, 1])
-            // .interpolator(d3.interpolateBlues);
-            // const colorScale = d3.scaleLinear()
-            // .domain([-1, -0.5, 0, 0.5, 1])
-            // .range(["#d7191c", "#fdae61", "#ffffbf", "#abdda4", "#2b83ba"]);
-          
-            // const colorScale = d3.scaleDiverging()
-            // .domain([-1, 0, 1])
-            // .interpolator(d3.interpolatePuOr);
-            // const colorScale = d3.scaleDiverging()
-            // .domain([-1, 0, 1])
-            // .interpolator(d3.interpolatePRGn);
-            // const colorScale = d3.scaleDiverging()
-            // .domain([-1, 0, 1])
-            // .interpolator(d3.interpolateRdBu);
-
-            // const colorScale = d3.scaleLinear()
-            // .domain([-1, -0.5, 0, 0.5, 1])
-            // .range(["#c0392b", "#e74c3c", "#ecf0f1", "#27ae60", "#2ecc71"]);
-          
-            const colorScale = d3.scaleLinear()
-            .domain([0, 1])
-            .range(["#077b8a ", "#b20238"]);
-          
-
-        // const colorScale = d3.scaleSequential(d3.interpolateViridis)
-        //     .domain([0, 1]);
+        const colorScale = d3.scaleSequential(d3.interpolateViridis)
+            .domain([Math.min(minScore*1.2,-0.5), Math.max(maxScore*1.5,0.75)]);
             
         const t = d3
             .transition()
             .duration(1500)      
             .ease(d3.easeCubicOut);
-
-        // const minCount = Math.min(...processedData.map(d => d.counts));
-        // const maxCount = Math.max(...processedData.map(d => d.counts));
         
         const simulation = d3.forceSimulation(processedData)
             .force('link', d3.forceLink(processedLinks).id(d => d.word)
-                // More consistent distance calculation
                 .distance(d => 100 + Math.min(d.source.radius + d.target.radius, 100)))
             .force('charge', d3.forceManyBody().strength(d => Math.min(d.charge, -300)))
             .force('center', d3.forceCenter(width / 2, height / 2))
@@ -184,7 +141,6 @@ export const wordBubbles = () => {
                 .on('start', dragstarted)
                 .on('drag', dragged)
                 .on('end', dragended))
-            // MOUSE EVENTS for tooltip:
             .on("mouseover", (event, d) => {
                 tooltip
                     .style("opacity", 0.95)
@@ -220,19 +176,15 @@ export const wordBubbles = () => {
             .text(d => d.word)
             .attr("text-anchor", "middle")
             .attr("dy", ".3em")
-            // .style("font-size", d => Math.min(d.radius * 0.5, 25) + "px")
-            // .style("font-weight", "bold")
-            // .style("font-size", d => d.word.length > 8 ? "9px" : Math.min(d.radius * 0.5, 25) + "px")
             .style("font-size", d => {
-                const maxFontSize = d.radius * 0.5; // Maximum font size based on node radius
-                const minFontSize = 9; // Minimum font size for readability
-                const calculatedFontSize = Math.min(d.word.length * 2, maxFontSize); // Scale with word length and cap at max size
-                return Math.max(calculatedFontSize, minFontSize) + "px"; // Ensure it's not too small
+                const baseSize = d.radius * 0.6; // 60% of node radius
+                const lengthPenalty = Math.sqrt(d.word.length); // Reduce impact of long words
+                const calculatedSize = Math.min(baseSize, baseSize / (lengthPenalty * 0.60));
+                return Math.max(calculatedSize, 8) + "px"; // Enforce 8px minimum
             })
             .style("text-anchor", "middle")
             .style("alignment-baseline", "middle")            
             .style("font-weight", "bold")
-
             .style("pointer-events", "none")
             .style("fill", "white")
             .style("opacity", 0)   
@@ -244,11 +196,9 @@ export const wordBubbles = () => {
         const legendWidth = 250;
         const legendHeight = 20;
         const legendX = width - legendWidth - margin.right;
-        //// CHANGE THE SIZES
         const legendY = 20;
         const sizeLegendY = legendY + legendHeight + 50;
         const linkLegendY = sizeLegendY + 100; 
-        
         
         // Create color gradient for legend
         const defs = svg.append('defs');
@@ -271,15 +221,14 @@ export const wordBubbles = () => {
         const legend = svg.append('g')
             .attr('class', 'legend');
             
-        ////////////////////// color legend //////////////////////
-        const xLocation = legendX +50
+        // Color legend
+        const xLocation = legendX + 50;
         legend.append('text')
             .attr('x', xLocation + 55)
             .attr('y', legendY - 5)
             .text('Word Mean Sentiment Score')
-            // .style('text-anchor', 'right')
             .style('font-weight', 'bold')
-            .style('font-size', '12px')
+            .style('font-size', '12px');
             
         legend.append('rect')
             .attr('x', xLocation)
@@ -288,41 +237,33 @@ export const wordBubbles = () => {
             .attr('height', legendHeight)
             .style('fill', 'url(#viridis-gradient)');
             
-        
-            legend.append('text')
+        legend.append('text')
             .attr('x', legendX+50)
-            .attr('y', legendY + legendHeight + 25) // Increase from 15 to 25
+            .attr('y', legendY + legendHeight + 25)
             .text(`(Negative)`)
             .style('font-size', '10px');
             
         legend.append('text')
             .attr('x', legendX + legendWidth+25)
-            .attr('y', legendY + legendHeight + 25) // Increase from 15 to 25
+            .attr('y', legendY + legendHeight + 25)
             .text(`(Positive)`)
             .style('text-anchor', 'end')
             .style('font-size', '10px');
         
-            
-        
-        // const sizeLegendY = legendY + legendHeight + 40;
-        
+        // Size legend
         legend.append('text')
-        .attr('x', xLocation+15)
-        .attr('y', sizeLegendY +4)
-        .style('font-weight', 'bold')
-        .style('fill', 'black')
-        .style('font-size', '12px')
-        .selectAll('tspan')
-        .data(['Word Frequency', '(Legend bubbles shown at 1:2 scale)'])
-        .enter()
-        .append('tspan')
-        .attr('x', xLocation+15)
-        .attr('dy', (d, i) => i * 15)  // Adjust line spacing as needed
-        .text(d => d);
-    
-
-
-
+            .attr('x', xLocation+15)
+            .attr('y', sizeLegendY +4)
+            .style('font-weight', 'bold')
+            .style('fill', 'black')
+            .style('font-size', '12px')
+            .selectAll('tspan')
+            .data(['Word Frequency', '(Legend bubbles shown at 1:2 scale)'])
+            .enter()
+            .append('tspan')
+            .attr('x', xLocation+15)
+            .attr('dy', (d, i) => i * 15)
+            .text(d => d);
             
         // Use nicer round numbers for size legend
         const sizeStops = [
@@ -338,18 +279,18 @@ export const wordBubbles = () => {
             
         sizeStops.forEach((count, i) => {
             const radius = radiusScale(count);
-            const cx = xLocation + 25 + i * 85; // Increase from 65 to 85
+            const cx = xLocation + 25 + i * 85;
             const cy = sizeLegendY + 45; 
             
             const legendScaleFactor = 1/2;
             // Add circle
             legend.append('circle')
-            .attr('cx', cx)
-            .attr('cy', cy)
-            .attr('r', radius * legendScaleFactor)
-            .style('fill', 'black')
-            .style('stroke', 'black')
-            .style('stroke-width', 1);
+                .attr('cx', cx)
+                .attr('cy', cy)
+                .attr('r', radius * legendScaleFactor)
+                .style('fill', 'black')
+                .style('stroke', 'black')
+                .style('stroke-width', 1);
                 
             legend.append('text')
                 .attr('x', cx)
@@ -359,24 +300,22 @@ export const wordBubbles = () => {
                 .style('font-size', '10px');
         });
 
-        // const linkLegendY = sizeLegendY + 80;
-
+        // Link legend
         legend.append('text')
-        .attr('x', xLocation+45)
-        .attr('y', linkLegendY + 25)
-        .text('Co-occurrence Frequency')
-        .style('font-weight', 'bold')
-        .style('font-size', '12px');
+            .attr('x', xLocation+45)
+            .attr('y', linkLegendY + 25)
+            .text('Co-occurrence Frequency')
+            .style('font-weight', 'bold')
+            .style('font-size', '12px');
     
-    // Add an explanatory note
-    legend.append('text')
-        .attr('x', xLocation+15)
-        .attr('y', linkLegendY + 40)
-        .text('(Link thickness shows frequency of word pairs)')
-        .style('font-size', '10px')
-        .style('font-style', 'italic');
+        // Add an explanatory note
+        legend.append('text')
+            .attr('x', xLocation+15)
+            .attr('y', linkLegendY + 40)
+            .text('(Link thickness shows frequency of word pairs)')
+            .style('font-size', '10px')
+            .style('font-style', 'italic');
     
-            
         // Use the same scale as for the actual links
         const linkWidthScale = d3.scaleSqrt()
             .domain([minWeight, maxWeight])
@@ -396,9 +335,9 @@ export const wordBubbles = () => {
         
             legend.append('line')
                 .attr('x1', xLocation+55)
-                .attr('y1', y + 55 )
+                .attr('y1', y + 55)
                 .attr('x2', xLocation + 200)
-                .attr('y2', y+55 )
+                .attr('y2', y+55)
                 .attr('stroke', color)  
                 .attr('stroke-width', thickness);
         
@@ -411,7 +350,7 @@ export const wordBubbles = () => {
         });
 
         function ticked() {
-            // Update node positions (unchanged from before)
+            // Update node positions
             nodes.attr('transform', d => {
               d.x = Math.max(margin.left + d.radius,
                              Math.min(width - margin.right - d.radius, d.x));
@@ -420,7 +359,7 @@ export const wordBubbles = () => {
               return `translate(${d.x},${d.y})`;
             });
             
-            // Update link positions as straight lines:
+            // Update link positions as straight lines
             link
               .attr("x1", d => d.source.x)
               .attr("y1", d => d.source.y)
@@ -428,7 +367,6 @@ export const wordBubbles = () => {
               .attr("y2", d => d.target.y);
         }
         
-        ////// tooltip
         // Create the tooltip
         const tooltip = d3
                 .select("body")

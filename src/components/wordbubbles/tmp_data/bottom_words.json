@@ -1,122 +1,62 @@
 [
   {
-    "word":"alleged",
-    "counts":322,
-    "total_score":2.8662445887,
-    "average_score":0.0089013807
+    "word":"bad",
+    "counts":8199,
+    "total_score":-5446.8179880381,
+    "average_score":-0.6643271116
   },
   {
-    "word":"democrats",
-    "counts":477,
-    "total_score":8.833997114,
-    "average_score":0.0185199101
+    "word":"fraud",
+    "counts":9242,
+    "total_score":-5244.7639962882,
+    "average_score":-0.5674923173
   },
   {
-    "word":"lying",
-    "counts":382,
-    "total_score":9.2853057359,
-    "average_score":0.0243070831
+    "word":"SEC",
+    "counts":9741,
+    "total_score":-3134.3305090219,
+    "average_score":-0.3217668113
   },
   {
-    "word":"show",
-    "counts":368,
-    "total_score":11.7115597944,
-    "average_score":0.0318248907
+    "word":"low",
+    "counts":7383,
+    "total_score":-1586.7197946459,
+    "average_score":-0.2149153183
   },
   {
-    "word":"ms",
-    "counts":378,
-    "total_score":12.1284478484,
-    "average_score":0.0320858409
+    "word":"CEO",
+    "counts":8098,
+    "total_score":-1635.8217968643,
+    "average_score":-0.2020031856
   },
   {
-    "word":"h",
-    "counts":291,
-    "total_score":12.7178318903,
-    "average_score":0.0437038897
+    "word":"TSLAQ (anti-Tesla)",
+    "counts":87455,
+    "total_score":-14959.5976251066,
+    "average_score":-0.171054801
   },
   {
-    "word":"news",
-    "counts":360,
-    "total_score":14.3321825859,
-    "average_score":0.0398116183
+    "word":"never",
+    "counts":9940,
+    "total_score":-1427.639524579,
+    "average_score":-0.1436257067
   },
   {
-    "word":"lawyer",
-    "counts":300,
-    "total_score":15.2411417749,
-    "average_score":0.0508038059
+    "word":"something",
+    "counts":6351,
+    "total_score":-860.7357757092,
+    "average_score":-0.1355275981
   },
   {
-    "word":"person",
-    "counts":319,
-    "total_score":15.9533874459,
-    "average_score":0.050010619
+    "word":"sales",
+    "counts":11092,
+    "total_score":-1226.3876228333,
+    "average_score":-0.110565058
   },
   {
-    "word":"happened",
-    "counts":305,
-    "total_score":16.2854491342,
-    "average_score":0.0533949152
-  },
-  {
-    "word":"claims",
-    "counts":290,
-    "total_score":16.432659632,
-    "average_score":0.0566643436
-  },
-  {
-    "word":"gop",
-    "counts":543,
-    "total_score":16.5226758658,
-    "average_score":0.0304285007
-  },
-  {
-    "word":"need",
-    "counts":308,
-    "total_score":17.2310134079,
-    "average_score":0.0559448487
-  },
-  {
-    "word":"way",
-    "counts":328,
-    "total_score":17.4720743897,
-    "average_score":0.0532685195
-  },
-  {
-    "word":"men",
-    "counts":354,
-    "total_score":17.7176016114,
-    "average_score":0.0500497221
-  },
-  {
-    "word":"music",
-    "counts":331,
-    "total_score":17.8282671958,
-    "average_score":0.0538618344
-  },
-  {
-    "word":"witnesses",
-    "counts":309,
-    "total_score":17.9879867124,
-    "average_score":0.0582135492
-  },
-  {
-    "word":"support",
-    "counts":298,
-    "total_score":18.6699969937,
-    "average_score":0.0626509966
-  },
-  {
-    "word":"asked",
-    "counts":309,
-    "total_score":18.7539688552,
-    "average_score":0.0606924558
-  },
-  {
-    "word":"breaking",
-    "counts":443,
-    "total_score":18.9399022968,
-    "average_score":0.0427537298
+    "word":"believe",
+    "counts":6758,
+    "total_score":-709.1527245343,
+    "average_score":-0.1049352951
   }
 ]
