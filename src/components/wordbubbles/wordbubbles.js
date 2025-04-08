@@ -16,7 +16,7 @@ export const wordBubbles = () => {
         // Create a more compressed scale for radius
         const radiusScale = d3.scaleSqrt()
         .domain([minCount, maxCount])
-        .range([10, 60]); 
+        .range([15, 70]); 
         //////////////////////////////////////////////////
         
         rawData.forEach(d => {
@@ -131,11 +131,13 @@ export const wordBubbles = () => {
             // .domain([-1, 0, 1])
             // .interpolator(d3.interpolateRdBu);
 
-            const colorScale = d3.scaleLinear()
-            .domain([-1, -0.5, 0, 0.5, 1])
-            .range(["#c0392b", "#e74c3c", "#ecf0f1", "#27ae60", "#2ecc71"]);
+            // const colorScale = d3.scaleLinear()
+            // .domain([-1, -0.5, 0, 0.5, 1])
+            // .range(["#c0392b", "#e74c3c", "#ecf0f1", "#27ae60", "#2ecc71"]);
           
-
+            const colorScale = d3.scaleLinear()
+            .domain([0, 1])
+            .range(["#077b8a ", "#b20238"]);
           
 
         // const colorScale = d3.scaleSequential(d3.interpolateViridis)
@@ -220,7 +222,15 @@ export const wordBubbles = () => {
             .attr("dy", ".3em")
             // .style("font-size", d => Math.min(d.radius * 0.5, 25) + "px")
             // .style("font-weight", "bold")
-            .style("font-size", d => d.word.length > 8 ? "9px" : Math.min(d.radius * 0.5, 25) + "px")
+            // .style("font-size", d => d.word.length > 8 ? "9px" : Math.min(d.radius * 0.5, 25) + "px")
+            .style("font-size", d => {
+                const maxFontSize = d.radius * 0.5; // Maximum font size based on node radius
+                const minFontSize = 9; // Minimum font size for readability
+                const calculatedFontSize = Math.min(d.word.length * 2, maxFontSize); // Scale with word length and cap at max size
+                return Math.max(calculatedFontSize, minFontSize) + "px"; // Ensure it's not too small
+            })
+            .style("text-anchor", "middle")
+            .style("alignment-baseline", "middle")            
             .style("font-weight", "bold")
 
             .style("pointer-events", "none")
@@ -303,7 +313,7 @@ export const wordBubbles = () => {
         .style('fill', 'black')
         .style('font-size', '12px')
         .selectAll('tspan')
-        .data(['Word Frequency', '(Legend bubbles shown at 1:3 scale)'])
+        .data(['Word Frequency', '(Legend bubbles shown at 1:2 scale)'])
         .enter()
         .append('tspan')
         .attr('x', xLocation+15)
@@ -324,7 +334,7 @@ export const wordBubbles = () => {
         // Use the same scale as for the actual nodes
         const radiusScale = d3.scaleSqrt()
             .domain([minCount, maxCount])
-            .range([5, 40]);
+            .range([15, 60]);
             
         sizeStops.forEach((count, i) => {
             const radius = radiusScale(count);

@@ -18,12 +18,6 @@
     "average_score":0.0243070831
   },
   {
-    "word":"gop",
-    "counts":543,
-    "total_score":16.5226758658,
-    "average_score":0.0304285007
-  },
-  {
     "word":"show",
     "counts":368,
     "total_score":11.7115597944,
@@ -36,87 +30,93 @@
     "average_score":0.0320858409
   },
   {
-    "word":"remember",
-    "counts":588,
-    "total_score":21.4420794483,
-    "average_score":0.0364661215
-  },
-  {
-    "word":"republicans",
-    "counts":631,
-    "total_score":24.2229365079,
-    "average_score":0.038388172
-  },
-  {
-    "word":"news",
-    "counts":362,
-    "total_score":14.5442739126,
-    "average_score":0.0401775522
-  },
-  {
-    "word":"google",
-    "counts":1266,
-    "total_score":51.238538961,
-    "average_score":0.0404727796
-  },
-  {
-    "word":"trump",
-    "counts":655,
-    "total_score":27.8182960558,
-    "average_score":0.042470681
-  },
-  {
-    "word":"breaking",
-    "counts":443,
-    "total_score":18.9399022968,
-    "average_score":0.0427537298
-  },
-  {
-    "word":"facebook",
-    "counts":1865,
-    "total_score":81.0982954845,
-    "average_score":0.0434843407
-  },
-  {
     "word":"h",
     "counts":291,
     "total_score":12.7178318903,
     "average_score":0.0437038897
   },
   {
-    "word":"says",
-    "counts":1242,
-    "total_score":55.8144436749,
-    "average_score":0.0449391656
+    "word":"news",
+    "counts":360,
+    "total_score":14.3321825859,
+    "average_score":0.0398116183
   },
   {
-    "word":"sen",
-    "counts":423,
-    "total_score":19.0529901696,
-    "average_score":0.04504253
-  },
-  {
-    "word":"fbi",
-    "counts":954,
-    "total_score":45.6136678541,
-    "average_score":0.047813069
-  },
-  {
-    "word":"grassley",
-    "counts":557,
-    "total_score":27.4007524651,
-    "average_score":0.0491934515
-  },
-  {
-    "word":"vote",
-    "counts":469,
-    "total_score":23.3253915645,
-    "average_score":0.0497343104
+    "word":"lawyer",
+    "counts":300,
+    "total_score":15.2411417749,
+    "average_score":0.0508038059
   },
   {
     "word":"person",
     "counts":319,
     "total_score":15.9533874459,
     "average_score":0.050010619
+  },
+  {
+    "word":"happened",
+    "counts":305,
+    "total_score":16.2854491342,
+    "average_score":0.0533949152
+  },
+  {
+    "word":"claims",
+    "counts":290,
+    "total_score":16.432659632,
+    "average_score":0.0566643436
+  },
+  {
+    "word":"gop",
+    "counts":543,
+    "total_score":16.5226758658,
+    "average_score":0.0304285007
+  },
+  {
+    "word":"need",
+    "counts":308,
+    "total_score":17.2310134079,
+    "average_score":0.0559448487
+  },
+  {
+    "word":"way",
+    "counts":328,
+    "total_score":17.4720743897,
+    "average_score":0.0532685195
+  },
+  {
+    "word":"men",
+    "counts":354,
+    "total_score":17.7176016114,
+    "average_score":0.0500497221
+  },
+  {
+    "word":"music",
+    "counts":331,
+    "total_score":17.8282671958,
+    "average_score":0.0538618344
+  },
+  {
+    "word":"witnesses",
+    "counts":309,
+    "total_score":17.9879867124,
+    "average_score":0.0582135492
+  },
+  {
+    "word":"support",
+    "counts":298,
+    "total_score":18.6699969937,
+    "average_score":0.0626509966
+  },
+  {
+    "word":"asked",
+    "counts":309,
+    "total_score":18.7539688552,
+    "average_score":0.0606924558
+  },
+  {
+    "word":"breaking",
+    "counts":443,
+    "total_score":18.9399022968,
+    "average_score":0.0427537298
   }
 ]

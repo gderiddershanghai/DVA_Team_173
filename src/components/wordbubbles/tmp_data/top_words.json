@@ -1,15 +1,39 @@
 [
   {
+    "word":"HTTPURL",
+    "counts":9237,
+    "total_score":517.8957954784,
+    "average_score":0.0560675323
+  },
+  {
+    "word":"dr",
+    "counts":7436,
+    "total_score":389.3170642957,
+    "average_score":0.0523557106
+  },
+  {
+    "word":"christine",
+    "counts":6009,
+    "total_score":374.8930912693,
+    "average_score":0.062388599
+  },
+  {
+    "word":"blasey",
+    "counts":5328,
+    "total_score":337.8331968668,
+    "average_score":0.0634071315
+  },
+  {
+    "word":"kavanaugh",
+    "counts":4818,
+    "total_score":304.6570640066,
+    "average_score":0.0632330976
+  },
+  {
     "word":"sexual",
     "counts":618,
     "total_score":112.4811081049,
     "average_score":0.1820082655
-  },
-  {
-    "word":"credible",
-    "counts":531,
-    "total_score":85.5674005855,
-    "average_score":0.1611438806
   },
   {
     "word":"assault",
@@ -18,94 +42,34 @@
     "average_score":0.1243754393
   },
   {
-    "word":"first",
-    "counts":436,
-    "total_score":53.3078987887,
-    "average_score":0.1222658229
-  },
-  {
-    "word":"wants",
-    "counts":331,
-    "total_score":37.9999064304,
-    "average_score":0.1148033427
-  },
-  {
-    "word":"thank",
-    "counts":299,
-    "total_score":29.5761297499,
-    "average_score":0.0989168219
-  },
-  {
-    "word":"assaulted",
-    "counts":486,
-    "total_score":45.110791847,
-    "average_score":0.0928205594
-  },
-  {
-    "word":"made",
-    "counts":346,
-    "total_score":31.7350396825,
-    "average_score":0.0917197679
-  },
-  {
-    "word":"years",
-    "counts":435,
-    "total_score":37.5928496976,
-    "average_score":0.0864203441
-  },
-  {
-    "word":"w",
-    "counts":410,
-    "total_score":35.2919535095,
-    "average_score":0.0860779354
-  },
-  {
-    "word":"forward",
-    "counts":559,
-    "total_score":48.0677532017,
-    "average_score":0.085988825
-  },
-  {
-    "word":"testimony",
-    "counts":559,
-    "total_score":47.7243062956,
-    "average_score":0.0853744299
-  },
-  {
-    "word":"story",
-    "counts":657,
-    "total_score":52.2166894218,
-    "average_score":0.0794774573
-  },
-  {
-    "word":"senator",
-    "counts":329,
-    "total_score":25.3664580327,
-    "average_score":0.0771016961
-  },
-  {
     "word":"brett",
     "counts":1140,
     "total_score":86.8797786762,
     "average_score":0.0762103322
   },
   {
-    "word":"saying",
-    "counts":301,
-    "total_score":21.4386056999,
-    "average_score":0.0712246037
+    "word":"credible",
+    "counts":531,
+    "total_score":85.5674005855,
+    "average_score":0.1611438806
+  },
+  {
+    "word":"Facebook",
+    "counts":1862,
+    "total_score":81.7662676617,
+    "average_score":0.0439131405
   },
   {
     "word":"judge",
-    "counts":1056,
-    "total_score":74.8180698842,
-    "average_score":0.070850445
+    "counts":1055,
+    "total_score":74.8750793651,
+    "average_score":0.0709716392
   },
   {
-    "word":"let",
-    "counts":488,
-    "total_score":33.8055760387,
-    "average_score":0.0692737214
+    "word":"believe",
+    "counts":1235,
+    "total_score":71.7261522968,
+    "average_score":0.0580778561
   },
   {
     "word":"hearing",
@@ -114,9 +78,45 @@
     "average_score":0.0686002738
   },
   {
-    "word":"please",
-    "counts":426,
-    "total_score":29.1077578671,
-    "average_score":0.0683280701
+    "word":"senate",
+    "counts":862,
+    "total_score":56.8774477606,
+    "average_score":0.0659831181
+  },
+  {
+    "word":"says",
+    "counts":1240,
+    "total_score":55.5648969086,
+    "average_score":0.0448104007
+  },
+  {
+    "word":"story",
+    "counts":656,
+    "total_score":51.3406837722,
+    "average_score":0.0782632375
+  },
+  {
+    "word":"Google",
+    "counts":1266,
+    "total_score":51.238538961,
+    "average_score":0.0404727796
+  },
+  {
+    "word":"forward",
+    "counts":559,
+    "total_score":48.0677532017,
+    "average_score":0.085988825
+  },
+  {
+    "word":"first",
+    "counts":430,
+    "total_score":47.9656631043,
+    "average_score":0.1115480537
+  },
+  {
+    "word":"testimony",
+    "counts":559,
+    "total_score":47.7243062956,
+    "average_score":0.0853744299
   }
 ]
