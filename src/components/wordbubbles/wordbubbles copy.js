@@ -6,8 +6,6 @@ export const wordBubbles = () => {
     let margin = { top: 20, right: 50, bottom: 20, left: 20 };
     let minScore, maxScore; // Define these at the module level
 
-    const backGroundColor = "#F1EEEB"//"aliceblue"; 
-
     const processData = (rawData) => {
         if (!rawData) return [];
         
@@ -81,7 +79,7 @@ export const wordBubbles = () => {
         
         const linkThicknessScale = d3.scaleSqrt()
             .domain([threshold, maxWeight])
-            .range([0.5, 4]);
+            .range([0.5, 6]);
             
         const processedLinks = links.map(link => ({
             source: wordMap[link.source],
@@ -91,13 +89,9 @@ export const wordBubbles = () => {
         })).filter(link => link.source && link.target && link.weight >= threshold);
         
         // Create link color scale based on actual data
-        // const linkColorScale = d3.scaleLinear()
-        //     .domain([threshold, maxWeight])
-        //     .range(["#a2d5c6", "#316879"]);
-
         const linkColorScale = d3.scaleLinear()
-            .domain([minWeight, maxWeight])
-            .range(["#CDC9C9", "#544444"]);
+            .domain([threshold, maxWeight])
+            .range(["#a2d5c6", "#316879"]);
 
         console.log("Processed links:", processedLinks.length);
         console.log("Sample processed links:", processedLinks.slice(0, 5));
@@ -107,13 +101,8 @@ export const wordBubbles = () => {
             .attr('width', width)
             .attr('height', height);
         
-        // const colorScale = d3.scaleSequential(d3.interpolateViridis)
-        //     .domain([Math.min(minScore*1.2,-0.5), Math.max(maxScore*1.5,0.75)]);
-
-        const colorScale = d3.scaleLinear()
-            // Create 5 equally spaced points between minScore and maxScore
-            .domain(d3.range(7).map(i => minScore + i * (maxScore - minScore) / 17.5))
-            .range([ "#ed5f74","#EF7C8E", "#F5B9C3",  "#B6E2D3", "#66C2A3", "#66C2A3"]);
+        const colorScale = d3.scaleSequential(d3.interpolateViridis)
+            .domain([Math.min(minScore*1.2,-0.5), Math.max(maxScore*1.5,0.75)]);
             
         const t = d3
             .transition()
@@ -172,16 +161,12 @@ export const wordBubbles = () => {
                 tooltip.style("opacity", 0);
             });
                 
-                    // .style("fill", () => colorScale(d.color_value))
-                    // .style("stroke-width", 5) 
-                    // .style("stroke", () => colorScale(d.color_value))
-
         nodes
             .append("circle")
             .attr("r", 0) // Start collapsed
-            .style("fill", backGroundColor)
-            .style("stroke", (d) => colorScale(d.color_value))
-            .style("stroke-width", 5)
+            .style("fill", (d) => colorScale(d.color_value))
+            .style("stroke", "#333")
+            .style("stroke-width", 1)
             .transition(t)
             .delay((d, i) => i * 100) 
             .attr("r", (d) => d.radius);
@@ -201,7 +186,7 @@ export const wordBubbles = () => {
             .style("alignment-baseline", "middle")            
             .style("font-weight", "bold")
             .style("pointer-events", "none")
-            .style("fill", "black")
+            .style("fill", "white")
             .style("opacity", 0)   
             .transition(t)
             .delay((d, i) => i * 100 + 100) 
@@ -225,10 +210,10 @@ export const wordBubbles = () => {
             .attr('y2', '0%');
             
         // Add color stops to gradient
-        const stops = [0, 0.1,0.15, 0.2, 0.3, 0.4, 0.5,1 ];
+        const stops = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
         stops.forEach(stop => {
             gradient.append('stop')
-                .attr('offset', `${stop * 130}%`)
+                .attr('offset', `${stop * 100}%`)
                 .attr('stop-color', colorScale(stop));
         });
         
@@ -334,7 +319,7 @@ export const wordBubbles = () => {
         // Use the same scale as for the actual links
         const linkWidthScale = d3.scaleSqrt()
             .domain([minWeight, maxWeight])
-            .range([0.5, 4]);
+            .range([0.5, 6]);
         
         // Use nicer round numbers for link legend
         const linkStops = [
@@ -411,16 +396,6 @@ export const wordBubbles = () => {
         function dragended(event, d) {
             if (!event.active) simulation.alphaTarget(0);
             
-            // 1) Okay, I'll change it to assign more space for the tweet analysis
-            // 2) I can add it by changing some design. I'll change it.
-            // 3) I agree it. I comment color code in the last page of my slide. please refer to it if you need. In my design plan, I use  "no fill" and line color with thick line. I think it would look better, but if it is hard to make, conventional one is okay but I recommend to remove outline of circles.
-            // 4) This is the hardest question. In my thought, there are two options:
-            //   (1) same color with background's (#F1EEB) with the moderate transparency (0.4~0.6)
-            //   (2) gradation from source color to target color with slightly lower saturation and moderate transparency (0.4~0.6)
-            // 5) I think the background color (#F1EEB) or the ticker color (#D6CDC4).
-
-
-
             // Toggle fixed status
             if (d.fixed !== true) {
                 d.fixed = true;
@@ -429,13 +404,7 @@ export const wordBubbles = () => {
                 // Change color to orange when fixed
                 d3.select(this)
                     .select("circle")
-                    .style("fill", "#D6CDC4")
-                    .style("stroke", "#D6CDC4")
-                    // .style("fill", d => colorScale(d.color_value))
-                    // // .style("fill-opacity", 0.15)  
-                    // .style("stroke", d => colorScale(d.color_value))
-                    // .style("stroke-opacity", 1);  
-                  
+                    .style("fill", "orange");
             } else {
                 d.fixed = false;
                 d.fx = null;
@@ -443,9 +412,7 @@ export const wordBubbles = () => {
                 // Restore original color based on sentiment
                 d3.select(this)
                     .select("circle")
-                    .style("fill", backGroundColor)
-                    .style("stroke-width", 5) 
-                    .style("stroke", () => colorScale(d.color_value))
+                    .style("fill", () => colorScale(d.color_value));
             }
         }
     };

@@ -1,62 +1,50 @@
 [
   {
-    "word":"full",
-    "counts":6373,
-    "total_score":1228.8072788864,
-    "average_score":0.1928145738
+    "word":"story",
+    "counts":105,
+    "total_score":19.3185227273,
+    "average_score":0.1839859307
   },
   {
-    "word":"SPX (Market)",
-    "counts":8553,
-    "total_score":1669.553891167,
-    "average_score":0.1952009694
+    "word":"air",
+    "counts":148,
+    "total_score":27.4146473665,
+    "average_score":0.1852341038
   },
   {
-    "word":"support",
-    "counts":6420,
-    "total_score":1287.5461423993,
-    "average_score":0.2005523586
+    "word":"movies",
+    "counts":601,
+    "total_score":122.1168908638,
+    "average_score":0.2031895023
   },
   {
-    "word":"higher",
-    "counts":7329,
-    "total_score":3043.6708732098,
-    "average_score":0.4152914276
+    "word":"gift",
+    "counts":92,
+    "total_score":18.953001443,
+    "average_score":0.2060108853
   },
   {
-    "word":"bought",
-    "counts":6431,
-    "total_score":2671.1643579304,
-    "average_score":0.4153575428
+    "word":"Mulan",
+    "counts":99,
+    "total_score":23.728219697,
+    "average_score":0.2396789868
   },
   {
-    "word":"Goldman",
-    "counts":19554,
-    "total_score":8306.4782161862,
-    "average_score":0.4247968813
+    "word":"true",
+    "counts":97,
+    "total_score":27.6289772727,
+    "average_score":0.2848348172
   },
   {
-    "word":"BIDU",
-    "counts":7025,
-    "total_score":3169.9968361408,
-    "average_score":0.4512451012
+    "word":"magic",
+    "counts":92,
+    "total_score":35.7365909091,
+    "average_score":0.3884412055
   },
   {
-    "word":"NVIDIA",
-    "counts":32510,
-    "total_score":14763.9537077993,
-    "average_score":0.4541357646
-  },
-  {
-    "word":"profits",
-    "counts":13659,
-    "total_score":6396.5365267396,
-    "average_score":0.468301964
-  },
-  {
-    "word":"active",
-    "counts":8002,
-    "total_score":5792.2422681004,
-    "average_score":0.7238493212
+    "word":"favorite",
+    "counts":207,
+    "total_score":89.3354978355,
+    "average_score":0.4315724533
   }
 ]

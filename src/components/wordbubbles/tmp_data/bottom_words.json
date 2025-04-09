@@ -1,62 +1,50 @@
 [
   {
-    "word":"bad",
-    "counts":8199,
-    "total_score":-5446.8179880381,
-    "average_score":-0.6643271116
+    "word":"James",
+    "counts":215,
+    "total_score":-3.9099765512,
+    "average_score":-0.0181859374
   },
   {
-    "word":"fraud",
-    "counts":9242,
-    "total_score":-5244.7639962882,
-    "average_score":-0.5674923173
+    "word":"Gunn",
+    "counts":242,
+    "total_score":-4.1778336941,
+    "average_score":-0.0172637756
   },
   {
-    "word":"SEC",
-    "counts":9741,
-    "total_score":-3134.3305090219,
-    "average_score":-0.3217668113
+    "word":"Nickelodeon",
+    "counts":284,
+    "total_score":0.0194426407,
+    "average_score":0.00006846
   },
   {
-    "word":"low",
-    "counts":7383,
-    "total_score":-1586.7197946459,
-    "average_score":-0.2149153183
+    "word":"network",
+    "counts":303,
+    "total_score":1.2269778139,
+    "average_score":0.0040494317
   },
   {
-    "word":"CEO",
-    "counts":8098,
-    "total_score":-1635.8217968643,
-    "average_score":-0.2020031856
+    "word":"cartoon",
+    "counts":323,
+    "total_score":2.6061444805,
+    "average_score":0.0080685588
   },
   {
-    "word":"TSLAQ (anti-Tesla)",
-    "counts":87455,
-    "total_score":-14959.5976251066,
-    "average_score":-0.171054801
+    "word":"guardians",
+    "counts":102,
+    "total_score":0.8404924242,
+    "average_score":0.0082401218
   },
   {
-    "word":"never",
-    "counts":9940,
-    "total_score":-1427.639524579,
-    "average_score":-0.1436257067
+    "word":"Marvel",
+    "counts":142,
+    "total_score":7.2990419303,
+    "average_score":0.0514017037
   },
   {
-    "word":"something",
-    "counts":6351,
-    "total_score":-860.7357757092,
-    "average_score":-0.1355275981
-  },
-  {
-    "word":"sales",
-    "counts":11092,
-    "total_score":-1226.3876228333,
-    "average_score":-0.110565058
-  },
-  {
-    "word":"believe",
-    "counts":6758,
-    "total_score":-709.1527245343,
-    "average_score":-0.1049352951
+    "word":"channel",
+    "counts":390,
+    "total_score":21.6977290071,
+    "average_score":0.0556352026
   }
 ]

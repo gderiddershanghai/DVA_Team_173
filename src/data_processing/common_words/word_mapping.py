@@ -22,6 +22,8 @@ WORD_MAPPING = {
     "ios": "iOS",
     "ip": "IP",
     "id": "ID",
+    'gold': 'Gold',
+    'silver': 'Silver',
     # "low": "LOW",
     "mac": "Mac",
     "max": "Max",

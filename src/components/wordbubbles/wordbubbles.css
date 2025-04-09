@@ -6,7 +6,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
-    background-color: aliceblue;
+    background-color: #F1EEEB;
 }
 
 .node:hover circle {
