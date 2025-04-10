@@ -1,11 +1,27 @@
 // Correlation chart structure and functionality
 // Set up dimensions for correlation chart
 const correlationMargin = {top: 20, right: 20, bottom: 20, left: 20};
-const correlationWidth = 900, correlationHeight = 300;
+const correlationWidth = 1080 - correlationMargin.left - correlationMargin.right;
+const correlationHeight = 460 - correlationMargin.top - correlationMargin.bottom - 30; // Account for title area
 
 // Function to update the correlation section with API data
 async function updateCorrelationChart(correlationData, symbol, startDate, endDate, selectedStartIdx, selectedEndIdx, dependencies) {
   const { currentWeeklyData, loadStockData, createLoadingSpinner, tooltip } = dependencies;
+  
+  // Make a local copy of the data to avoid affecting the original
+  const localWeeklyData = [...currentWeeklyData];
+  
+  // Create a local stock data loading function that doesn't affect the global state
+  const loadCorrelatedStockData = async (correlatedSymbol) => {
+    try {
+      // Use the original loadStockData but return only the result without storing it globally
+      const data = await loadStockData(correlatedSymbol, false);
+      return data;
+    } catch (error) {
+      console.error(`Error loading correlated stock data for ${correlatedSymbol}:`, error);
+      return null;
+    }
+  };
   
   // Create SVGs for the two correlation charts
   const corrContainer = d3.select("#correlationChart");
@@ -23,26 +39,26 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
   // Create the two chart areas
   const mostCorrChart = chartContainer.append("div")
     .attr("id", "most-correlated-chart")
-    .style("width", "48%")
+    .style("width", "520px")
     .style("height", "100%");
     
   const leastCorrChart = chartContainer.append("div")
     .attr("id", "least-correlated-chart")
-    .style("width", "48%")
+    .style("width", "520px")
     .style("height", "100%");
   
   // Create SVGs within the chart areas
   const mostSvg = mostCorrChart.append("svg")
-    .attr("width", correlationWidth / 2 - 10)
+    .attr("width", 520)
     .attr("height", correlationHeight);
     
   const leastSvg = leastCorrChart.append("svg")
-    .attr("width", correlationWidth / 2 - 10)
+    .attr("width", 520)
     .attr("height", correlationHeight);
   
   // Add titles to the charts
   mostSvg.append("text")
-    .attr("x", (correlationWidth / 2 - 10) / 2)
+    .attr("x", 520 / 2)
     .attr("y", 20)
     .attr("text-anchor", "middle")
     .style("font-weight", "bold")
@@ -50,7 +66,7 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     .text("Most Correlated Stock");
     
   leastSvg.append("text")
-    .attr("x", (correlationWidth / 2 - 10) / 2)
+    .attr("x", 520 / 2)
     .attr("y", 20)
     .attr("text-anchor", "middle")
     .style("font-weight", "bold")
@@ -64,13 +80,13 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     
     // Show "No Data" message in both charts
     mostSvg.append("text")
-      .attr("x", (correlationWidth / 2 - 10) / 2)
+      .attr("x", 520 / 2)
       .attr("y", correlationHeight / 2)
       .attr("text-anchor", "middle")
       .text("No correlation data available");
       
     leastSvg.append("text")
-      .attr("x", (correlationWidth / 2 - 10) / 2)
+      .attr("x", 520 / 2)
       .attr("y", correlationHeight / 2)
       .attr("text-anchor", "middle")
       .text("No correlation data available");
@@ -104,19 +120,18 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
   
   try {
     // Get the selected date range
-    const currentWeeklyDataCopy = [...currentWeeklyData];
-    const startIdx = Math.max(0, Math.min(selectedStartIdx, currentWeeklyDataCopy.length - 1));
-    const endIdx = Math.max(0, Math.min(selectedEndIdx, currentWeeklyDataCopy.length - 1));
+    const startIdx = Math.max(0, Math.min(selectedStartIdx, localWeeklyData.length - 1));
+    const endIdx = Math.max(0, Math.min(selectedEndIdx, localWeeklyData.length - 1));
     
-    const minDate = currentWeeklyDataCopy[startIdx].date;
-    const maxDate = currentWeeklyDataCopy[endIdx].date;
+    const minDate = localWeeklyData[startIdx].date;
+    const maxDate = localWeeklyData[endIdx].date;
     
     // Filter the main data to the selected range
-    const filteredMainData = currentWeeklyDataCopy.slice(startIdx, endIdx + 1);
+    const filteredMainData = localWeeklyData.slice(startIdx, endIdx + 1);
     
     // Load data for the most correlated stock
     if (correlationData.most_correlated_stock !== "None") {
-      const mostData = await loadStockData(correlationData.most_correlated_stock);
+      const mostData = await loadCorrelatedStockData(correlationData.most_correlated_stock);
       if (mostData) {
         // Filter by date range
         mostCorrelatedData = mostData.weekly.filter(d => 
@@ -143,7 +158,7 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
       // Remove spinner and show no data message
       mostSpinner.remove();
       mostSvg.append("text")
-        .attr("x", (correlationWidth / 2 - 10) / 2)
+        .attr("x", 520 / 2)
         .attr("y", correlationHeight / 2)
         .attr("text-anchor", "middle")
         .text("No most correlated stock found");
@@ -151,7 +166,7 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     
     // Load data for the least correlated stock
     if (correlationData.least_correlated_stock !== "None") {
-      const leastData = await loadStockData(correlationData.least_correlated_stock);
+      const leastData = await loadCorrelatedStockData(correlationData.least_correlated_stock);
       if (leastData) {
         // Filter by date range
         leastCorrelatedData = leastData.weekly.filter(d => 
@@ -178,7 +193,7 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
       // Remove spinner and show no data message
       leastSpinner.remove();
       leastSvg.append("text")
-        .attr("x", (correlationWidth / 2 - 10) / 2)
+        .attr("x", 520 / 2)
         .attr("y", correlationHeight / 2)
         .attr("text-anchor", "middle")
         .text("No least correlated stock found");
@@ -191,13 +206,13 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     leastSpinner.remove();
     
     mostSvg.append("text")
-      .attr("x", (correlationWidth / 2 - 10) / 2)
+      .attr("x", 520 / 2)
       .attr("y", correlationHeight / 2)
       .attr("text-anchor", "middle")
       .text("Error loading data");
       
     leastSvg.append("text")
-      .attr("x", (correlationWidth / 2 - 10) / 2)
+      .attr("x", 520 / 2)
       .attr("y", correlationHeight / 2)
       .attr("text-anchor", "middle")
       .text("Error loading data");

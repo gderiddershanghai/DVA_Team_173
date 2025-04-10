@@ -1,7 +1,8 @@
 // Line chart structure and functionality
 // Set up dimensions for line chart
 const lineMargin = {top: 100, right: 20, bottom: 50, left: 50};
-const lineWidth = 900, lineHeight = 600;
+const lineWidth = 1080 - lineMargin.left - lineMargin.right;
+const lineHeight = 800 - lineMargin.top - lineMargin.bottom;
 
 // Create a line chart
 function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, dependencies) {

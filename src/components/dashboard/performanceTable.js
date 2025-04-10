@@ -1,7 +1,8 @@
 // Performance table structure and functionality
 // Set up dimensions for performance table
 const tableMargin = {top: 20, right: 20, bottom: 20, left: 20};
-const tableWidth = 300, tableHeight = 600;
+const tableWidth = 1300 - tableMargin.left - tableMargin.right;
+const tableHeight = 460 - tableMargin.top - tableMargin.bottom;
 
 // Function to update the performance table with API data
 function updatePerformanceTable(performanceData, dependencies) {

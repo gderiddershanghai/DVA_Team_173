@@ -1,7 +1,8 @@
 // Sentiment diagram structure and functionality
 // Set up dimensions for sentiment diagram
 const sentimentMargin = {top: 20, right: 20, bottom: 20, left: 20};
-const sentimentWidth = 300, sentimentHeight = 300;
+const sentimentWidth = 1300 - sentimentMargin.left - sentimentMargin.right;
+const sentimentHeight = 800 - sentimentMargin.top - sentimentMargin.bottom;
 
 // Function to update the sentiment chart with API data
 function updateSentimentChart(sentimentData, dependencies) {

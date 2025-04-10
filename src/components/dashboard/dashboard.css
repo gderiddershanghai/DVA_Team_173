@@ -1,52 +1,89 @@
 /* Dashboard container */
 #dashboard {
-    width: 1200px;
-    height: 900px;
+    width: 2560px;
+    height: 1440px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
+    padding: 60px 0;
+    box-sizing: border-box;
   }
   
   /* Top and bottom rows */
   #top-row, #bottom-row {
     display: flex;
+    justify-content: space-between;
+    margin: 0 60px;
+  }
+  
+  #bottom-row {
+    margin-top: 60px;
   }
   
   /* Top row components */
   #line-container {
-    width: 900px;
-    height: 600px;
+    width: 1080px;
+    height: 800px;
     border: 1px solid #ccc;
     position: relative;
-    margin-right: 20px;
+    border-radius: 60px;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  
+  #lineChart {
+    width: 100%;
+    height: 100%;
   }
   
   #performance-table {
-    width: 300px;
-    height: 600px;
+    width: 1300px;
+    height: 460px;
     border: 1px solid #ccc;
     padding: 20px;
     overflow-y: auto;
+    border-radius: 60px;
+    box-sizing: border-box;
   }
   
   /* Bottom row components */
   #correlation-container {
-    width: 900px;
-    height: 300px;
+    width: 1080px;
+    height: 460px;
     border: 1px solid #ccc;
     position: relative;
     padding: 20px;
-    margin-right: 20px;
-    margin-top: 20px;
+    border-radius: 60px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
   }
   
   #sentiment-container {
-    width: 300px;
-    height: 300px;
+    width: 1300px;
+    height: 800px;
     border: 1px solid #ccc;
     position: relative;
     padding: 20px;
-    margin-top: 20px;
+    border-radius: 60px;
+    box-sizing: border-box;
+  }
+  
+  /* Correlation charts */
+  #correlationChart {
+    display: flex;
+    justify-content: space-between;
+    flex-grow: 1;
+    width: 100%;
+    height: calc(100% - 30px);
+  }
+  
+  #correlationChart > div {
+    width: 520px !important;
+  }
+  
+  #correlationChart > div:first-child {
+    margin-right: 40px;
   }
   
   /* Controls for line chart */
@@ -302,6 +339,8 @@
   #sentimentChart svg {
     background-color: #f9f9f9;
     border-radius: 5px;
+    width: 100%;
+    height: calc(100% - 40px);
   }
   
   /* Tooltip for line chart */
