@@ -13,7 +13,7 @@
   }
   
   /* Top row components */
-  #candle-container {
+  #line-container {
     width: 900px;
     height: 600px;
     border: 1px solid #ccc;
@@ -49,7 +49,7 @@
     margin-top: 20px;
   }
   
-  /* Controls for candle chart */
+  /* Controls for line chart */
   #controls {
     position: absolute;
     top: 10px;
@@ -304,7 +304,7 @@
     border-radius: 5px;
   }
   
-  /* Tooltip for candle chart */
+  /* Tooltip for line chart */
   .tooltip {
     position: absolute;
     padding: 10px;
@@ -340,12 +340,12 @@
     shape-rendering: crispEdges;
   }
   
-  /* Candle styling */
-  .candle .body {
+  /* line styling */
+  .line .body {
     stroke-width: 1;
   }
   
-  .candle .wick {
+  .line .wick {
     stroke-linecap: round;
   }
   

@@ -9,8 +9,8 @@
   <div id="dashboard">
     <!-- Top Row -->
     <div id="top-row">
-      <!-- Left: Candle Chart with Search Bar and Date Range Sliders -->
-      <div id="candle-container">
+      <!-- Left: line Chart with Search Bar and Date Range Sliders -->
+      <div id="line-container">
         <div id="controls">
           <div class="search-container">
             <input type="text" id="searchTicker" placeholder="Enter Stock Ticker">
@@ -46,7 +46,7 @@
             </div>
           </div>
         </div>
-        <div id="candleChart"></div>
+        <div id="lineChart"></div>
         <div id="date-sliders">
           <div id="date-range-slider">
             <div class="slider-track"></div>
@@ -132,6 +132,6 @@
   </div>
   <!-- Include d3.js -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="dashboard.js"></script>
+  <script type="module" src="dashboard.js"></script>
 </body>
 </html>
