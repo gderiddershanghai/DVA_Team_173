@@ -9,8 +9,8 @@
   <div id="dashboard">
     <!-- Top Row -->
     <div id="top-row">
-      <!-- Left: Candle Chart with Search Bar and Date Range Sliders -->
-      <div id="candle-container">
+      <!-- Left: line Chart with Search Bar and Date Range Sliders -->
+      <div id="line-container">
         <div id="controls">
           <div class="search-container">
             <input type="text" id="searchTicker" placeholder="Enter Stock Ticker">
@@ -46,7 +46,7 @@
             </div>
           </div>
         </div>
-        <div id="candleChart"></div>
+        <div id="lineChart"></div>
         <div id="date-sliders">
           <div id="date-range-slider">
             <div class="slider-track"></div>
@@ -54,12 +54,38 @@
             <div class="slider-handle start-handle" id="startHandle"></div>
             <div class="slider-handle end-handle" id="endHandle"></div>
           </div>
-          <div class="slider-labels">
-            <span id="startLabel">Jan 2017</span>
-            <span id="endLabel">Jul 2020</span>
-          </div>
         </div>
       </div>
+      
+      <!-- Right: Sentiment Analysis Bubbles -->
+      <div id="sentiment-container">
+        <div id="sentimentChart"></div>
+        <!-- FastAPI integration sample -->
+        <!-- 
+        fetch('/api/sentiment')
+          .then(response => response.json())
+          .then(data => { ... update sentiment bubbles ... });
+        -->
+      </div>
+    </div>
+    
+    <!-- Bottom Row -->
+    <div id="bottom-row">
+      <!-- Left: Correlation Section -->
+      <div id="correlation-container">
+        <div id="correlation-info">
+          <span id="mostCorrelated">Most Correlated: Stock A (Score: 0.95)</span>
+          <span id="leastCorrelated">Least Correlated: Stock B (Score: -0.45)</span>
+        </div>
+        <div id="correlationChart"></div>
+        <!-- FastAPI integration sample -->
+        <!-- 
+        fetch('/api/correlation')
+          .then(response => response.json())
+          .then(data => { ... update correlation graphs ... });
+        -->
+      </div>
+      
       <!-- Right: Performance Comparison Table -->
       <div id="performance-table">
         <table>
@@ -102,36 +128,9 @@
         -->
       </div>
     </div>
-    <!-- Bottom Row -->
-    <div id="bottom-row">
-      <!-- Left: Correlation Section -->
-      <div id="correlation-container">
-        <div id="correlation-info">
-          <span id="mostCorrelated">Most Correlated: Stock A (Score: 0.95)</span>
-          <span id="leastCorrelated">Least Correlated: Stock B (Score: -0.45)</span>
-        </div>
-        <div id="correlationChart"></div>
-        <!-- FastAPI integration sample -->
-        <!-- 
-        fetch('/api/correlation')
-          .then(response => response.json())
-          .then(data => { ... update correlation graphs ... });
-        -->
-      </div>
-      <!-- Right: Sentiment Analysis Bubbles -->
-      <div id="sentiment-container">
-        <div id="sentimentChart"></div>
-        <!-- FastAPI integration sample -->
-        <!-- 
-        fetch('/api/sentiment')
-          .then(response => response.json())
-          .then(data => { ... update sentiment bubbles ... });
-        -->
-      </div>
-    </div>
   </div>
   <!-- Include d3.js -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="dashboard.js"></script>
+  <script type="module" src="dashboard.js"></script>
 </body>
 </html>
