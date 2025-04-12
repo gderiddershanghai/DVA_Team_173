@@ -1,9 +1,18 @@
 export const wordBubbles = () => {
-    let width = 1000;
+
+
+//     // Sentiment diagram structure and functionality
+// // Set up dimensions for sentiment diagram
+// const sentimentMargin = {top: 20, right: 20, bottom: 20, left: 20};
+// const sentimentWidth = 1300 - sentimentMargin.left - sentimentMargin.right;
+// const sentimentHeight = 800 - sentimentMargin.top - sentimentMargin.bottom;
+
+
+    let width = 1300;
     let height = 800;
     let data;
     let links = [];
-    let margin = { top: 20, right: 50, bottom: 20, left: 20 };
+    let margin = { top: 20, right: 20, bottom: 20, left: 20 };
     let minScore, maxScore; // Define these at the module level
 
     const backGroundColor = "#F1EEEB"//"aliceblue"; 
@@ -97,6 +106,7 @@ export const wordBubbles = () => {
 
         const linkColorScale = d3.scaleLinear()
             .domain([minWeight, maxWeight])
+            // .domain([minWeight, maxWeight])
             .range(["#CDC9C9", "#544444"]);
 
         console.log("Processed links:", processedLinks.length);
@@ -206,16 +216,23 @@ export const wordBubbles = () => {
             .transition(t)
             .delay((d, i) => i * 100 + 100) 
             .style("opacity", 1);
-        
+
+
+
         // Add a color gradient legend
         const legendWidth = 250;
         const legendHeight = 20;
-        const legendX = width - legendWidth - margin.right;
-        const legendY = 20;
-        const sizeLegendY = legendY + legendHeight + 50;
-        const linkLegendY = sizeLegendY + 100; 
-        
-        // Create color gradient for legend
+        const legendX = (width - legendWidth) / 2;  
+        const legendY = margin.top 
+
+        const spacing = 250 ////
+
+        const colorLegendX = width / 2 - spacing;
+        const sizeLegendX = width / 2;
+        const linkLegendX = width / 2 + spacing;
+
+
+        // === Gradient Definition for Color Legend ===
         const defs = svg.append('defs');
         const gradient = defs.append('linearGradient')
             .attr('id', 'viridis-gradient')
@@ -223,52 +240,103 @@ export const wordBubbles = () => {
             .attr('y1', '0%')
             .attr('x2', '100%')
             .attr('y2', '0%');
+
+            const stops = [
+                { offset: "0%", color: colorScale(-0.1) },
+                { offset: "20%", color: colorScale(-0.5) },
+                { offset: "40%", color: colorScale(0) },
+                { offset: "60%", color: colorScale(0.25) },
+                { offset: "80%", color: colorScale(0.5) },
+                { offset: "100%", color: colorScale(1) }
+            ];
+            stops.forEach(stop => {
+                gradient.append('stop')
+                    .attr('offset', stop.offset)
+                    .attr('stop-color', stop.color);
             
-        // Add color stops to gradient
-        const stops = [0, 0.1,0.15, 0.2, 0.3, 0.4, 0.5,1 ];
-        stops.forEach(stop => {
-            gradient.append('stop')
-                .attr('offset', `${stop * 130}%`)
-                .attr('stop-color', colorScale(stop));
         });
+
+
         
-        // add legend
-        const legend = svg.append('g')
-            .attr('class', 'legend');
-            
-        // Color legend
-        const xLocation = legendX + 50;
-        legend.append('text')
-            .attr('x', xLocation + 55)
-            .attr('y', legendY - 5)
+
+        
+
+        
+
+        // === Color Legend ===
+        const colorLegend = svg.append('g')
+            .attr('class', 'legend color-legend')
+            .attr('transform', `translate(${colorLegendX}, ${legendY})`);
+
+
+
+        //////////////////////////////////////////////////////////
+        // Wrap the contents in a subgroup
+        const colorContent = colorLegend.append('g');
+
+
+
+
+
+        colorLegend.append('text')
+            .attr('x', 2)
+            .attr('y', 0)
             .text('Word Mean Sentiment Score')
             .style('font-weight', 'bold')
             .style('font-size', '12px');
-            
-        legend.append('rect')
-            .attr('x', xLocation)
-            .attr('y', legendY)
-            .attr('width', legendWidth-25)
-            .attr('height', legendHeight)
+
+        colorLegend.append('rect')
+            .attr('x', 0)
+            .attr('y', 10)
+            .attr('width', 200)
+            .attr('height', 20)
             .style('fill', 'url(#viridis-gradient)');
-            
-        legend.append('text')
-            .attr('x', legendX+50)
-            .attr('y', legendY + legendHeight + 25)
-            .text(`(Negative)`)
+
+        colorLegend.append('text')
+            .attr('x', 0)
+            .attr('y', 45)
+            .text('(Negative)')
             .style('font-size', '10px');
-            
-        legend.append('text')
-            .attr('x', legendX + legendWidth+25)
-            .attr('y', legendY + legendHeight + 25)
-            .text(`(Positive)`)
+
+        colorLegend.append('text')
+            .attr('x', 200)
+            .attr('y', 45)
+            .text('(Positive)')
             .style('text-anchor', 'end')
             .style('font-size', '10px');
-        
-        // Size legend
-        legend.append('text')
-            .attr('x', xLocation+15)
-            .attr('y', sizeLegendY +4)
+
+        // Add this **after** all colorContent is appended:
+        const bbox = colorContent.node().getBBox();
+
+        const colorLegendWidth = bbox.width + 760;
+        const colorLegendHeight = bbox.height + 130;
+
+
+        colorLegend.insert('rect', 'g') // insert behind everything
+            .attr('x', bbox.x - 10)
+            .attr('y', bbox.y - 20)
+            .attr('width', colorLegendWidth)
+            .attr('height', colorLegendHeight)
+            .attr('rx', 12)  // rounded corners
+            .attr('ry', 12)
+            .attr('fill', '#D6CDC4')
+            .attr('opacity', 0.21)
+            .attr('stroke', '#ccc')
+            .attr('stroke-width', 1);
+        //////////////////////////////////////////////////////////
+
+
+
+
+        // === Size Legend ===
+        const sizeLegend = svg.append('g')
+            .attr('class', 'legend size-legend')
+            .attr('transform', `translate(${sizeLegendX}, ${legendY})`);
+
+
+        sizeLegend.append('text')
+            .attr('cx', -10)
+            .attr('y', 0)
             .style('font-weight', 'bold')
             .style('fill', 'black')
             .style('font-size', '12px')
@@ -276,93 +344,104 @@ export const wordBubbles = () => {
             .data(['Word Frequency', '(Legend bubbles shown at 1:2 scale)'])
             .enter()
             .append('tspan')
-            .attr('x', xLocation+15)
+            .attr('x', 20)
             .attr('dy', (d, i) => i * 15)
             .text(d => d);
-            
-        // Use nicer round numbers for size legend
-        const sizeStops = [
-            minCount,
-            Math.round((minCount + maxCount) / 2),
-            maxCount
-        ];
-        
-        // Use the same scale as for the actual nodes
+
+        const sizeStops = [minCount, Math.round((minCount + maxCount) / 2), maxCount];
         const radiusScale = d3.scaleSqrt()
             .domain([minCount, maxCount])
             .range([15, 60]);
-            
+
         sizeStops.forEach((count, i) => {
             const radius = radiusScale(count);
-            const cx = xLocation + 25 + i * 85;
-            const cy = sizeLegendY + 45; 
-            
-            const legendScaleFactor = 1/2;
-            // Add circle
-            legend.append('circle')
+            const cx = 25 + i * 85;
+            const cy = 55;
+            const legendScaleFactor = 0.5;
+
+            sizeLegend.append('circle')
                 .attr('cx', cx)
                 .attr('cy', cy)
                 .attr('r', radius * legendScaleFactor)
                 .style('fill', 'black')
                 .style('stroke', 'black')
                 .style('stroke-width', 1);
-                
-            legend.append('text')
+
+            sizeLegend.append('text')
                 .attr('x', cx)
-                .attr('y', cy + radius + 15)
+                .attr('y', cy + (0.5*radius) + 20)
                 .text(Math.round(count))
                 .style('text-anchor', 'middle')
                 .style('font-size', '10px');
         });
 
-        // Link legend
-        legend.append('text')
-            .attr('x', xLocation+45)
-            .attr('y', linkLegendY + 25)
+            // sizeLegend.append('text')
+            // .attr('x', cx)
+            // .attr('y', cy + radius + 10)  // << move it closer to the circle
+            // .text(Math.round(count))
+            // .style('text-anchor', 'middle')  // << ensures it's centered
+            // .style('font-size', '10px');
+
+
+
+        // === Link Legend ===
+        const linkLegend = svg.append('g')
+            .attr('class', 'legend link-legend')
+            .attr('transform', `translate(${linkLegendX}, ${legendY})`);
+
+        linkLegend.append('text')
+            .attr('x', 20)
+            .attr('y', 0)
             .text('Co-occurrence Frequency')
             .style('font-weight', 'bold')
             .style('font-size', '12px');
-    
-        // Add an explanatory note
-        legend.append('text')
-            .attr('x', xLocation+15)
-            .attr('y', linkLegendY + 40)
+
+        linkLegend.append('text')
+            .attr('x', 20)
+            .attr('y', 15)
             .text('(Link thickness shows frequency of word pairs)')
             .style('font-size', '10px')
             .style('font-style', 'italic');
-    
-        // Use the same scale as for the actual links
+
         const linkWidthScale = d3.scaleSqrt()
             .domain([minWeight, maxWeight])
             .range([0.5, 4]);
-        
-        // Use nicer round numbers for link legend
-        const linkStops = [
-            threshold,
-            Math.round((threshold + maxWeight) / 2),
-            maxWeight
-        ];
-        
+
+        const linkStops = [threshold, Math.round((threshold + maxWeight) / 2), maxWeight];
         linkStops.forEach((weight, i) => {
-            const thickness = linkWidthScale(weight);  
-            const color = linkColorScale(weight);  
-            const y = linkLegendY + i * 25;
-        
-            legend.append('line')
-                .attr('x1', xLocation+55)
-                .attr('y1', y + 55)
-                .attr('x2', xLocation + 200)
-                .attr('y2', y+55)
-                .attr('stroke', color)  
+            const thickness = linkWidthScale(weight);
+            const color = linkColorScale(weight);
+            const y = 40 + i * 20;
+
+            linkLegend.append('line')
+                .attr('x1', 55)
+                .attr('y1', y)
+                .attr('x2', 160)
+                .attr('y2', y)
+                .attr('stroke', color)
                 .attr('stroke-width', thickness);
-        
-            // Add weight label
-            legend.append('text')
-                .attr('x', xLocation +20)
-                .attr('y', y + 60)
+
+            linkLegend.append('text')
+                .attr('x', 20)
+                .attr('y', y + 4)
                 .text(Math.round(weight))
                 .style('font-size', '10px');
         });
+
+
+        
+////////////////////////////FUNCTIONS/////////////////////////////////////
+
+// keeps nodes from going into the legend
+
+                //  const colorLegendWidth = bbox.width + 760;
+                //  const colorLegendHeight = bbox.height + 130;
+        function isInsideLegend(x, y) {
+            // Define fixed region covering all legend groups
+            return y < 130 && x > (width / 2 - 400) && x < (width / 2 + 400);
+        }
+
+
 
         function ticked() {
             // Update node positions
@@ -371,7 +450,17 @@ export const wordBubbles = () => {
                              Math.min(width - margin.right - d.radius, d.x));
               d.y = Math.max(margin.top + d.radius,
                              Math.min(height - margin.bottom - d.radius, d.y));
-              return `translate(${d.x},${d.y})`;
+            
+
+
+                             if (isInsideLegend(d.x, d.y)) {
+                                d.x = d.px || d.x;  // Revert to previous x
+                                d.y = d.py || d.y;
+                            }
+                            d.px = d.x;
+                            d.py = d.y;
+              
+                             return `translate(${d.x},${d.y})`;
             });
             
             // Update link positions as straight lines
@@ -429,9 +518,9 @@ export const wordBubbles = () => {
                 // Change color to orange when fixed
                 d3.select(this)
                     .select("circle")
-                    .style("fill", "#D6CDC4")
-                    .style("stroke", "#D6CDC4")
-                    // .style("fill", d => colorScale(d.color_value))
+                    // .style("fill", "#D6CDC4")
+                    // .style("stroke", "#D6CDC4")
+                    .style("fill", d => colorScale(d.color_value))
                     // // .style("fill-opacity", 0.15)  
                     // .style("stroke", d => colorScale(d.color_value))
                     // .style("stroke-opacity", 1);  
@@ -449,6 +538,10 @@ export const wordBubbles = () => {
             }
         }
     };
+    
+
+
+
     
     my.width = function(_) {
         return arguments.length ? ((width = +_), my) : width;
