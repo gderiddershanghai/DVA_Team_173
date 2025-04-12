@@ -8,6 +8,9 @@ export const wordBubbles = () => {
 // const sentimentHeight = 800 - sentimentMargin.top - sentimentMargin.bottom;
 
 
+
+
+
     let width = 1300;
     let height = 800;
     let data;
@@ -34,7 +37,7 @@ export const wordBubbles = () => {
         // Create a more compressed scale for radius
         const radiusScale = d3.scaleSqrt()
             .domain([minCount, maxCount])
-            .range([30, 100]); 
+            .range([20, 70]); 
         
         rawData.forEach(d => {
             d.radius = radiusScale(d.counts);
@@ -73,12 +76,13 @@ export const wordBubbles = () => {
         });
 
         const centerX = width / 2;
-        const centerY = height / 2;
+        const centerY = height * .1;
         processedData.forEach((d, i) => {
             const angle = (i / processedData.length) * 2 * Math.PI;
             const r = width * .5; // reduce!!
             d.x = centerX + r * Math.cos(angle);
             d.y = centerY + r * Math.sin(angle);
+            // d.y = height * 0.015 + Math.random() * 40;
         });
 
         // Create map of words
@@ -128,7 +132,8 @@ export const wordBubbles = () => {
         const svg = selection
             .append('svg')
             .attr('width', width)
-            .attr('height', height);
+            .attr('height', height-10)
+            .style('background-color', 'white');
         
         // const colorScale = d3.scaleSequential(d3.interpolateViridis)
         //     .domain([Math.min(minScore*1.2,-0.5), Math.max(maxScore*1.5,0.75)]);
@@ -147,11 +152,11 @@ export const wordBubbles = () => {
         const simulation = d3.forceSimulation(processedData)
             .force('link', d3.forceLink(processedLinks).id(d => d.word)
                 .distance(d => 100 + Math.min(d.source.radius + d.target.radius, 100)))
-            .force('charge', d3.forceManyBody().strength(d => Math.min(d.charge, -3050)))
+            .force('charge', d3.forceManyBody().strength(d => Math.min(d.charge, -350)))
             .force('center', d3.forceCenter(width / 2, height / 2))
             .force('x', d3.forceX().strength(0.08))
             .force('y', d3.forceY().strength(0.18))
-            .force('collision', d3.forceCollide().radius(d => d.radius +35)) // makes them spread out more
+            .force('collision', d3.forceCollide().radius(d => d.radius +25)) // makes them spread out more
             .alphaTarget(0.01)
             .alphaDecay(0.002)
             .on('tick', ticked);
@@ -276,9 +281,9 @@ export const wordBubbles = () => {
             .attr('class', 'legend-group')
             .attr('transform', `translate(${width / 2}, ${legendY})`);
 
-            const colorLegend = legendGroup.append('g').attr('transform', `translate(-260, 0)`);
-            const sizeLegend  = legendGroup.append('g').attr('transform', `translate(0, 0)`);
-            const linkLegend  = legendGroup.append('g').attr('transform', `translate(260, 0)`);
+            const colorLegend = legendGroup.append('g').attr('transform', `translate(-360, 0)`);
+            const sizeLegend  = legendGroup.append('g').attr('transform', `translate(-80, 0)`);
+            const linkLegend  = legendGroup.append('g').attr('transform', `translate(190, 0)`);
             
 
         
@@ -328,23 +333,43 @@ export const wordBubbles = () => {
             .style('font-size', '10px');
 
         // Add this **after** all colorContent is appended:
-        const bbox = colorContent.node().getBBox();
+        // const bbox = colorContent.node().getBBox();
 
-        const colorLegendWidth = bbox.width + 800;
-        const colorLegendHeight = bbox.height + 130;
+        // const colorLegendWidth = bbox.width + 800;
+        // const colorLegendHeight = bbox.height + 130;
 
-
-        colorLegend.insert('rect', 'g') // insert behind everything
+        const bboxNode = colorContent.node();
+        if (bboxNode) {
+          const bbox = bboxNode.getBBox();
+          const colorLegendWidth = bbox.width + 800;
+          const colorLegendHeight = bbox.height + 130;
+        
+          colorLegend.insert('rect', 'g') // insert behind everything
             .attr('x', bbox.x - 10)
             .attr('y', bbox.y - 20)
             .attr('width', colorLegendWidth)
             .attr('height', colorLegendHeight)
-            .attr('rx', 12)  // rounded corners
+            .attr('rx', 12)
             .attr('ry', 12)
             .attr('fill', '#D6CDC4')
             .attr('opacity', 0.21)
             .attr('stroke', '#ccc')
             .attr('stroke-width', 1);
+        }
+        
+
+
+        // colorLegend.insert('rect', 'g') // insert behind everything
+        //     .attr('x', bbox.x - 10)
+        //     .attr('y', bbox.y - 20)
+        //     .attr('width', colorLegendWidth)
+        //     .attr('height', colorLegendHeight)
+        //     .attr('rx', 12)  // rounded corners
+        //     .attr('ry', 12)
+        //     .attr('fill', '#D6CDC4')
+        //     .attr('opacity', 0.21)
+        //     .attr('stroke', '#ccc')
+        //     .attr('stroke-width', 1);
         //////////////////////////////////////////////////////////
 
 
@@ -373,7 +398,7 @@ export const wordBubbles = () => {
         const sizeStops = [minCount, Math.round((minCount + maxCount) / 2), maxCount];
         const radiusScale = d3.scaleSqrt()
             .domain([minCount, maxCount])
-            .range([30, 100]);
+            .range([20, 70]);
 
         sizeStops.forEach((count, i) => {
             const radius = radiusScale(count);

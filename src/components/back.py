@@ -1,8 +1,19 @@
 from fastapi import FastAPI
 import pandas as pd
 import numpy as np
+from fastapi.middleware.cors import CORSMiddleware # 
 
 app = FastAPI()
+###############
+# Enable CORS##################
+app.add_middleware( ###############
+    CORSMiddleware,        ###############
+    allow_origins=["*"],    ########## #####
+    allow_credentials=True,  ###############
+    allow_methods=["*"],   ###############
+    allow_headers=["*"],   ###############
+)  ###############
+###############
 
 # Load stock and market data (assuming CSV files exist)
 def load_data():

@@ -2,7 +2,8 @@
 import { lineMargin, lineWidth, lineHeight, drawlineChart } from './lineChart.js';
 import { correlationMargin, correlationWidth, correlationHeight, updateCorrelationChart, drawCorrelationChart } from './correlationChart.js';
 import { tableMargin, tableWidth, tableHeight, updatePerformanceTable } from './performanceTable.js';
-import { sentimentMargin, sentimentWidth, sentimentHeight, updateSentimentChart } from './sentimentDiagram.js';
+// import { sentimentMargin, sentimentWidth, sentimentHeight, updateSentimentChart } from './sentimentDiagram.js';
+import { wordBubbles } from './wordbubbles.js';
 
 // Set up dimensions for different components
 // Note: Component-specific dimensions are now imported from their respective files
@@ -307,6 +308,60 @@ async function fetchCalculationData(symbol, startDate, endDate) {
   }
 }
 
+// function to load sentiment data
+async function updateWordBubbles(sentimentData) {
+  let wordData = [];
+  let links = [];
+
+  if (sentimentData && sentimentData.keywords && Object.keys(sentimentData.keywords).length > 0) {
+    wordData = Object.entries(sentimentData.keywords).map(([word, d]) => ({
+      word,
+      counts: d.count,
+      average_score: d.sentiment_score
+    }));
+    links = sentimentData.links || [];
+  } else {
+    console.warn("Sentiment data missing — using fallback files.");
+
+    try {
+      const [topWords, bottomWords, adjMatrix] = await Promise.all([
+        d3.json("tmp_data/top_words.json"),
+        d3.json("tmp_data/bottom_words.json"),
+        d3.json("tmp_data/adjacency_matrix.json"),
+      ]);
+
+      wordData = [...topWords, ...bottomWords];
+
+      Object.keys(adjMatrix).forEach(source => {
+        Object.keys(adjMatrix[source]).forEach(target => {
+          const weight = adjMatrix[source][target];
+          if (weight > 0) {
+            links.push({ source, target, weight });
+          }
+        });
+      });
+    } catch (err) {
+      console.error("Error loading local word bubble data:", err);
+      return;
+    }
+  }
+
+  d3.select("#sentimentChart").selectAll("*").remove();
+
+  const bubbles = wordBubbles()
+    .width(1300)
+    .height(800)
+    .data(wordData)
+    .links(links)
+    .margin({ top: 20, right: 20, bottom: 20, left: 20 });
+
+  d3.select("#sentimentChart").call(bubbles);
+}
+
+
+
+
+
 // Add a generic loading spinner function
 function createLoadingSpinner(container, width, height) {
   const spinner = container.append("g")
@@ -407,8 +462,18 @@ async function updateDashboard(isSliderUpdate = false) {
   const endDate = d3.timeFormat("%Y-%m-%d")(currentWeeklyData[endIndex].date);
   
   // Show loading indicators in the performance and sentiment areas
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                // TO DO: CENTER THE SPINNER
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////
   d3.select("#performance-table tbody").style("opacity", 0.5);
   
+
+  const sentimentMargin = {top: 20, right: 20, bottom: 20, left: 20};
+  const sentimentWidth = 1300 - sentimentMargin.left - sentimentMargin.right;
+  const sentimentHeight = 800 - sentimentMargin.top - sentimentMargin.bottom;
+
+
+
   d3.select("#sentimentChart").selectAll("*").remove();
   createLoadingSpinner(
     d3.select("#sentimentChart").append("svg")
@@ -477,7 +542,11 @@ async function updateDashboard(isSliderUpdate = false) {
   );
   
   // Update the sentiment chart with API data or placeholder visualization
-  updateSentimentChart(calculationData ? calculationData.sentiment : null, { tooltip });
+//   updateSentimentChart(calculationData ? calculationData.sentiment : null, { tooltip });
+await updateWordBubbles(calculationData ? calculationData.sentiment : null);
+
+
+
 }
 
 // Attach event listeners for interactivity
@@ -547,6 +616,48 @@ initializeSlider();
 const initialTicker = "V"; // Set the current ticker
 currentTicker = initialTicker;
 d3.select("#searchTicker").property("value", currentTicker);
+
+
+async function initWordBubbleChart() {
+  try {
+    const [topWords, bottomWords, adjMatrix] = await Promise.all([
+      d3.json("tmp_data/top_words.json"),
+      d3.json("tmp_data/bottom_words.json"),
+      d3.json("tmp_data/adjacency_matrix.json"),
+    ]);
+
+    const wordData = [...topWords, ...bottomWords];
+
+    const links = [];
+    Object.keys(adjMatrix).forEach(source => {
+      Object.keys(adjMatrix[source]).forEach(target => {
+        const weight = adjMatrix[source][target];
+        if (weight > 0) {
+          links.push({ source, target, weight });
+        }
+      });
+    });
+
+    const width = 1300;
+    const height = 800;
+
+    const bubbles = wordBubbles()
+      .width(width)
+      .height(height)
+      .data(wordData)
+      .links(links)
+      .margin({ top: 20, right: 20, bottom: 20, left: 20 });
+
+    d3.select("#wordBubbleChart").call(bubbles);
+  } catch (error) {
+    console.error("Error loading word bubble data:", error);
+  }
+}
+
+
+// to initialize the bubbles
+initWordBubbleChart();
+
 updateDashboard(false); // Full update for initial load
 
 // Close dropdown when clicking outside
