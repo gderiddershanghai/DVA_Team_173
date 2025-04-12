@@ -5,6 +5,7 @@ WORD_MAPPING = {
     "ad": "Ads",
     "ads": "Ads",
     "app": "App",
+    'florida': 'Florida',
     "aws": "AWS",
     "bp": "BP (Oil)",
     "btc": "Bitcoin",

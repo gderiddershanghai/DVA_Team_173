@@ -25,7 +25,7 @@ class FilterStopwords:
             'pepsico', 'pfizer', 'intel', 'oracle', 'netflix', 'mcdonalds', 'amazon', 'ford',
             'alphabet', 'mastercard', 'procter', 'gamble', 'meta', 'chevron', 'apple', 'walt',
             'disney', 'starbucks', 'microsoft', 'johnson', 'costco', 'coca', 'cola', 'tesla', 'twrt',
-            'TWTR', 'FB', 'GM', 'GOOG', 'Try', 'another'
+            'TWTR', 'FB', 'GM', 'GOOG', 'Try', 'another', 'news'
         }
         self.tickers = {
             'unh', 'xom', 'meta', 'aapl', 'googl', 'nke', 'jnj', 'amzn', 'f', 'dis',

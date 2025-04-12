@@ -1,9 +1,33 @@
 [
   {
-    "word":"story",
-    "counts":105,
-    "total_score":19.3185227273,
-    "average_score":0.1839859307
+    "word":"princess",
+    "counts":313,
+    "total_score":26.9568064574,
+    "average_score":0.0861239823
+  },
+  {
+    "word":"world",
+    "counts":447,
+    "total_score":49.9054737855,
+    "average_score":0.1116453552
+  },
+  {
+    "word":"need",
+    "counts":143,
+    "total_score":18.4916017316,
+    "average_score":0.1293119002
+  },
+  {
+    "word":"show",
+    "counts":151,
+    "total_score":23.9510651154,
+    "average_score":0.1586163253
+  },
+  {
+    "word":"US",
+    "counts":197,
+    "total_score":31.6336940837,
+    "average_score":0.1605771273
   },
   {
     "word":"air",
@@ -16,30 +40,6 @@
     "counts":601,
     "total_score":122.1168908638,
     "average_score":0.2031895023
-  },
-  {
-    "word":"gift",
-    "counts":92,
-    "total_score":18.953001443,
-    "average_score":0.2060108853
-  },
-  {
-    "word":"Mulan",
-    "counts":99,
-    "total_score":23.728219697,
-    "average_score":0.2396789868
-  },
-  {
-    "word":"true",
-    "counts":97,
-    "total_score":27.6289772727,
-    "average_score":0.2848348172
-  },
-  {
-    "word":"magic",
-    "counts":92,
-    "total_score":35.7365909091,
-    "average_score":0.3884412055
   },
   {
     "word":"favorite",

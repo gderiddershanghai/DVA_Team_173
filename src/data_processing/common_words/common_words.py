@@ -175,7 +175,16 @@ class CommonWords:
                 count = matrix_json.get(w1, {}).get(w2, matrix_json.get(w2, {}).get(w1, 0))
                 mapped_matrix[mapped_w1][mapped_w2] = count
 
-        
+        ######################
+        ######################
+                ######################
+        ######################
+                ######################
+        ###################### REMOVE WORDS THAT OCCUR OFTEN BUT NOT IN ADJ Matrix
+                ######################
+        ######################
+                ######################
+        ######################
         word_pass_end = time.perf_counter()
         print(f"Time for word mapping: {word_pass_end - word_pass_start:.2f} seconds")
         print('top words:', top_words)
@@ -232,14 +241,14 @@ if __name__ == "__main__":
         
         
         ######################################
-    idx = 5
+    idx = 5 # 5 is a good one  "2017-01-01" "2019-12-21"
     print(tickers[idx])
     analyzer = CommonWords(
         ticker=tickers[idx],
         data_dir=input_dir,
         start_date="2017-01-01",
         end_date="2019-12-21",
-        min_count_percentage=0.01,
+        min_count_percentage=0.015,
         top_n_words=8,
         filter_metric='average_score'
         

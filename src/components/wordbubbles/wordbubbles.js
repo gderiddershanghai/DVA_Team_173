@@ -15,6 +15,13 @@ export const wordBubbles = () => {
     let margin = { top: 20, right: 20, bottom: 20, left: 20 };
     let minScore, maxScore; // Define these at the module level
 
+
+    function isInLegendArea(x, y) {
+        return y < 160 && x > (width / 2 - 420) && x < (width / 2 + 420);
+    }
+    
+
+
     const backGroundColor = "#F1EEEB"//"aliceblue"; 
 
     const processData = (rawData) => {
@@ -27,21 +34,27 @@ export const wordBubbles = () => {
         // Create a more compressed scale for radius
         const radiusScale = d3.scaleSqrt()
             .domain([minCount, maxCount])
-            .range([15, 70]); 
+            .range([25, 90]); 
         
         rawData.forEach(d => {
             d.radius = radiusScale(d.counts);
           
             const sign = 1;
             // Scale charge based on radius but cap it for very large nodes
-            d.charge = sign * Math.min(Math.pow(d.radius, 1.15), -300);
+            d.charge = sign * Math.min(Math.pow(d.radius, 1.15), -100);
+            // const polarityStrength = 60;
+            // d.charge = (d.average_score >= 0 ? -1 : 1) * polarityStrength - Math.pow(d.radius, 1.1);
+            // d.charge = -100 + d.average_score * 600; 
         });
         
         minScore = Math.min(...rawData.map(d => d.average_score));
         maxScore = Math.max(...rawData.map(d => d.average_score));
         
         rawData.forEach(d => {
-            d.color_value = (d.average_score - minScore) / (maxScore - minScore);
+            // normalize color
+            // d.color_value = (d.average_score - minScore) / (maxScore - minScore);
+            // dont normalize the color
+            d.color_value = d.average_score;
         });
         
         return rawData;
@@ -63,7 +76,7 @@ export const wordBubbles = () => {
         const centerY = height / 2;
         processedData.forEach((d, i) => {
             const angle = (i / processedData.length) * 2 * Math.PI;
-            const r = width * 0.4; // Reduced radius from center for better initial layout
+            const r = width * .5; // Reduced radius from center for better initial layout
             d.x = centerX + r * Math.cos(angle);
             d.y = centerY + r * Math.sin(angle);
         });
@@ -121,9 +134,10 @@ export const wordBubbles = () => {
         //     .domain([Math.min(minScore*1.2,-0.5), Math.max(maxScore*1.5,0.75)]);
 
         const colorScale = d3.scaleLinear()
-            // Create 5 equally spaced points between minScore and maxScore
-            .domain(d3.range(7).map(i => minScore + i * (maxScore - minScore) / 17.5))
-            .range([ "#ed5f74","#EF7C8E", "#F5B9C3",  "#B6E2D3", "#66C2A3", "#66C2A3"]);
+        .domain([-0.5, -0.3, -0.1, 0, 0.3, 0.5, 0.75])
+        .range(["#ed5f74", "#EF7C8E", "#F5B9C3", '#fef9e7', "#B6E2D3", "#66C2A3", "#1B9E77"])
+        .clamp(true);
+    
             
         const t = d3
             .transition()
@@ -133,11 +147,11 @@ export const wordBubbles = () => {
         const simulation = d3.forceSimulation(processedData)
             .force('link', d3.forceLink(processedLinks).id(d => d.word)
                 .distance(d => 100 + Math.min(d.source.radius + d.target.radius, 100)))
-            .force('charge', d3.forceManyBody().strength(d => Math.min(d.charge, -300)))
+            .force('charge', d3.forceManyBody().strength(d => Math.min(d.charge, -3050)))
             .force('center', d3.forceCenter(width / 2, height / 2))
             .force('x', d3.forceX().strength(0.08))
             .force('y', d3.forceY().strength(0.18))
-            .force('collision', d3.forceCollide().radius(d => d.radius + 15))
+            .force('collision', d3.forceCollide().radius(d => d.radius +35)) // makes them spread out more
             .alphaTarget(0.01)
             .alphaDecay(0.002)
             .on('tick', ticked);
@@ -225,7 +239,7 @@ export const wordBubbles = () => {
         const legendX = (width - legendWidth) / 2;  
         const legendY = margin.top 
 
-        const spacing = 250 ////
+        const spacing = 200 ////
 
         const colorLegendX = width / 2 - spacing;
         const sizeLegendX = width / 2;
@@ -235,38 +249,46 @@ export const wordBubbles = () => {
         // === Gradient Definition for Color Legend ===
         const defs = svg.append('defs');
         const gradient = defs.append('linearGradient')
-            .attr('id', 'viridis-gradient')
-            .attr('x1', '0%')
-            .attr('y1', '0%')
-            .attr('x2', '100%')
-            .attr('y2', '0%');
+                .attr('id', 'viridis-gradient')
+                .attr('x1', '0%')
+                .attr('y1', '0%')
+                .attr('x2', '100%')
+                .attr('y2', '0%');
 
             const stops = [
-                { offset: "0%", color: colorScale(-0.1) },
-                { offset: "20%", color: colorScale(-0.5) },
-                { offset: "40%", color: colorScale(0) },
-                { offset: "60%", color: colorScale(0.25) },
-                { offset: "80%", color: colorScale(0.5) },
-                { offset: "100%", color: colorScale(1) }
+                { offset: "0%", color: colorScale(-0.5) },
+                { offset: "16.6%", color: colorScale(-0.3) },
+                { offset: "33.3%", color: colorScale(-0.1) },
+                { offset: "50%", color: colorScale(0) },
+                { offset: "66.6%", color: colorScale(0.3) },
+                { offset: "83.3%", color: colorScale(0.5) },
+                { offset: "100%", color: colorScale(0.75) }
             ];
+            
             stops.forEach(stop => {
                 gradient.append('stop')
                     .attr('offset', stop.offset)
                     .attr('stop-color', stop.color);
+            });
             
-        });
 
+            const legendGroup = svg.append('g')
+            .attr('class', 'legend-group')
+            .attr('transform', `translate(${width / 2}, ${legendY})`);
 
-        
+            const colorLegend = legendGroup.append('g').attr('transform', `translate(-260, 0)`);
+            const sizeLegend  = legendGroup.append('g').attr('transform', `translate(0, 0)`);
+            const linkLegend  = legendGroup.append('g').attr('transform', `translate(260, 0)`);
+            
 
         
 
         
 
         // === Color Legend ===
-        const colorLegend = svg.append('g')
-            .attr('class', 'legend color-legend')
-            .attr('transform', `translate(${colorLegendX}, ${legendY})`);
+        // const colorLegend = svg.append('g')
+        //     .attr('class', 'legend color-legend')
+        //     .attr('transform', `translate(${colorLegendX}, ${legendY})`);
 
 
 
@@ -308,7 +330,7 @@ export const wordBubbles = () => {
         // Add this **after** all colorContent is appended:
         const bbox = colorContent.node().getBBox();
 
-        const colorLegendWidth = bbox.width + 760;
+        const colorLegendWidth = bbox.width + 800;
         const colorLegendHeight = bbox.height + 130;
 
 
@@ -329,9 +351,9 @@ export const wordBubbles = () => {
 
 
         // === Size Legend ===
-        const sizeLegend = svg.append('g')
-            .attr('class', 'legend size-legend')
-            .attr('transform', `translate(${sizeLegendX}, ${legendY})`);
+        // const sizeLegend = svg.append('g')
+        //     .attr('class', 'legend size-legend')
+        //     .attr('transform', `translate(${sizeLegendX}, ${legendY})`);
 
 
         sizeLegend.append('text')
@@ -385,9 +407,9 @@ export const wordBubbles = () => {
 
 
         // === Link Legend ===
-        const linkLegend = svg.append('g')
-            .attr('class', 'legend link-legend')
-            .attr('transform', `translate(${linkLegendX}, ${legendY})`);
+        // const linkLegend = svg.append('g')
+        //     .attr('class', 'legend link-legend')
+        //     .attr('transform', `translate(${linkLegendX}, ${legendY})`);
 
         linkLegend.append('text')
             .attr('x', 20)
@@ -436,10 +458,10 @@ export const wordBubbles = () => {
 
                 //  const colorLegendWidth = bbox.width + 760;
                 //  const colorLegendHeight = bbox.height + 130;
-        function isInsideLegend(x, y) {
-            // Define fixed region covering all legend groups
-            return y < 130 && x > (width / 2 - 400) && x < (width / 2 + 400);
-        }
+        // function isInsideLegend(x, y) {
+        //     // Define fixed region covering all legend groups
+        //     return y < 130 && x > (width / 2 - 400) && x < (width / 2 + 400);
+        // }
 
 
 
@@ -453,12 +475,12 @@ export const wordBubbles = () => {
             
 
 
-                             if (isInsideLegend(d.x, d.y)) {
-                                d.x = d.px || d.x;  // Revert to previous x
-                                d.y = d.py || d.y;
-                            }
-                            d.px = d.x;
-                            d.py = d.y;
+                            //  if (isInsideLegend(d.x, d.y)) {
+                            //     d.x = d.px || d.x;  // Revert to previous x
+                            //     d.y = d.py || d.y;
+                            // }
+                            // d.px = d.x;
+                            // d.py = d.y;
               
                              return `translate(${d.x},${d.y})`;
             });

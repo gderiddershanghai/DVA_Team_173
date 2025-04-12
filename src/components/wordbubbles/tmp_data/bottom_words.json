@@ -30,12 +30,6 @@
     "average_score":0.0080685588
   },
   {
-    "word":"guardians",
-    "counts":102,
-    "total_score":0.8404924242,
-    "average_score":0.0082401218
-  },
-  {
     "word":"Marvel",
     "counts":142,
     "total_score":7.2990419303,
@@ -46,5 +40,11 @@
     "counts":390,
     "total_score":21.6977290071,
     "average_score":0.0556352026
+  },
+  {
+    "word":"star",
+    "counts":165,
+    "total_score":13.2561844637,
+    "average_score":0.0803405119
   }
 ]
