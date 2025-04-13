@@ -20,12 +20,12 @@ class FilterStopwords:
 
         # Define word sets to filter
         self.company_names = {
-            'jpmorgan', 'chase', 'cisco', 'comcast', 'exxon', 'mobil', 'verizon', 'inc',
-            'walmart', 'paypal', 'holdings', 'boeing', 'nike', 'merck', 'at&t', 'kroger',
+            'jpmorgan', 'chase', 'cisco', 'comcast', 'exxon', 'mobil', 'verizon', 'inc','daytrading', 'free',
+            'walmart', 'paypal', 'holdings', 'boeing', 'nike', 'merck', 'at&t', 'kroger', 'optionsflow'
             'pepsico', 'pfizer', 'intel', 'oracle', 'netflix', 'mcdonalds', 'amazon', 'ford',
             'alphabet', 'mastercard', 'procter', 'gamble', 'meta', 'chevron', 'apple', 'walt',
             'disney', 'starbucks', 'microsoft', 'johnson', 'costco', 'coca', 'cola', 'tesla', 'twrt',
-            'TWTR', 'FB', 'GM', 'GOOG', 'Try', 'another'
+            'TWTR', 'FB', 'GM', 'GOOG', 'Try', 'another', 'news'
         }
         self.tickers = {
             'unh', 'xom', 'meta', 'aapl', 'googl', 'nke', 'jnj', 'amzn', 'f', 'dis',
@@ -79,7 +79,8 @@ class FilterStopwords:
             'posting', 'posted', 'user', 'users', 'account', 'accounts', 'am', 'pm', 'vs',
             'via', 'per', 'new', 'now', 'next', 'last', 'ago', 'yet', 'still', 'ever',
             'even', 'also', 'too', 'very', 'quite', 'like', 'said', 'made', 'come', 'first',
-            'put', 'coming', 'something', 'hey', 'stockmarket', 'stock', 'stocks',
+            'put', 'coming', 'something', 'hey', 'stockmarket', 'stock', 'stocks', 'support',
+            'sure', 'feed', 'read', 'stophateforprofit', 'donate', 'donate', 'donating',
         }
 
         # Create a unified stopword set (forcing everything to lower-case)
