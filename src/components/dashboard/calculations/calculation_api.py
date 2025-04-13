@@ -253,11 +253,10 @@ def calculate_correlation(request_ticker: str, stock_return: float, all_stock_re
         least_corr_value = -1.0
     
     return {
-        "most_correlated_stock": most_similar_ticker,
-        "most_correlated_stock_correlation": float(most_corr_value),
-        "least_correlated_stock": least_similar_ticker,
-        "least_correlated_stock_correlation": float(least_corr_value)
-    }
+        "most_correlated_stock": most_correlated[0],
+        "most_correlated_stock_correlation": float(most_correlated[1]),
+        "least_correlated_stock": least_correlated[0],
+        "least_correlated_stock_correlation": float(least_correlated[1])}
 
 # def extract_keywords(tweet: str) -> List[str]:
 #     # Tweet column already contains cleaned keywords separated by spaces
@@ -269,13 +268,7 @@ def calculate_correlation(request_ticker: str, stock_return: float, all_stock_re
 # def analyze_sentiment(twitter_data: pd.DataFrame) -> dict:
 #     if twitter_data.empty:
 #         return {"keywords": {}}
-# def analyze_sentiment(twitter_data: pd.DataFrame) -> dict:
-#     if twitter_data.empty:
-#         return {"keywords": {}}
     
-#     # Initialize data structures
-#     keyword_data = defaultdict(lambda: {"sentiment_score": 0, "count": 0})  # Track sentiment and count for each keyword
-#     keyword_tweets = defaultdict(set)  # Using sets instead of lists for faster intersection operations
 #     # Initialize data structures
 #     keyword_data = defaultdict(lambda: {"sentiment_score": 0, "count": 0})  # Track sentiment and count for each keyword
 #     keyword_tweets = defaultdict(set)  # Using sets instead of lists for faster intersection operations
@@ -284,21 +277,10 @@ def calculate_correlation(request_ticker: str, stock_return: float, all_stock_re
 #     for idx, row in twitter_data.iterrows():
 #         tweet = row['Tweet']
 #         score = row['Score']
-#     # First pass: Process each tweet to extract keywords and track their tweets
-#     for idx, row in twitter_data.iterrows():
-#         tweet = row['Tweet']
-#         score = row['Score']
         
 #         # Extract keywords
 #         keywords = extract_keywords(tweet)
-#         # Extract keywords
-#         keywords = extract_keywords(tweet)
         
-#         # Update keyword data and track which tweet index the keyword appears in
-#         for keyword in keywords:
-#             keyword_data[keyword]["sentiment_score"] += score
-#             keyword_data[keyword]["count"] += 1
-#             keyword_tweets[keyword].add(idx)
 #         # Update keyword data and track which tweet index the keyword appears in
 #         for keyword in keywords:
 #             keyword_data[keyword]["sentiment_score"] += score
@@ -308,12 +290,7 @@ def calculate_correlation(request_ticker: str, stock_return: float, all_stock_re
 #     # Sort keywords by count and take top 8
 #     top_keywords = sorted(keyword_data.items(), key=lambda x: x[1]["count"], reverse=True)[:8]
 #     top_keyword_names = [k for k, _ in top_keywords]
-#     # Sort keywords by count and take top 8
-#     top_keywords = sorted(keyword_data.items(), key=lambda x: x[1]["count"], reverse=True)[:8]
-#     top_keyword_names = [k for k, _ in top_keywords]
     
-#     # Prepare final format with precalculated average sentiment
-#     result = {"keywords": {}}
 #     # Prepare final format with precalculated average sentiment
 #     result = {"keywords": {}}
     
@@ -324,17 +301,7 @@ def calculate_correlation(request_ticker: str, stock_return: float, all_stock_re
 #             "sentiment_score": float(avg_sentiment),
 #             "count": data["count"]
 #         }
-#     # Calculate average sentiment and add base data for each top keyword
-#     for keyword, data in top_keywords:
-#         avg_sentiment = data["sentiment_score"] / data["count"] if data["count"] > 0 else 0
-#         result["keywords"][keyword] = {
-#             "sentiment_score": float(avg_sentiment),
-#             "count": data["count"]
-#         }
     
-#     # Precompute co-occurrences matrix for top keywords only - much more efficient
-#     # Create a dictionary to store precomputed intersections
-#     co_occurrences = {}
 #     # Precompute co-occurrences matrix for top keywords only - much more efficient
 #     # Create a dictionary to store precomputed intersections
 #     co_occurrences = {}
@@ -347,22 +314,7 @@ def calculate_correlation(request_ticker: str, stock_return: float, all_stock_re
 #             if common_count > 0:
 #                 co_occurrences[(keyword1, keyword2)] = common_count
 #                 co_occurrences[(keyword2, keyword1)] = common_count  # Store both directions
-#     # For each pair of top keywords, calculate intersection once
-#     for i, keyword1 in enumerate(top_keyword_names):
-#         for keyword2 in top_keyword_names[i+1:]:  # Only compute each pair once
-#             # Find intersection of tweet indices
-#             common_count = len(keyword_tweets[keyword1] & keyword_tweets[keyword2])
-#             if common_count > 0:
-#                 co_occurrences[(keyword1, keyword2)] = common_count
-#                 co_occurrences[(keyword2, keyword1)] = common_count  # Store both directions
     
-#     # Add co-occurrence data to result
-#     for keyword in top_keyword_names:
-#         for other_keyword in top_keyword_names:
-#             if keyword != other_keyword:
-#                 count = co_occurrences.get((keyword, other_keyword), 0)
-#                 if count > 0:
-#                     result["keywords"][keyword][other_keyword] = count
 #     # Add co-occurrence data to result
 #     for keyword in top_keyword_names:
 #         for other_keyword in top_keyword_names:
@@ -373,17 +325,47 @@ def calculate_correlation(request_ticker: str, stock_return: float, all_stock_re
     
 #     return result
 
-# TODO: add sentiment analysis function
+@app.post("/api/word-bubbles")
+async def word_bubbles_endpoint(req: WordBubbleRequest):
+    print('TRYING TO GET SENTIMENT DATAAAAA')
+    try:
+        print('what does a man gotta ado to get some sentiment data around here')
+        analyzer = CommonWords(
+            ticker=req.ticker.upper(),
+            data_dir=TWEET_DATA_DIR,
+            start_date=req.start_date,
+            end_date=req.end_date,
+            min_count_percentage=req.min_count_percentage,
+            top_n_words=req.top_n_words,
+            filter_metric=req.filter_metric,
+        )
 
-@app.post("/api/get_sentiment_data")
-# async def get_sentiment_data(request: StockRequest):
-#     try:
-#         twitter_data = load_twitter_data(request.stock_ticker, request.start_date, request.end_date)
-#         sentiment_data = analyze_sentiment(twitter_data)
-#         return sentiment_data
-#     except Exception as e:
+        result = analyzer.calculate()
 
-@app.post("/api/get_stock_data")
+        if result is None:
+            raise HTTPException(status_code=404, detail="No data found for this query.")
+
+        top_words, bottom_words, adj_matrix = result
+        # print('WRONG FUCKING WORDS', top_words,  bottom_words)
+        # print("TYPE OF top_words[0]:", type(top_words[0]))
+
+        return {
+            "top_words": top_words,
+            "bottom_words": bottom_words,
+            "adj_matrix": adj_matrix,
+        }
+
+    except FileNotFoundError as e:
+        # print('404 could not get that data')
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        # print('oopsies internal error')
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
+
+
 
 @app.post("/api/calculate")
 async def calculate(request: StockRequest):
