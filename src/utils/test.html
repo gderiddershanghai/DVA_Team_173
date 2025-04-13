@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Charts Test</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="charts.js" defer></script>
+  <style>
+    #chartContainer, #similarStockChart, #leastCorrelatedChart, #bubbleChart {
+      margin: 20px;
+    }
+    svg {
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Main Chart</h1>
+  <div id="chartContainer"></div>
+
+  <h2>Most Correlated Stock</h2>
+  <div id="similarStockChart"></div>
+
+  <h2>Least Correlated Stock</h2>
+  <div id="leastCorrelatedChart"></div>
+
+  <h2>Sentiment Analysis Bubble Chart</h2>
+  <div id="bubbleChart"></div>
+</body>
+</html>

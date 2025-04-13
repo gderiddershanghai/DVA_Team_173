@@ -510,7 +510,7 @@ async function updateDashboard(isSliderUpdate = false) {
                              " - $" + d3.max(selectedData, d => d.high).toFixed(2));
   
   // Update all components
-  updateAllComponents(ticker, calculationData, startIndex, endIndex, startDate, endDate);
+  await updateAllComponents(ticker, calculationData, startIndex, endIndex, startDate, endDate);
 }
 
 // Display loading indicators for components
@@ -530,7 +530,7 @@ function displayLoadingIndicators() {
 }
 
 // Update all dashboard components
-function updateAllComponents(ticker, calculationData, startIndex, endIndex, startDate, endDate) {
+async function updateAllComponents(ticker, calculationData, startIndex, endIndex, startDate, endDate) {
   // Create dependencies object to pass to component functions
   const commonDependencies = {
     lineSvg,

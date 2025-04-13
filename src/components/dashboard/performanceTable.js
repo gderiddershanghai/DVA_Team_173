@@ -23,8 +23,9 @@ function updatePerformanceTable(performanceData, dependencies) {
   // Add title
   performanceTable.append("h2")
     .text("Stock Information")
-    .style("margin-bottom", "20px")
-    .style("color", "#333");
+    .style("margin-bottom", "15px")
+    .style("color", "#333")
+    .style("font-size", "22px");
   
   if (!performanceData) {
     performanceTable.append("p")
@@ -35,9 +36,6 @@ function updatePerformanceTable(performanceData, dependencies) {
     return;
   }
   
-  // Log performance data for debugging
-  console.log("Performance Data:", performanceData);
-  
   // Get benchmark values from the API data
   const benchmarkValues = {
     "alpha": performanceData.market_alpha,
@@ -46,17 +44,15 @@ function updatePerformanceTable(performanceData, dependencies) {
     "treynor_ratio": performanceData.market_treynor_ratio 
   };
   
-  // Log benchmark values
-  console.log("Benchmark Values:", benchmarkValues);
-  
   // Calculate average rank (for color determination)
   const avgRank = stocksDatabase.length / 2;
   
-  // Create metric row container
+  // Create grid layout for metrics - 2x2 grid
   const metricsContainer = performanceTable.append("div")
     .style("display", "grid")
     .style("grid-template-columns", "repeat(2, 1fr)")
-    .style("grid-gap", "20px");
+    .style("grid-gap", "15px")
+    .style("max-height", "380px"); // Ensure it fits within container
   
   // Get current ticker from the search box
   const currentTicker = d3.select("#searchTicker").property("value").toUpperCase() || "AAPL";
@@ -106,133 +102,155 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
   rank = rank || 0;
   
   // Calculate if above or below average
-  const isBelowAverage = rank > avgRank;
-  const colorClass = isBelowAverage ? "#F44336" : "#4CAF50";
+  const isBelowAverage = value < benchmarkValues[paramKey];
+  const circleColor = isBelowAverage ? "#EF7C8E" : "#66C2A3";
   
   // Create card container
   const card = container.append("div")
-    .style("display", "flex")
     .style("background-color", "white")
     .style("border-radius", "8px")
     .style("box-shadow", "0 2px 6px rgba(0,0,0,0.1)")
     .style("padding", "15px")
-    .style("height", "120px");
-  
-  // Left side with badge and description
-  const leftSide = card.append("div")
-    .style("flex", "1")
     .style("display", "flex")
     .style("flex-direction", "column")
-    .style("padding-right", "15px");
+    .style("height", "165px");
   
-  // Metric badge (circular)
-  const badgeContainer = leftSide.append("div")
+  // Create first row with circle and description
+  const topRow = card.append("div")
     .style("display", "flex")
-    .style("align-items", "center");
+    .style("margin-bottom", "10px");
   
-  badgeContainer.append("div")
+  // Create rank circle - 60x60px (reduced from 70x70)
+  const circleContainer = topRow.append("div")
+    .style("min-width", "60px");
+  
+  circleContainer.append("div")
     .style("width", "60px")
     .style("height", "60px")
     .style("border-radius", "50%")
-    .style("background-color", colorClass)
+    .style("background-color", circleColor)
     .style("display", "flex")
     .style("align-items", "center")
     .style("justify-content", "center")
-    .style("margin-bottom", "10px")
     .style("color", "white")
     .style("font-weight", "bold")
     .style("font-size", "24px")
-    .text(Math.round(value));
+    .text(rank);
   
-  // Title and description
-  leftSide.append("h3")
-    .style("font-size", "18px")
-    .style("margin", "5px 0")
+  // Create title and description
+  const textContainer = topRow.append("div")
+    .style("margin-left", "15px")
+    .style("display", "flex")
+    .style("flex-direction", "column")
+    .style("justify-content", "center");
+  
+  textContainer.append("div")
+    .style("font-size", "20px")
+    .style("font-weight", "500")
+    .style("color", "black")
     .text(title);
   
-  leftSide.append("p")
-    .style("font-size", "14px")
-    .style("color", "#666")
+  textContainer.append("div")
+    .style("font-size", "16px")
+    .style("color", "#D6CDC4")
+    .style("margin-top", "3px")
     .text(parameterDescriptions[paramKey]);
   
-  // Right side with linear graph
-  const rightSide = card.append("div")
-    .style("flex", "1.5")
-    .style("border-left", "1px solid #eee")
-    .style("padding-left", "15px");
+  // Create second row with linear graph
+  const bottomRow = card.append("div")
+    .style("height", "50px")
+    .style("position", "relative")
+    .style("margin-top", "5px");
   
-  // Create SVG for visualization
-  const svg = rightSide.append("svg")
-    .attr("width", "100%")
-    .attr("height", "60px");
+  // Create the linear scale and axis
+  const svgWidth = "100%";
+  const svgHeight = 50;
   
-  // Add scale line
+  const svg = bottomRow.append("svg")
+    .attr("width", svgWidth)
+    .attr("height", svgHeight);
+  
+  // Add horizontal line for the scale
   svg.append("line")
     .attr("x1", "10%")
     .attr("x2", "90%")
-    .attr("y1", 30)
-    .attr("y2", 30)
-    .attr("stroke", "#ddd")
-    .attr("stroke-width", 2);
-  
-  // Add benchmark marker (S&P500)
-  const benchmarkX = "50%"; // Center position
-  svg.append("line")
-    .attr("x1", benchmarkX)
-    .attr("x2", benchmarkX)
     .attr("y1", 25)
-    .attr("y2", 35)
-    .attr("stroke", "#888")
+    .attr("y2", 25)
+    .attr("stroke", "#E9E5E1")
     .attr("stroke-width", 2);
   
+  // Add benchmark marker (S&P500) - center at 50%
+  const benchmarkX = "50%";
+  const benchmarkValue = benchmarkValues[paramKey];
+  
+  svg.append("rect")
+    .attr("x", benchmarkX)
+    .attr("y", 15)
+    .attr("width", 2)
+    .attr("height", 20)
+    .attr("transform", "translate(-1, 0)")
+    .attr("fill", "#A38E79");
+  
+  // Add benchmark label
   svg.append("text")
     .attr("x", benchmarkX)
-    .attr("y", 50)
+    .attr("y", 45)
     .attr("text-anchor", "middle")
     .attr("fill", "#666")
     .attr("font-size", "12px")
     .text("S&P500");
   
+  // Add benchmark value
   svg.append("text")
     .attr("x", benchmarkX)
-    .attr("y", 20)
+    .attr("y", 10)
     .attr("text-anchor", "middle")
     .attr("fill", "#333")
-    .attr("font-size", "10px")
-    .text(benchmarkValues[paramKey].toFixed(1));
+    .attr("font-size", "12px")
+    .text(benchmarkValue.toFixed(1));
   
   // Calculate stock position based on value relative to benchmark
   // Normalize position between 10% and 90% of the available width
-  const benchmarkVal = benchmarkValues[paramKey];
-  const range = Math.max(Math.abs(value - benchmarkVal) * 3, 0.5);
+  const range = Math.max(Math.abs(value - benchmarkValue) * 3, 0.5);
   const maxPos = Math.min(90, 50 + range * 20);
   const minPos = Math.max(10, 50 - range * 20);
   
-  const stockX = value > benchmarkVal 
-    ? `${50 + (value - benchmarkVal) / range * (maxPos - 50)}%`
-    : `${50 - (benchmarkVal - value) / range * (50 - minPos)}%`;
+  const stockX = value > benchmarkValue 
+    ? `${50 + (value - benchmarkValue) / range * (maxPos - 50)}%`
+    : `${50 - (benchmarkValue - value) / range * (50 - minPos)}%`;
+  
+  // Add path/line connecting benchmark to stock value
+  svg.append("line")
+    .attr("x1", benchmarkX)
+    .attr("x2", stockX)
+    .attr("y1", 25)
+    .attr("y2", 25)
+    .attr("stroke", isBelowAverage ? "rgba(239, 124, 142, 0.3)" : "rgba(102, 194, 163, 0.3)")
+    .attr("stroke-width", 2);
   
   // Add stock marker
   svg.append("circle")
     .attr("cx", stockX)
-    .attr("cy", 30)
-    .attr("r", 10)
-    .attr("fill", colorClass);
+    .attr("cy", 25)
+    .attr("r", 6)
+    .attr("fill", circleColor);
   
+  // Add stock ticker
   svg.append("text")
     .attr("x", stockX)
-    .attr("y", 50)
+    .attr("y", 45)
     .attr("text-anchor", "middle")
     .attr("fill", "#666")
     .attr("font-size", "12px")
     .text(stockTicker);
   
+  // Add stock value
   svg.append("text")
     .attr("x", stockX)
     .attr("y", 10)
     .attr("text-anchor", "middle")
     .attr("fill", "#333")
-    .attr("font-size", "10px")
+    .attr("font-size", "12px")
     .text(value.toFixed(1));
 }
 
