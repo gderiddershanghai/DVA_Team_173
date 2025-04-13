@@ -129,7 +129,7 @@ async function loadStockData(symbol, updateGlobalState = true) {
     // Use d3.csv to directly load CSV data
     const csvPath = `/clean_data/stock_data/${symbol}.csv`;
     
-    const dailyData = await d3.csv(csvPath, d => ({
+    const rawData = await d3.csv(csvPath, d => ({
       date: parseDate(d.Date.split(' ')[0]), // Extract just the date part
       open: +d.Open,
       high: +d.High,
@@ -141,10 +141,10 @@ async function loadStockData(symbol, updateGlobalState = true) {
     }));
     
     // Sort by date
-    dailyData.sort((a, b) => a.date - b.date);
+    rawData.sort((a, b) => a.date - b.date);
     
     // Filter for data within our display range plus calculation period
-    const filteredDailyData = filterDataByDateRange(dailyData);
+    const filteredDailyData = filterDataByDateRange(rawData);
     
     // Aggregate to weekly data
     const weeklyData = aggregateToWeekly(filteredDailyData);
@@ -247,30 +247,39 @@ function initializeSlider() {
     e.preventDefault();
   });
   
-  document.addEventListener('mousemove', function(e) {
-    if (!isDraggingStart && !isDraggingEnd) return;
-    
-    const sliderRect = sliderTrack.getBoundingClientRect();
-    const newPercent = Math.min(100, Math.max(0, ((e.clientX - sliderRect.left) / sliderRect.width) * 100));
-    
-    if (isDraggingStart) {
-      startPercent = Math.min(endPercent - 5, newPercent);
-    } else if (isDraggingEnd) {
-      endPercent = Math.max(startPercent + 5, newPercent);
-    }
-    
-    updateSliderPositions();
-  });
+  // Unified mousemove handler
+  document.addEventListener('mousemove', handleSliderMove);
   
-  document.addEventListener('mouseup', function() {
-    if (isDraggingStart || isDraggingEnd) {
-      // Only update dashboard when dragging stops, and signal this is a slider update
-      updateDashboard(true);
-      sliderInUse = false; // Clear flag when slider interaction ends
-    }
-    isDraggingStart = false;
-    isDraggingEnd = false;
-  });
+  // Unified mouseup handler
+  document.addEventListener('mouseup', handleSliderRelease);
+}
+
+// Handle slider movement
+function handleSliderMove(e) {
+  if (!isDraggingStart && !isDraggingEnd) return;
+  
+  const sliderTrack = document.getElementById('date-range-slider');
+  const sliderRect = sliderTrack.getBoundingClientRect();
+  const newPercent = Math.min(100, Math.max(0, ((e.clientX - sliderRect.left) / sliderRect.width) * 100));
+  
+  if (isDraggingStart) {
+    startPercent = Math.min(endPercent - 5, newPercent);
+  } else if (isDraggingEnd) {
+    endPercent = Math.max(startPercent + 5, newPercent);
+  }
+  
+  updateSliderPositions();
+}
+
+// Handle slider release
+function handleSliderRelease() {
+  if (isDraggingStart || isDraggingEnd) {
+    // Only update dashboard when dragging stops, and signal this is a slider update
+    updateDashboard(true);
+    sliderInUse = false; // Clear flag when slider interaction ends
+  }
+  isDraggingStart = false;
+  isDraggingEnd = false;
 }
 
 // Update slider handle positions and range display
@@ -361,8 +370,10 @@ async function updateDashboard(isSliderUpdate = false) {
   // Update search ticker display to match current ticker (in case it was changed programmatically)
   d3.select("#searchTicker").property("value", ticker);
   
+  let shouldLoadData = !isSliderUpdate;
+  
   // If this is not a slider update, update the entire dashboard including the line chart
-  if (!isSliderUpdate) {
+  if (shouldLoadData) {
     // Show loading spinner in the line chart area
     lineSvg.selectAll("*").remove();
     createLoadingSpinner(
@@ -406,17 +417,8 @@ async function updateDashboard(isSliderUpdate = false) {
   const startDate = d3.timeFormat("%Y-%m-%d")(currentWeeklyData[startIndex].date);
   const endDate = d3.timeFormat("%Y-%m-%d")(currentWeeklyData[endIndex].date);
   
-  // Show loading indicators in the performance and sentiment areas
-  d3.select("#performance-table tbody").style("opacity", 0.5);
-  
-  d3.select("#sentimentChart").selectAll("*").remove();
-  createLoadingSpinner(
-    d3.select("#sentimentChart").append("svg")
-      .attr("width", sentimentWidth)
-      .attr("height", sentimentHeight),
-    sentimentWidth,
-    sentimentHeight
-  );
+  // Show loading indicators
+  displayLoadingIndicators();
   
   // Fetch calculation data from the API
   const calculationData = await fetchCalculationData(ticker, startDate, endDate);
@@ -433,6 +435,28 @@ async function updateDashboard(isSliderUpdate = false) {
   d3.select("#priceRange").text("Selected: $" + d3.min(selectedData, d => d.low).toFixed(2) + 
                              " - $" + d3.max(selectedData, d => d.high).toFixed(2));
   
+  // Update all components
+  updateAllComponents(ticker, calculationData, startIndex, endIndex, startDate, endDate);
+}
+
+// Display loading indicators for components
+function displayLoadingIndicators() {
+  // Show loading for performance table
+  d3.select("#performance-table tbody").style("opacity", 0.5);
+  
+  // Show loading for sentiment chart
+  d3.select("#sentimentChart").selectAll("*").remove();
+  createLoadingSpinner(
+    d3.select("#sentimentChart").append("svg")
+      .attr("width", sentimentWidth)
+      .attr("height", sentimentHeight),
+    sentimentWidth,
+    sentimentHeight
+  );
+}
+
+// Update all dashboard components
+function updateAllComponents(ticker, calculationData, startIndex, endIndex, startDate, endDate) {
   // Create dependencies object to pass to component functions
   const commonDependencies = {
     lineSvg,
@@ -448,8 +472,6 @@ async function updateDashboard(isSliderUpdate = false) {
   };
   
   // Always update the line chart with the SELECTED stock's data
-  // Make sure to use currentWeeklyData which has the currently selected stock's data
-  console.log(`Drawing line chart for ${ticker}, data points: ${currentWeeklyData.length}`);
   drawlineChart(currentWeeklyData, currentDailyData, startIndex, endIndex, commonDependencies);
   
   // Reset performance table opacity
@@ -502,28 +524,13 @@ function handleSearchInput() {
   dropdown.html("");
   
   if (input.length > 0) {
-    // Filter stocks based on input matching either symbol or name
-    const filteredStocks = stocksDatabase.filter(stock => 
-      stock.symbol.includes(input) || 
-      stock.name.toUpperCase().includes(input)
-    );
+    // Get filtered suggestions
+    const suggestions = getFilteredStockSuggestions(input);
     
-    // Sort results: exact symbol matches first, then symbol includes, then name includes
-    filteredStocks.sort((a, b) => {
-      if (a.symbol === input && b.symbol !== input) return -1;
-      if (a.symbol !== input && b.symbol === input) return 1;
-      if (a.symbol.startsWith(input) && !b.symbol.startsWith(input)) return -1;
-      if (!a.symbol.startsWith(input) && b.symbol.startsWith(input)) return 1;
-      return 0;
-    });
-    
-    // Limit to top 8 results for better UX
-    const limitedResults = filteredStocks.slice(0, 8);
-    
-    if (limitedResults.length > 0) {
+    if (suggestions.length > 0) {
       dropdown.style("display", "block");
       
-      limitedResults.forEach(stock => {
+      suggestions.forEach(stock => {
         dropdown.append("div")
           .attr("class", "suggestion")
           .html(`<strong>${stock.symbol}</strong> - ${stock.name}`)
@@ -540,6 +547,27 @@ function handleSearchInput() {
   } else {
     dropdown.style("display", "none");
   }
+}
+
+// Filter and sort stock suggestions based on input
+function getFilteredStockSuggestions(input) {
+  // Filter stocks based on input matching either symbol or name
+  const filteredStocks = stocksDatabase.filter(stock => 
+    stock.symbol.includes(input) || 
+    stock.name.toUpperCase().includes(input)
+  );
+  
+  // Sort results: exact symbol matches first, then symbol includes, then name includes
+  filteredStocks.sort((a, b) => {
+    if (a.symbol === input && b.symbol !== input) return -1;
+    if (a.symbol !== input && b.symbol === input) return 1;
+    if (a.symbol.startsWith(input) && !b.symbol.startsWith(input)) return -1;
+    if (!a.symbol.startsWith(input) && b.symbol.startsWith(input)) return 1;
+    return 0;
+  });
+  
+  // Limit to top 8 results for better UX
+  return filteredStocks.slice(0, 8);
 }
 
 // Initialize the dashboard

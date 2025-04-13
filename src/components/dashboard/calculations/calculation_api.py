@@ -69,8 +69,8 @@ STOCK_TICKERS = ["CSCO", "BA", "V", "T", "BAC", "F", "PEP", "COST", "MRK", "ORCL
 
 # the performance metrics will be calculated with using SPY as the benchmark
 # when a data is received, all metrics will be calculated for all the stocks in the STOCK_TICKERS list and get the rank accoring to the results
-# risk_free_rate is 0.05 per year
-RISK_FREE_RATE = 0.05
+# risk_free_rate is 0.02 per year
+RISK_FREE_RATE = 0.02
 
 # the sentiment analysis will be done by repeating the following steps:
 # 1. get the tweets for the given stock and date range
@@ -134,30 +134,56 @@ def load_twitter_data(ticker: str, start_date: str, end_date: str) -> pd.DataFra
         # Return empty DataFrame if no Twitter data exists
         return pd.DataFrame(columns=['Date', 'Tweet', 'Ticker', 'Score'])
 
-def calculate_returns(stock_data: pd.DataFrame) -> np.ndarray:
-    # Calculate daily returns using Close price
-    returns = stock_data['Close'].pct_change().dropna().values
-    return returns
+def calculate_returns(stock_data: pd.DataFrame) -> float:
+    # Calculate total return over the period
+    first_price = stock_data['Close'].iloc[0]
+    last_price = stock_data['Close'].iloc[-1]
+    total_return = (last_price / first_price) - 1
+    return total_return
 
-def calculate_performance_metrics(stock_returns: np.ndarray, market_returns: np.ndarray) -> dict:
-    # Convert risk-free rate from annual to daily
-    daily_risk_free_rate = RISK_FREE_RATE / 252 # 252 is the number of trading days in a year
+def calculate_performance_metrics(stock_return: float, market_return: float, stock_data: pd.DataFrame, market_data: pd.DataFrame) -> dict:
+    # Convert annual risk-free rate to the period return
+    # Assuming 252 trading days in a year
     
-    # Calculate excess returns
-    excess_stock_returns = stock_returns - daily_risk_free_rate
-    excess_market_returns = market_returns - daily_risk_free_rate
+    # Calculate period length in trading days
+    period_days = len(stock_data)
+    if period_days < 1:
+        period_days = 1  # Default to 1 if no data available
     
-    # Calculate beta: covariance(stock, market) / variance(market)
-    beta = np.cov(excess_stock_returns, excess_market_returns)[0, 1] / np.var(excess_market_returns)
+    # Calculate the period's risk-free rate
+    period_risk_free_rate = RISK_FREE_RATE * (period_days / 252)
     
-    # Calculate alpha: average excess stock return - (beta * average excess market return)
-    alpha = np.mean(excess_stock_returns) - (beta * np.mean(excess_market_returns))
+    # Calculate excess returns for the period
+    excess_stock_return = stock_return - period_risk_free_rate
+    excess_market_return = market_return - period_risk_free_rate
     
-    # Calculate Sharpe ratio: mean(excess returns) / std(excess returns)
-    sharpe_ratio = np.mean(excess_stock_returns) / np.std(excess_stock_returns)
+    # Since we have daily data, we can calculate beta properly using the daily returns
+    # Calculate daily returns for beta calculation
+    daily_stock_returns = stock_data['Close'].pct_change().dropna().values
+    daily_market_returns = market_data['Close'].pct_change().dropna().values
     
-    # Calculate Treynor ratio: mean(excess returns) / beta
-    treynor_ratio = np.mean(excess_stock_returns) / beta if beta != 0 else 0
+    # Ensure arrays are the same length
+    min_length = min(len(daily_stock_returns), len(daily_market_returns))
+    if min_length > 1:
+        beta = np.cov(daily_stock_returns[:min_length], daily_market_returns[:min_length])[0, 1] / np.var(daily_market_returns[:min_length])
+    else:
+        beta = 1.0  # Default value
+    
+    # Alpha: stock return - (risk-free rate + beta * (market return - risk-free rate))
+    alpha = stock_return - (period_risk_free_rate + beta * (market_return - period_risk_free_rate))
+    
+    # Calculate Sharpe ratio using the period return and annualized volatility
+    # For more accurate Sharpe, we use daily returns to estimate volatility
+    if min_length > 1:
+        # Annualize the volatility
+        daily_volatility = np.std(daily_stock_returns)
+        annualized_volatility = daily_volatility * np.sqrt(252)
+        sharpe_ratio = excess_stock_return / annualized_volatility if annualized_volatility != 0 else 0
+    else:
+        sharpe_ratio = excess_stock_return / period_risk_free_rate if period_risk_free_rate != 0 else 0
+    
+    # Calculate Treynor ratio
+    treynor_ratio = excess_stock_return / beta if beta != 0 else 0
     
     return {
         "alpha": float(alpha),
@@ -166,24 +192,11 @@ def calculate_performance_metrics(stock_returns: np.ndarray, market_returns: np.
         "treynor_ratio": float(treynor_ratio)
     }
 
-def calculate_correlation(stock_returns: np.ndarray, all_stock_returns: Dict[str, np.ndarray]) -> dict:
-    correlations = {}
-    for ticker, returns in all_stock_returns.items():
-        # Skip self-correlation (correlation of 1.0)
-        if np.array_equal(stock_returns, returns):
-            continue
-            
-        if len(returns) > 0 and len(stock_returns) > 0:
-            # Use the minimum length between the two arrays
-            min_length = min(len(stock_returns), len(returns))
-            correlation = np.corrcoef(stock_returns[:min_length], returns[:min_length])[0, 1]
-            correlations[ticker] = correlation
+def calculate_correlation(stock_return: float, all_stock_returns: Dict[str, float]) -> dict:
+    # For period returns calculation, we'll use the total return values to determine similarity
     
-    # Find most and least correlated stocks
-    # Exclude NaN values
-    valid_correlations = {k: v for k, v in correlations.items() if not np.isnan(v)}
-    
-    if not valid_correlations:
+    # Find most and least correlated stocks based on similarity of total returns
+    if len(all_stock_returns) <= 1:
         return {
             "most_correlated_stock": "None",
             "most_correlated_stock_correlation": 0,
@@ -191,14 +204,45 @@ def calculate_correlation(stock_returns: np.ndarray, all_stock_returns: Dict[str
             "least_correlated_stock_correlation": 0
         }
     
-    most_correlated = max(valid_correlations.items(), key=lambda x: x[1])
-    least_correlated = min(valid_correlations.items(), key=lambda x: x[1])
+    # Create dictionary of stock ticker to difference from target stock return
+    # Skip the requested stock itself
+    stock_ticker = next(iter(all_stock_returns))  # Just get any key to identify the request stock
+    differences = {ticker: abs(ret - stock_return) 
+                   for ticker, ret in all_stock_returns.items() 
+                   if ticker != stock_ticker}
+    
+    if not differences:
+        return {
+            "most_correlated_stock": "None",
+            "most_correlated_stock_correlation": 0,
+            "least_correlated_stock": "None",
+            "least_correlated_stock_correlation": 0
+        }
+    
+    # Find most similar (smallest difference) and least similar (largest difference)
+    most_similar_ticker = min(differences.items(), key=lambda x: x[1])[0]
+    least_similar_ticker = max(differences.items(), key=lambda x: x[1])[0]
+    
+    # Convert differences to correlation-like values between -1 and 1
+    # The smaller the difference, the closer to 1
+    # The larger the difference, the closer to -1
+    max_diff = max(differences.values())
+    
+    # Calculate "correlation" values
+    if max_diff > 0:
+        most_corr_value = 1.0 - (differences[most_similar_ticker] / max_diff)
+        least_corr_value = 1.0 - (differences[least_similar_ticker] / max_diff)
+        # Make sure least correlation is negative
+        least_corr_value = -abs(least_corr_value)
+    else:
+        most_corr_value = 1.0
+        least_corr_value = -1.0
     
     return {
-        "most_correlated_stock": most_correlated[0],
-        "most_correlated_stock_correlation": float(most_correlated[1]),
-        "least_correlated_stock": least_correlated[0],
-        "least_correlated_stock_correlation": float(least_correlated[1])
+        "most_correlated_stock": most_similar_ticker,
+        "most_correlated_stock_correlation": float(most_corr_value),
+        "least_correlated_stock": least_similar_ticker,
+        "least_correlated_stock_correlation": float(least_corr_value)
     }
 
 def extract_keywords(tweet: str) -> List[str]:
@@ -276,12 +320,12 @@ async def calculate(request: StockRequest):
         market_data = load_stock_data("SPY", request.start_date, request.end_date)
         twitter_data = load_twitter_data(request.stock_ticker, request.start_date, request.end_date)
         
-        # Calculate returns
-        stock_returns = calculate_returns(stock_data)
-        market_returns = calculate_returns(market_data)
+        # Calculate total returns over the period
+        stock_return = calculate_returns(stock_data)
+        market_return = calculate_returns(market_data)
         
         # Calculate performance metrics for the requested stock
-        performance_metrics = calculate_performance_metrics(stock_returns, market_returns)
+        performance_metrics = calculate_performance_metrics(stock_return, market_return, stock_data, market_data)
         
         # Calculate performance metrics for all stocks to determine ranks
         all_metrics = {}
@@ -289,19 +333,16 @@ async def calculate(request: StockRequest):
         
         for ticker in STOCK_TICKERS:
             # Skip the requested stock - we already calculated its metrics
-            if ticker == request.stock_ticker or ticker == "SPY":
+            if ticker == request.stock_ticker:
                 continue
                 
             try:
                 ticker_data = load_stock_data(ticker, request.start_date, request.end_date)
-                ticker_returns = calculate_returns(ticker_data)
-                all_returns[ticker] = ticker_returns
+                ticker_return = calculate_returns(ticker_data)
+                all_returns[ticker] = ticker_return
                 
-                if len(ticker_returns) > 0 and len(market_returns) > 0:
-                    # Use the minimum length between the two arrays
-                    min_length = min(len(ticker_returns), len(market_returns))
-                    metrics = calculate_performance_metrics(ticker_returns[:min_length], market_returns[:min_length])
-                    all_metrics[ticker] = metrics
+                metrics = calculate_performance_metrics(ticker_return, market_return, ticker_data, market_data)
+                all_metrics[ticker] = metrics
             except Exception:
                 # Skip stocks with missing data
                 continue
@@ -315,7 +356,11 @@ async def calculate(request: StockRequest):
         betas = {ticker: metrics["beta"] for ticker, metrics in combined_metrics.items()}
         sharpe_ratios = {ticker: metrics["sharpe_ratio"] for ticker, metrics in combined_metrics.items()}
         treynor_ratios = {ticker: metrics["treynor_ratio"] for ticker, metrics in combined_metrics.items()}
-        
+        market_alpha = 0
+        market_beta = 1
+        market_sharpe_ratio = combined_metrics.get("SPY", {"sharpe_ratio": 0})["sharpe_ratio"]
+        market_treynor_ratio = combined_metrics.get("SPY", {"treynor_ratio": 0})["treynor_ratio"]
+
         alpha_rank = sorted(alphas.keys(), key=lambda x: alphas[x], reverse=True).index(request.stock_ticker) + 1 if request.stock_ticker in alphas else 0
         beta_rank = sorted(betas.keys(), key=lambda x: betas[x], reverse=True).index(request.stock_ticker) + 1 if request.stock_ticker in betas else 0
         sharpe_rank = sorted(sharpe_ratios.keys(), key=lambda x: sharpe_ratios[x], reverse=True).index(request.stock_ticker) + 1 if request.stock_ticker in sharpe_ratios else 0
@@ -324,8 +369,8 @@ async def calculate(request: StockRequest):
         # Calculate correlation
         # Make a copy and add the current stock to ensure we have all correlations
         correlation_returns = all_returns.copy()
-        correlation_returns[request.stock_ticker] = stock_returns
-        correlation_data = calculate_correlation(stock_returns, correlation_returns)
+        correlation_returns[request.stock_ticker] = stock_return
+        correlation_data = calculate_correlation(stock_return, correlation_returns)
         
         # Analyze sentiment
         sentiment_data = analyze_sentiment(twitter_data)
@@ -335,16 +380,16 @@ async def calculate(request: StockRequest):
             "performance": {
                 "alpha": performance_metrics["alpha"],
                 "alpha_rank": alpha_rank,
-                "market_alpha": 0, # market alpha is 0 by definition
+                "market_alpha": market_alpha,
                 "beta": performance_metrics["beta"],
                 "beta_rank": beta_rank,
-                "market_beta": 1, # market beta is 1 by definition
+                "market_beta": market_beta,
                 "sharpe_ratio": performance_metrics["sharpe_ratio"],
                 "sharpe_ratio_rank": sharpe_rank,
-                "market_sharpe_ratio": all_metrics.get("SPY", {}).get("sharpe_ratio", 0),
+                "market_sharpe_ratio": market_sharpe_ratio,
                 "treynor_ratio": performance_metrics["treynor_ratio"],
                 "treynor_ratio_rank": treynor_rank,
-                "market_treynor_ratio": all_metrics.get("SPY", {}).get("treynor_ratio", 0)
+                "market_treynor_ratio": market_treynor_ratio
             },
             "correlation": correlation_data,
             "sentiment": sentiment_data

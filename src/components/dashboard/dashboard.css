@@ -40,10 +40,19 @@
     width: 1300px;
     height: 460px;
     border: 1px solid #ccc;
-    padding: 20px;
+    padding: 30px;
     overflow-y: auto;
     border-radius: 60px;
     box-sizing: border-box;
+    background-color: #f9f9f9;
+  }
+  
+  /* Performance table title */
+  #performance-table h2 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #333;
+    font-weight: 500;
   }
   
   /* Bottom row components */

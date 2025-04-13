@@ -4,6 +4,37 @@ const lineMargin = {top: 100, right: 20, bottom: 50, left: 50};
 const lineWidth = 1080 - lineMargin.left - lineMargin.right;
 const lineHeight = 800 - lineMargin.top - lineMargin.bottom;
 
+// Calculate moving average
+function calculateMovingAverage(displayDailyData, period) {
+  const dailyMA = [];
+  for (let i = period - 1; i < displayDailyData.length; i++) {
+    const sum = displayDailyData.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val.close, 0);
+    dailyMA.push({
+      date: displayDailyData[i].date,
+      value: sum / period
+    });
+  }
+  return dailyMA;
+}
+
+// Map daily MA to weekly points
+function mapMovingAverageToWeekly(filteredData, dailyMA) {
+  // Find closest MA point to each weekly line
+  return filteredData.map(weekData => {
+    // Find the closest daily MA point to this week's end date
+    const closestMA = dailyMA.reduce((closest, current) => {
+      const currentDiff = Math.abs(current.date - weekData.date);
+      const closestDiff = Math.abs(closest.date - weekData.date);
+      return currentDiff < closestDiff ? current : closest;
+    }, dailyMA[0]);
+    
+    return {
+      date: weekData.date,
+      value: closestMA.value
+    };
+  });
+}
+
 // Create a line chart
 function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, dependencies) {
   const { lineSvg, formatMonthYear, formatDate, DISPLAY_START_DATE, DISPLAY_END_DATE, tooltip } = dependencies;
@@ -37,6 +68,31 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
     ])
     .range([lineHeight - lineMargin.bottom, lineMargin.top]);
   
+  // Draw the chart components
+  drawAxes(lineSvg, xScale, yScale, filteredData, formatMonthYear);
+  drawGridLines(lineSvg, xScale, yScale);
+  drawPriceLine(lineSvg, filteredData, xScale, yScale, tooltip, formatDate);
+  
+  // Add shaded regions for unselected areas based on the slider positions
+  const startDate = filteredData[selectedStartIdx].date;
+  const endDate = filteredData[selectedEndIdx].date;
+  
+  // Create a clipping path and highlight the selected region
+  highlightSelectedRegion(lineSvg, xScale, startDate, endDate, selectedStartIdx, selectedEndIdx, 
+                         filteredData, lineMargin, lineHeight);
+  
+  // Calculate and draw moving averages if showMovingAverages is enabled
+  const showingMA = d3.select("#maToggle").property("checked");
+  if (showingMA && dailyData) {
+    drawMovingAverage(lineSvg, filteredData, dailyData, xScale, yScale, DISPLAY_START_DATE, DISPLAY_END_DATE);
+  }
+  
+  // Add legend for the price line
+  addLegends(lineSvg, lineWidth);
+}
+
+// Helper function to draw axes
+function drawAxes(svg, xScale, yScale, filteredData, formatMonthYear) {
   // Store quarters we've already seen to avoid duplicate ticks
   const seenQuarters = new Set();
   
@@ -69,7 +125,7 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
     .tickFormat(d => formatMonthYear(d));
   
   // Add X axis
-  lineSvg.append("g")
+  svg.append("g")
     .attr("class", "x-axis")
     .attr("transform", `translate(0,${lineHeight - lineMargin.bottom})`)
     .call(xAxis)
@@ -80,13 +136,15 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
     .attr("transform", "rotate(-45)");
   
   // Add Y axis
-  lineSvg.append("g")
+  svg.append("g")
     .attr("class", "y-axis")
     .attr("transform", `translate(${lineMargin.left},0)`)
     .call(d3.axisLeft(yScale));
-  
-  // Add grid lines
-  lineSvg.append("g")
+}
+
+// Helper function to draw grid lines
+function drawGridLines(svg, xScale, yScale) {
+  svg.append("g")
     .attr("class", "grid")
     .attr("transform", `translate(0,${lineHeight - lineMargin.bottom})`)
     .call(d3.axisBottom(xScale)
@@ -95,14 +153,17 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
       .tickFormat("")
     );
   
-  lineSvg.append("g")
+  svg.append("g")
     .attr("class", "grid")
     .attr("transform", `translate(${lineMargin.left},0)`)
     .call(d3.axisLeft(yScale)
       .tickSize(-(lineWidth - lineMargin.left - lineMargin.right))
       .tickFormat("")
     );
-  
+}
+
+// Helper function to draw the price line with data points
+function drawPriceLine(svg, filteredData, xScale, yScale, tooltip, formatDate) {
   // Create line generator for the price line
   const line = d3.line()
     .x(d => xScale(d.date) + xScale.bandwidth() / 2)
@@ -110,7 +171,7 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
     .curve(d3.curveMonotoneX);
   
   // Draw the price line
-  lineSvg.append("path")
+  svg.append("path")
     .datum(filteredData)
     .attr("class", "price-line")
     .attr("fill", "none")
@@ -119,7 +180,7 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
     .attr("d", line);
   
   // Add dots for data points with tooltips
-  lineSvg.selectAll(".data-point")
+  svg.selectAll(".data-point")
     .data(filteredData)
     .enter()
     .append("circle")
@@ -157,13 +218,13 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
         .attr("r", 3)
         .attr("fill", "#1976D2");
     });
-  
-  // Add shaded regions for unselected areas based on the slider positions
-  const startDate = filteredData[selectedStartIdx].date;
-  const endDate = filteredData[selectedEndIdx].date;
-  
+}
+
+// Helper function to highlight the selected region
+function highlightSelectedRegion(svg, xScale, startDate, endDate, selectedStartIdx, selectedEndIdx, 
+                               filteredData, lineMargin, lineHeight) {
   // Create a clipping path for the selected region to make it stand out
-  lineSvg.append("defs")
+  svg.append("defs")
     .append("clipPath")
     .attr("id", "selected-region")
     .append("rect")
@@ -174,7 +235,7 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
   
   // Left shade (before start handle)
   if (selectedStartIdx > 0) {
-    lineSvg.append("rect")
+    svg.append("rect")
       .attr("class", "chart-shade-left")
       .attr("x", lineMargin.left)
       .attr("y", lineMargin.top)
@@ -184,7 +245,7 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
   
   // Right shade (after end handle)
   if (selectedEndIdx < filteredData.length - 1) {
-    lineSvg.append("rect")
+    svg.append("rect")
       .attr("class", "chart-shade-right")
       .attr("x", xScale(endDate) + xScale.bandwidth())
       .attr("y", lineMargin.top)
@@ -192,111 +253,8 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
       .attr("height", lineHeight - lineMargin.top - lineMargin.bottom);
   }
   
-  // Calculate and draw moving averages if showMovingAverages is enabled
-  const showingMA = d3.select("#maToggle").property("checked");
-  if (showingMA && dailyData) {
-    const maType = d3.select('input[name="maType"]:checked').property("value");
-    let period;
-    let color;
-    
-    switch(maType) {
-      case "7day":
-        period = 7;
-        color = "#2196F3"; // Blue
-        break;
-      case "14day":
-        period = 14;
-        color = "#4CAF50"; // Green
-        break;
-      case "30day":
-        period = 30;
-        color = "#FF9800"; // Orange
-        break;
-      case "90day":
-        period = 90;
-        color = "#9C27B0"; // Purple
-        break;
-      default:
-        period = 7;
-        color = "#2196F3";
-    }
-    
-    // Filter daily data to match display range
-    const displayDailyData = dailyData.filter(d => 
-      d.date >= DISPLAY_START_DATE && d.date <= DISPLAY_END_DATE
-    );
-    
-    // Calculate moving average on daily data
-    const dailyMA = [];
-    for (let i = period - 1; i < displayDailyData.length; i++) {
-      const sum = displayDailyData.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val.close, 0);
-      dailyMA.push({
-        date: displayDailyData[i].date,
-        value: sum / period
-      });
-    }
-    
-    // Map daily MA to weekly points 
-    // Find closest MA point to each weekly line
-    const maData = filteredData.map(weekData => {
-      // Find the closest daily MA point to this week's end date
-      const closestMA = dailyMA.reduce((closest, current) => {
-        const currentDiff = Math.abs(current.date - weekData.date);
-        const closestDiff = Math.abs(closest.date - weekData.date);
-        return currentDiff < closestDiff ? current : closest;
-      }, dailyMA[0]);
-      
-      return {
-        date: weekData.date,
-        value: closestMA.value
-      };
-    });
-    
-    // Draw moving average line
-    const maLine = d3.line()
-      .x(d => xScale(d.date) + xScale.bandwidth() / 2)
-      .y(d => yScale(d.value))
-      .curve(d3.curveMonotoneX);
-      
-    lineSvg.append("path")
-      .datum(maData)
-      .attr("class", "ma-line")
-      .attr("fill", "none")
-      .attr("stroke", color)
-      .attr("stroke-width", 2)
-      .attr("d", maLine);
-      
-    // Add legend for moving average
-    lineSvg.append("rect")
-      .attr("x", lineWidth - 150)
-      .attr("y", 15)
-      .attr("width", 15)
-      .attr("height", 3)
-      .attr("fill", color);
-      
-    lineSvg.append("text")
-      .attr("x", lineWidth - 130)
-      .attr("y", 18)
-      .attr("font-size", "10px")
-      .text(`${period} Day MA`);
-  }
-  
-  // Add legend for the price line
-  lineSvg.append("rect")
-    .attr("x", lineWidth - 150)
-    .attr("y", 35)
-    .attr("width", 15)
-    .attr("height", 3)
-    .attr("fill", "#1976D2");
-    
-  lineSvg.append("text")
-    .attr("x", lineWidth - 130)
-    .attr("y", 38)
-    .attr("font-size", "10px")
-    .text("Closing Price");
-  
   // Highlight the selected range with a border or indicator
-  lineSvg.append("rect")
+  svg.append("rect")
     .attr("class", "selection-indicator")
     .attr("x", xScale(startDate))
     .attr("y", lineMargin.top)
@@ -307,6 +265,91 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
     .attr("stroke-width", 2)
     .attr("stroke-dasharray", "5,5")
     .attr("pointer-events", "none");
+}
+
+// Helper function to draw moving average lines
+function drawMovingAverage(svg, filteredData, dailyData, xScale, yScale, DISPLAY_START_DATE, DISPLAY_END_DATE) {
+  const maType = d3.select('input[name="maType"]:checked').property("value");
+  let period;
+  let color;
+  
+  switch(maType) {
+    case "7day":
+      period = 7;
+      color = "#2196F3"; // Blue
+      break;
+    case "14day":
+      period = 14;
+      color = "#4CAF50"; // Green
+      break;
+    case "30day":
+      period = 30;
+      color = "#FF9800"; // Orange
+      break;
+    case "90day":
+      period = 90;
+      color = "#9C27B0"; // Purple
+      break;
+    default:
+      period = 7;
+      color = "#2196F3";
+  }
+  
+  // Filter daily data to match display range
+  const displayDailyData = dailyData.filter(d => 
+    d.date >= DISPLAY_START_DATE && d.date <= DISPLAY_END_DATE
+  );
+  
+  // Calculate moving average
+  const dailyMA = calculateMovingAverage(displayDailyData, period);
+  
+  // Map daily MA to weekly points
+  const maData = mapMovingAverageToWeekly(filteredData, dailyMA);
+  
+  // Draw moving average line
+  const maLine = d3.line()
+    .x(d => xScale(d.date) + xScale.bandwidth() / 2)
+    .y(d => yScale(d.value))
+    .curve(d3.curveMonotoneX);
+    
+  svg.append("path")
+    .datum(maData)
+    .attr("class", "ma-line")
+    .attr("fill", "none")
+    .attr("stroke", color)
+    .attr("stroke-width", 2)
+    .attr("d", maLine);
+    
+  // Add legend for moving average
+  svg.append("rect")
+    .attr("x", lineWidth - 150)
+    .attr("y", 15)
+    .attr("width", 15)
+    .attr("height", 3)
+    .attr("fill", color);
+    
+  svg.append("text")
+    .attr("x", lineWidth - 130)
+    .attr("y", 18)
+    .attr("font-size", "10px")
+    .text(`${period} Day MA`);
+}
+
+// Helper function to add legends
+function addLegends(svg, lineWidth) {
+  // Add legend for the price line
+  svg.append("rect")
+    .attr("x", lineWidth - 150)
+    .attr("y", 35)
+    .attr("width", 15)
+    .attr("height", 3)
+    .attr("fill", "#1976D2");
+    
+  svg.append("text")
+    .attr("x", lineWidth - 130)
+    .attr("y", 38)
+    .attr("font-size", "10px")
+    .text("Closing Price");
 }
 
 // Export the functions and constants
