@@ -132,7 +132,7 @@ export const wordBubbles = () => {
         const svg = selection
             .append('svg')
             .attr('width', width)
-            .attr('height', height-10)
+            .attr('height', height)
             .style('background-color', 'white');
         
         // const colorScale = d3.scaleSequential(d3.interpolateViridis)
@@ -277,12 +277,12 @@ export const wordBubbles = () => {
             });
             
 
-            const legendGroup = svg.append('g')
+            const legendGroup = svg.insert('g', ':first-child')
             .attr('class', 'legend-group')
             .attr('transform', `translate(${width / 2}, ${legendY})`);
 
             const colorLegend = legendGroup.append('g').attr('transform', `translate(-360, 0)`);
-            const sizeLegend  = legendGroup.append('g').attr('transform', `translate(-80, 0)`);
+            const sizeLegend  = legendGroup.append('g').attr('transform', `translate(-90, 0)`);
             const linkLegend  = legendGroup.append('g').attr('transform', `translate(190, 0)`);
             
 
@@ -332,7 +332,7 @@ export const wordBubbles = () => {
             .style('text-anchor', 'end')
             .style('font-size', '10px');
 
-        // Add this **after** all colorContent is appended:
+       
         // const bbox = colorContent.node().getBBox();
 
         // const colorLegendWidth = bbox.width + 800;
@@ -345,7 +345,7 @@ export const wordBubbles = () => {
           const colorLegendHeight = bbox.height + 130;
         
           colorLegend.insert('rect', 'g') // insert behind everything
-            .attr('x', bbox.x - 10)
+            .attr('x', bbox.x - 20)
             .attr('y', bbox.y - 20)
             .attr('width', colorLegendWidth)
             .attr('height', colorLegendHeight)
@@ -471,7 +471,7 @@ export const wordBubbles = () => {
             linkLegend.append('text')
                 .attr('x', 20)
                 .attr('y', y + 4)
-                .text(Math.round(weight))
+                .text(Math.max(Math.round(weight),1))
                 .style('font-size', '10px');
         });
 

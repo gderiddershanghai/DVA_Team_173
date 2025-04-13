@@ -30,7 +30,7 @@ const lineSvg = d3.select("#lineChart")
   .append("svg")
   .attr("width", lineWidth)
   .attr("height", lineHeight)
-  .style("background-color", "#f9f9f9");
+  .style("background-color", "#f9f9f9")
 
 // Create tooltip for lines
 const tooltip = d3.select("body").append("div")
@@ -309,19 +309,41 @@ async function fetchCalculationData(symbol, startDate, endDate) {
 }
 
 // function to load sentiment data
-async function updateWordBubbles(sentimentData) {
+async function updateWordBubbles(ticker, startDate, endDate) {
   let wordData = [];
   let links = [];
 
-  if (sentimentData && sentimentData.keywords && Object.keys(sentimentData.keywords).length > 0) {
-    wordData = Object.entries(sentimentData.keywords).map(([word, d]) => ({
-      word,
-      counts: d.count,
-      average_score: d.sentiment_score
-    }));
-    links = sentimentData.links || [];
-  } else {
-    console.warn("Sentiment data missing — using fallback files.");
+  try {
+    const response = await fetch("http://localhost:8001/api/word-bubbles", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ticker,
+        start_date: startDate,
+        end_date: endDate,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("API request failed");
+    }
+
+    const sentimentData = await response.json();
+    wordData = [...sentimentData.top_words, ...sentimentData.bottom_words];
+
+    const adjMatrix = sentimentData.adj_matrix;
+    Object.keys(adjMatrix).forEach((source) => {
+      Object.keys(adjMatrix[source]).forEach((target) => {
+        const weight = adjMatrix[source][target];
+        if (weight > 0) {
+          links.push({ source, target, weight });
+        }
+      });
+    });
+  } catch (err) {
+    console.warn("Falling back to local files due to API error:", err);
 
     try {
       const [topWords, bottomWords, adjMatrix] = await Promise.all([
@@ -332,16 +354,16 @@ async function updateWordBubbles(sentimentData) {
 
       wordData = [...topWords, ...bottomWords];
 
-      Object.keys(adjMatrix).forEach(source => {
-        Object.keys(adjMatrix[source]).forEach(target => {
+      Object.keys(adjMatrix).forEach((source) => {
+        Object.keys(adjMatrix[source]).forEach((target) => {
           const weight = adjMatrix[source][target];
           if (weight > 0) {
             links.push({ source, target, weight });
           }
         });
       });
-    } catch (err) {
-      console.error("Error loading local word bubble data:", err);
+    } catch (localErr) {
+      console.error("Error loading fallback word bubble data:", localErr);
       return;
     }
   }
@@ -542,9 +564,7 @@ async function updateDashboard(isSliderUpdate = false) {
   );
   
   // Update the sentiment chart with API data or placeholder visualization
-//   updateSentimentChart(calculationData ? calculationData.sentiment : null, { tooltip });
-await updateWordBubbles(calculationData ? calculationData.sentiment : null);
-
+  await updateWordBubbles(ticker, startDate, endDate);
 
 
 }
