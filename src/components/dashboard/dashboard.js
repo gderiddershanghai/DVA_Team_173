@@ -388,35 +388,37 @@ async function updateWordBubbles(ticker, startDate, endDate) {
 function createLoadingSpinner(container, width, height) {
   const spinner = container.append("g")
     .attr("class", "loading-spinner")
-    .attr("transform", `translate(${width/2}, ${height/2})`);
+    .attr("transform", `translate(${width / 2}, ${height / 2})`);
     
-  // Add spinner circle
-  spinner.append("circle")
-    .attr("r", 30)
+  const spinnerCircle = spinner.append("circle")
+    .attr("r", 130)
     .attr("fill", "none")
     .attr("stroke", "#999")
     .attr("stroke-width", 4)
     .attr("stroke-dasharray", "10, 10")
     .style("opacity", 0.7);
-  
-  // Add rotation animation using conventional method
-  spinner.append("animateTransform")
+
+  // add rotation animation directly to the circle
+  spinnerCircle.append("animateTransform")
     .attr("attributeName", "transform")
+    .attr("attributeType", "XML")
     .attr("type", "rotate")
     .attr("from", "0 0 0")
     .attr("to", "360 0 0")
     .attr("dur", "1s")
     .attr("repeatCount", "indefinite");
-    
-  // Add "Loading" text
+
+  // centered text
   spinner.append("text")
     .attr("text-anchor", "middle")
     .attr("dy", "0.3em")
     .attr("fill", "#333")
+    .style("font-size", "22px")
     .text("Loading...");
     
   return spinner;
 }
+
 
 // Create update function to refresh the dashboard components
 async function updateDashboard(isSliderUpdate = false) {

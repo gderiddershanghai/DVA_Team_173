@@ -132,7 +132,7 @@ export const wordBubbles = () => {
         const svg = selection
             .append('svg')
             .attr('width', width)
-            .attr('height', height)
+            .attr('height', height-10)
             .style('background-color', 'white');
         
         // const colorScale = d3.scaleSequential(d3.interpolateViridis)
@@ -493,10 +493,15 @@ export const wordBubbles = () => {
         function ticked() {
             // Update node positions
             nodes.attr('transform', d => {
-              d.x = Math.max(margin.left + d.radius,
-                             Math.min(width - margin.right - d.radius, d.x));
-              d.y = Math.max(margin.top + d.radius,
-                             Math.min(height - margin.bottom - d.radius, d.y));
+                const strokeBuffer = 26
+
+                d.x = Math.max(margin.left + d.radius + strokeBuffer,
+                               Math.min(width - margin.right - d.radius - strokeBuffer, d.x));
+                
+                d.y = Math.max(margin.top + d.radius + strokeBuffer,
+                               Math.min(height - margin.bottom - d.radius - strokeBuffer, d.y));
+                
+     
             
 
 
