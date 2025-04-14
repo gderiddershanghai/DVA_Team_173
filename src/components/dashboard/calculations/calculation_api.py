@@ -55,7 +55,7 @@
 
 
 # Dir of the tweet data - @Kenny, might have to change this
-TWEET_DATA_DIR = "/home/ginger/code/gderiddershanghai/DVA_Team_173/data_full/cleaned_tweet_data/non_neutral" # non neutral is neutral tweets are filtered out
+TWEET_DATA_DIR = "clean_data/twit_data/non_neutral" # non neutral is neutral tweets are filtered out
 
 # stock data is saved in the following path with individual csv files for each stock with the ticker as the name
 # the csv file contains the following columns:
@@ -92,7 +92,7 @@ from datetime import datetime
 import re
 from fastapi.middleware.cors import CORSMiddleware
 from collections import defaultdict
-from src.components.dashboard.calculations.get_common_words import CommonWords
+from get_common_words import CommonWords
 
 
 app = FastAPI()
@@ -100,7 +100,7 @@ app = FastAPI()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -207,56 +207,60 @@ def calculate_performance_metrics(stock_return: float, market_return: float, sto
         "treynor_ratio": float(treynor_ratio)
     }
 
-def calculate_correlation(request_ticker: str, stock_return: float, all_stock_returns: Dict[str, float]) -> dict:
-    # For period returns calculation, we'll use the total return values to determine similarity
-    
-    # Find most and least correlated stocks based on similarity of total returns
-    if len(all_stock_returns) <= 1:
+def calculate_correlation(request_ticker: str, stock_data: pd.DataFrame, all_stocks_data: Dict[str, pd.DataFrame]) -> dict:
+    """Calculate true Pearson correlation between stocks using daily returns."""
+    if not stock_data.empty and len(all_stocks_data) > 0:
+        # Calculate daily returns for the requested stock
+        stock_returns = stock_data['Close'].pct_change().dropna()
+        
+        # Calculate correlations with all other stocks
+        correlations = {}
+        for ticker, data in all_stocks_data.items():
+            # Skip the requested stock itself and SPY (benchmark)
+            if ticker == request_ticker or ticker == "SPY" or data.empty:
+                continue
+                
+            # Calculate daily returns for comparison stock
+            compare_returns = data['Close'].pct_change().dropna()
+            
+            # Align the two return series to ensure they have matching dates
+            aligned_returns = pd.concat([stock_returns, compare_returns], axis=1, join='inner')
+            aligned_returns.columns = ['stock', 'compare']
+            
+            # Skip if not enough data points for correlation
+            if len(aligned_returns) < 5:
+                continue
+                
+            # Calculate Pearson correlation
+            corr = aligned_returns['stock'].corr(aligned_returns['compare'])
+            if not np.isnan(corr):
+                correlations[ticker] = corr
+        
+        if not correlations:
+            return {
+                "most_correlated_stock": "None",
+                "most_correlated_stock_correlation": 0,
+                "least_correlated_stock": "None",
+                "least_correlated_stock_correlation": 0
+            }
+        
+        # Find most and least correlated stocks
+        most_correlated = max(correlations.items(), key=lambda x: x[1])
+        least_correlated = min(correlations.items(), key=lambda x: x[1])
+        
         return {
-            "most_correlated_stock": "None",
-            "most_correlated_stock_correlation": 0,
-            "least_correlated_stock": "None",
-            "least_correlated_stock_correlation": 0
+            "most_correlated_stock": most_correlated[0],
+            "most_correlated_stock_correlation": float(most_correlated[1]),
+            "least_correlated_stock": least_correlated[0],
+            "least_correlated_stock_correlation": float(least_correlated[1])
         }
-    
-    # Create dictionary of stock ticker to difference from target stock return
-    # Exclude the requested stock itself using the passed request_ticker
-    differences = {ticker: abs(ret - stock_return) 
-                   for ticker, ret in all_stock_returns.items() 
-                   if ticker != request_ticker}
-    
-    if not differences:
-        return {
-            "most_correlated_stock": "None",
-            "most_correlated_stock_correlation": 0,
-            "least_correlated_stock": "None",
-            "least_correlated_stock_correlation": 0
-        }
-    
-    # Find most similar (smallest difference) and least similar (largest difference)
-    most_similar_ticker = min(differences.items(), key=lambda x: x[1])[0]
-    least_similar_ticker = max(differences.items(), key=lambda x: x[1])[0]
-    
-    # Convert differences to correlation-like values between -1 and 1
-    # The smaller the difference, the closer to 1
-    # The larger the difference, the closer to -1
-    max_diff = max(differences.values())
-    
-    # Calculate "correlation" values
-    if max_diff > 0:
-        most_corr_value = 1.0 - (differences[most_similar_ticker] / max_diff)
-        least_corr_value = 1.0 - (differences[least_similar_ticker] / max_diff)
-        # Make sure least correlation is negative
-        least_corr_value = -abs(least_corr_value)
-    else:
-        most_corr_value = 1.0
-        least_corr_value = -1.0
     
     return {
-        "most_correlated_stock": most_correlated[0],
-        "most_correlated_stock_correlation": float(most_correlated[1]),
-        "least_correlated_stock": least_correlated[0],
-        "least_correlated_stock_correlation": float(least_correlated[1])}
+        "most_correlated_stock": "None",
+        "most_correlated_stock_correlation": 0,
+        "least_correlated_stock": "None",
+        "least_correlated_stock_correlation": 0
+    }
 
 # def extract_keywords(tweet: str) -> List[str]:
 #     # Tweet column already contains cleaned keywords separated by spaces
@@ -365,7 +369,17 @@ async def word_bubbles_endpoint(req: WordBubbleRequest):
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
 
-
+@app.post("/api/stock_data")
+async def stock_data(request: StockRequest):
+    try:
+        stock_df = load_stock_data(request.stock_ticker, request.start_date, request.end_date)
+        # Convert DataFrame to list of dictionaries (records format) for JSON serialization
+        stock_data_list = stock_df.to_dict(orient='records')
+        return stock_data_list
+    except Exception as e:
+        import traceback
+        traceback.print_exc() # Print full traceback for debugging
+        raise HTTPException(status_code=500, detail=f"Error processing stock data: {str(e)}")
 
 @app.post("/api/calculate")
 async def calculate(request: StockRequest):
@@ -385,6 +399,7 @@ async def calculate(request: StockRequest):
         # Calculate performance metrics for all stocks to determine ranks
         all_metrics = {}
         all_returns = {}
+        all_stocks_data = {}
         
         for ticker in STOCK_TICKERS:
             # Skip the requested stock - we already calculated its metrics
@@ -395,6 +410,7 @@ async def calculate(request: StockRequest):
                 ticker_data = load_stock_data(ticker, request.start_date, request.end_date)
                 ticker_return = calculate_returns(ticker_data)
                 all_returns[ticker] = ticker_return
+                all_stocks_data[ticker] = ticker_data
                 
                 metrics = calculate_performance_metrics(ticker_return, market_return, ticker_data, market_data)
                 all_metrics[ticker] = metrics
@@ -421,14 +437,9 @@ async def calculate(request: StockRequest):
         sharpe_rank = sorted(sharpe_ratios.keys(), key=lambda x: sharpe_ratios[x], reverse=True).index(request.stock_ticker) + 1 if request.stock_ticker in sharpe_ratios else 0
         treynor_rank = sorted(treynor_ratios.keys(), key=lambda x: treynor_ratios[x], reverse=True).index(request.stock_ticker) + 1 if request.stock_ticker in treynor_ratios else 0
         
-        # Calculate correlation
-        # Make a copy and add the current stock to ensure we have all correlations
-        correlation_returns = all_returns.copy()
-        correlation_returns[request.stock_ticker] = stock_return
-        correlation_data = calculate_correlation(request.stock_ticker, stock_return, correlation_returns)
-        
-        # Analyze sentiment
-        # sentiment_data = analyze_sentiment(twitter_data)
+        # Calculate correlation using time series data, not just total returns
+        all_stocks_data[request.stock_ticker] = stock_data
+        correlation_data = calculate_correlation(request.stock_ticker, stock_data, all_stocks_data)
         
         # Format response
         response = {
@@ -446,8 +457,7 @@ async def calculate(request: StockRequest):
                 "treynor_ratio_rank": treynor_rank,
                 "market_treynor_ratio": market_treynor_ratio
             },
-            # "correlation": correlation_data,
-            # "sentiment": sentiment_data
+            "correlation": correlation_data
         }
         
         return response

@@ -60,12 +60,6 @@
       <!-- Right: Sentiment Analysis Bubbles -->
       <div id="sentiment-container">
         <div id="sentimentChart"></div>
-        <!-- FastAPI integration sample -->
-        <!-- 
-        fetch('/api/sentiment')
-          .then(response => response.json())
-          .then(data => { ... update sentiment bubbles ... });
-        -->
       </div>
     </div>
     
@@ -73,59 +67,11 @@
     <div id="bottom-row">
       <!-- Left: Correlation Section -->
       <div id="correlation-container">
-        <div id="correlation-info">
-          <span id="mostCorrelated">Most Correlated: Stock A (Score: 0.95)</span>
-          <span id="leastCorrelated">Least Correlated: Stock B (Score: -0.45)</span>
-        </div>
         <div id="correlationChart"></div>
-        <!-- FastAPI integration sample -->
-        <!-- 
-        fetch('/api/correlation')
-          .then(response => response.json())
-          .then(data => { ... update correlation graphs ... });
-        -->
       </div>
       
       <!-- Right: Performance Comparison Table -->
       <div id="performance-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Parameter</th>
-              <th>Rank</th>
-              <th>SP500 Average</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Sample data; later data will be fetched from FastAPI -->
-            <tr>
-              <td>Alpha</td>
-              <td>5</td>
-              <td>0.5</td>
-            </tr>
-            <tr>
-              <td>Beta</td>
-              <td>12</td>
-              <td>1.0</td>
-            </tr>
-            <tr>
-              <td>Sharpe Ratio</td>
-              <td>8</td>
-              <td>0.8</td>
-            </tr>
-            <tr>
-              <td>Treynor Ratio</td>
-              <td>3</td>
-              <td>0.3</td>
-            </tr>
-          </tbody>
-        </table>
-        <!-- Reserve for FastAPI integration -->
-        <!-- 
-        fetch('/api/performance')
-          .then(response => response.json())
-          .then(data => { ... update table ... });
-        -->
       </div>
     </div>
   </div>

@@ -7,6 +7,7 @@
     flex-direction: column;
     padding: 60px 0;
     box-sizing: border-box;
+    background-color: #F1EEEB;
   }
   
   /* Top and bottom rows */
@@ -24,7 +25,7 @@
   #line-container {
     width: 1080px;
     height: 800px;
-    border: 1px solid #ccc;
+    border: 0;
     position: relative;
     border-radius: 60px;
     overflow: hidden;
@@ -39,8 +40,8 @@
   #performance-table {
     width: 1300px;
     height: 460px;
-    border: 1px solid #ccc;
-    padding: 30px;
+    border: 0;
+    padding: 0;
     overflow-y: auto;
     border-radius: 60px;
     box-sizing: border-box;
@@ -59,9 +60,9 @@
   #correlation-container {
     width: 1080px;
     height: 460px;
-    border: 1px solid #ccc;
+    border: 0;
     position: relative;
-    padding: 20px;
+    padding: 0;
     border-radius: 60px;
     display: flex;
     flex-direction: column;
@@ -71,9 +72,9 @@
   #sentiment-container {
     width: 1300px;
     height: 800px;
-    border: 1px solid #ccc;
+    border: 0;
     position: relative;
-    padding: 20px;
+    padding: 0;
     border-radius: 60px;
     box-sizing: border-box;
   }
@@ -122,7 +123,7 @@
     width: 100%;
     padding: 5px;
     border-radius: 4px;
-    border: 1px solid #ccc;
+    border: 0;
   }
   
   /* Suggestion dropdown */
@@ -132,8 +133,7 @@
     width: 100%;
     max-height: 150px;
     overflow-y: auto;
-    background: white;
-    border: 1px solid #ccc;
+    border: 0;
     border-top: none;
     border-radius: 0 0 4px 4px;
     z-index: 10;
@@ -143,7 +143,7 @@
   .suggestion {
     padding: 8px;
     cursor: pointer;
-    border-bottom: 1px solid #eee;
+    border-bottom: 0;
     font-size: 14px;
   }
   
@@ -272,7 +272,7 @@
     width: 16px;
     height: 16px;
     background-color: #fff;
-    border: 2px solid #2196F3;
+    border: 0;
     border-radius: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
@@ -328,7 +328,7 @@
   }
   
   #performance-table th, #performance-table td {
-    border: 1px solid #ddd;
+    border: 0;
     padding: 8px;
     text-align: center;
   }
@@ -347,7 +347,7 @@
   /* Sentiment bubbles */
   #sentimentChart svg {
     background-color: #f9f9f9;
-    border-radius: 5px;
+    border-radius: 60px;
     width: 100%;
     height: calc(100% - 40px);
   }
@@ -356,8 +356,7 @@
   .tooltip {
     position: absolute;
     padding: 10px;
-    background-color: rgba(255, 255, 255, 0.95);
-    border: 1px solid #ccc;
+    border: 0;
     border-radius: 5px;
     box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
     pointer-events: none;
@@ -400,5 +399,13 @@
   /* Moving average line */
   .ma-line {
     stroke-width: 2;
+  }
+  
+  /* Remove borders from correlation chart elements */
+  #correlationChart div,
+  #most-correlated-chart,
+  #least-correlated-chart {
+    border: 0;
+    box-sizing: border-box;
   }
   

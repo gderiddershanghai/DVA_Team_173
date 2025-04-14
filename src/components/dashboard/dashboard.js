@@ -1,12 +1,8 @@
 // Import modularized components
 import { lineMargin, lineWidth, lineHeight, drawlineChart } from './lineChart.js';
-import { correlationMargin, correlationWidth, correlationHeight, updateCorrelationChart, drawCorrelationChart } from './correlationChart.js';
+import { correlationMargin, correlationWidth, correlationHeight, updateCorrelationChart } from './correlationChart.js';
 import { tableMargin, tableWidth, tableHeight, updatePerformanceTable } from './performanceTable.js';
-// import { sentimentMargin, sentimentWidth, sentimentHeight, updateSentimentChart } from './sentimentDiagram.js';
 import { wordBubbles } from './wordbubbles.js';
-
-// Set up dimensions for different components
-// Note: Component-specific dimensions are now imported from their respective files
 
 // Format date for display
 const formatDate = d3.timeFormat("%b %d, %Y");
@@ -18,10 +14,6 @@ const DISPLAY_START_DATE = new Date(2017, 0, 1); // Jan 1, 2017
 const DISPLAY_END_DATE = new Date(2020, 6, 31); // Jul 31, 2020
 const CALCULATION_DAYS_BEFORE = 90; // Data for calculation: 90 days before display start
 
-// Store date strings for API calls
-const apiStartDate = "2017-01-01";
-const apiEndDate = "2020-07-31";
-
 // API configuration
 const API_BASE_URL = "http://localhost:8001";
 
@@ -30,7 +22,7 @@ const lineSvg = d3.select("#lineChart")
   .append("svg")
   .attr("width", lineWidth)
   .attr("height", lineHeight)
-  .style("background-color", "#f9f9f9")
+  .style("background-color", "#f9f9f9");
 
 // Create tooltip for lines
 const tooltip = d3.select("body").append("div")
@@ -42,30 +34,13 @@ let startPercent = 0; // Start at beginning of display range
 let endPercent = 100; // End at end of display range
 let isDraggingStart = false;
 let isDraggingEnd = false;
-let sliderInUse = false; // Add a flag to track if slider is in use
+let sliderInUse = false; // Track if slider is in use
 
-// Store both daily and weekly data
+// Store data
 let currentDailyData = null;
 let currentWeeklyData = null;
-
-// Store API data
-let performanceData = null;
-let correlationData = null;
-
-// Initialize price range display with full data range
 let currentStockData = null;
-let currentTicker = "V"; // Add a variable to store the currently selected ticker
-
-// Function to filter data by date range
-function filterDataByDateRange(data) {
-  // Calculate the date 90 days before display start
-  const calculationStartDate = new Date(DISPLAY_START_DATE);
-  calculationStartDate.setDate(calculationStartDate.getDate() - CALCULATION_DAYS_BEFORE);
-  
-  return data.filter(d => 
-    d.date >= calculationStartDate && d.date <= DISPLAY_END_DATE
-  );
-}
+let currentTicker = "V"; // Default ticker
 
 // Function to aggregate daily data into weekly lines
 function aggregateToWeekly(dailyData) {
@@ -124,28 +99,55 @@ function aggregateToWeekly(dailyData) {
   return weeklyData;
 }
 
-// Load and parse CSV data
+// Load and parse stock data using API
 async function loadStockData(symbol, updateGlobalState = true) {
   try {
-    // Use d3.csv to directly load CSV data
-    const csvPath = `/clean_data/stock_data/${symbol}.csv`;
+    // Use the API endpoint to fetch stock data
+    const url = `${API_BASE_URL}/api/stock_data`;
     
-    const rawData = await d3.csv(csvPath, d => ({
-      date: parseDate(d.Date.split(' ')[0]), // Extract just the date part
-      open: +d.Open,
-      high: +d.High,
-      low: +d.Low,
-      close: +d.Close,
-      volume: +d.Volume,
-      dividends: +d.Dividends,
-      stockSplits: +d['Stock Splits']
-    }));
+    // Calculate date range
+    const calculationStartDate = new Date(DISPLAY_START_DATE);
+    calculationStartDate.setDate(calculationStartDate.getDate() - CALCULATION_DAYS_BEFORE);
+    const paddedStartDate = d3.timeFormat("%Y-%m-%d")(calculationStartDate);
+    const endDate = d3.timeFormat("%Y-%m-%d")(DISPLAY_END_DATE);
+    
+    // Fetch data from API
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        stock_ticker: symbol,
+        start_date: paddedStartDate,
+        end_date: endDate
+      })
+    });
+    
+    const rawData = await response.json();
+    
+    // Transform API data to our format
+    const transformedData = rawData.map(d => {
+      const parsedDate = parseDate(d.Date.split(' ')[0]) || new Date(d.Date);
+      return {
+        date: parsedDate,
+        open: +d.Open,
+        high: +d.High,
+        low: +d.Low,
+        close: +d.Close,
+        volume: +d.Volume,
+        dividends: d.Dividends ? +d.Dividends : 0,
+        stockSplits: d['Stock Splits'] ? +d['Stock Splits'] : 0
+      };
+    }).filter(d => d.date instanceof Date);
     
     // Sort by date
-    rawData.sort((a, b) => a.date - b.date);
+    transformedData.sort((a, b) => a.date - b.date);
     
     // Filter for data within our display range plus calculation period
-    const filteredDailyData = filterDataByDateRange(rawData);
+    const filteredDailyData = transformedData.filter(d => 
+      d.date >= calculationStartDate && d.date <= DISPLAY_END_DATE
+    );
     
     // Aggregate to weekly data
     const weeklyData = aggregateToWeekly(filteredDailyData);
@@ -157,10 +159,7 @@ async function loadStockData(symbol, updateGlobalState = true) {
     
     // Only update global state if requested
     if (updateGlobalState) {
-      // Store filtered daily data for MA calculations
       currentDailyData = filteredDailyData;
-      
-      // Store for later use with sliders
       currentWeeklyData = displayWeeklyData;
     }
     
@@ -169,7 +168,7 @@ async function loadStockData(symbol, updateGlobalState = true) {
       weekly: displayWeeklyData
     };
   } catch (error) {
-    console.error(`Error loading data for ${symbol}:`, error);
+    console.error(`Error loading data for ${symbol}`);
     return null;
   }
 }
@@ -234,7 +233,6 @@ function initializeSlider() {
   // Add event listeners for the slider handles
   const startHandle = document.getElementById('startHandle');
   const endHandle = document.getElementById('endHandle');
-  const sliderTrack = document.getElementById('date-range-slider');
   
   startHandle.addEventListener('mousedown', function(e) {
     isDraggingStart = true;
@@ -253,6 +251,23 @@ function initializeSlider() {
   
   // Unified mouseup handler
   document.addEventListener('mouseup', handleSliderRelease);
+  
+  // Initialize word bubble chart with the initial ticker and date range
+  const initialTicker = currentTicker; // Use the current ticker (set to "V" by default)
+  
+  // Get initial date range based on slider positions
+  const totalDataPoints = currentWeeklyData ? currentWeeklyData.length : 0;
+  if (totalDataPoints > 0) {
+    const startIndex = Math.floor(startPercent / 100 * (totalDataPoints - 1));
+    const endIndex = Math.floor(endPercent / 100 * (totalDataPoints - 1));
+    
+    // Get the selected date range for the API call
+    const startDate = d3.timeFormat("%Y-%m-%d")(currentWeeklyData[startIndex].date);
+    const endDate = d3.timeFormat("%Y-%m-%d")(currentWeeklyData[endIndex].date);
+    
+    // Initialize word bubbles with API data for the initial ticker
+    updateWordBubbles(initialTicker, startDate, endDate);
+  }
 }
 
 // Handle slider movement
@@ -317,7 +332,7 @@ async function fetchCalculationData(symbol, startDate, endDate) {
   }
 }
 
-// function to load sentiment data
+// Function to load sentiment data
 async function updateWordBubbles(ticker, startDate, endDate) {
   let wordData = [];
   let links = [];
@@ -389,25 +404,21 @@ async function updateWordBubbles(ticker, startDate, endDate) {
   d3.select("#sentimentChart").call(bubbles);
 }
 
-
-
-
-
-// Add a generic loading spinner function
+// Generic loading spinner function
 function createLoadingSpinner(container, width, height) {
   const spinner = container.append("g")
     .attr("class", "loading-spinner")
     .attr("transform", `translate(${width / 2}, ${height / 2})`);
     
   const spinnerCircle = spinner.append("circle")
-    .attr("r", 130)
+    .attr("r", 30)
     .attr("fill", "none")
     .attr("stroke", "#999")
     .attr("stroke-width", 4)
     .attr("stroke-dasharray", "10, 10")
     .style("opacity", 0.7);
 
-  // add rotation animation directly to the circle
+  // Add rotation animation directly to the circle
   spinnerCircle.append("animateTransform")
     .attr("attributeName", "transform")
     .attr("attributeType", "XML")
@@ -417,97 +428,69 @@ function createLoadingSpinner(container, width, height) {
     .attr("dur", "1s")
     .attr("repeatCount", "indefinite");
 
-  // centered text
+  // Centered text
   spinner.append("text")
     .attr("text-anchor", "middle")
     .attr("dy", "0.3em")
     .attr("fill", "#333")
-    .style("font-size", "22px")
     .text("Loading...");
     
   return spinner;
 }
 
-
 // Create update function to refresh the dashboard components
 async function updateDashboard(isSliderUpdate = false) {
-  // Get current values from the search bar but only update if it's explicitly being changed
-  // AND this is not a slider update
+  // Get current ticker from search bar if changed and not a slider update
   const searchTickerValue = d3.select("#searchTicker").property("value").toUpperCase();
   
-  // Only update the currentTicker if this is not a slider update
-  // and the search box has a valid value and is actively being changed
   if (!isSliderUpdate && searchTickerValue && searchTickerValue !== currentTicker && 
       (d3.select("#searchTicker").node() === document.activeElement || 
        document.activeElement.matches(".suggestion"))) {
-    currentTicker = searchTickerValue; // Update the currentTicker
+    currentTicker = searchTickerValue;
   }
   
-  // Use the persistent ticker value
+  // Use the current ticker
   const ticker = currentTicker;
-  
-  // Update search ticker display to match current ticker (in case it was changed programmatically)
   d3.select("#searchTicker").property("value", ticker);
   
+  // Check if we need to load new data
   let shouldLoadData = !isSliderUpdate;
   
-  // If this is not a slider update, update the entire dashboard including the line chart
   if (shouldLoadData) {
-    // Show loading spinner in the line chart area
+    // Show loading spinner
     lineSvg.selectAll("*").remove();
-    createLoadingSpinner(
-      lineSvg,
-      lineWidth,
-      lineHeight
-    );
+    createLoadingSpinner(lineSvg, lineWidth, lineHeight);
     
-    // Load stock data if not already loaded or if ticker changed
+    // Load stock data if needed
     if (!currentStockData || currentStockData.symbol !== ticker) {
       const data = await loadStockData(ticker);
-      if (!data) {
-        console.error(`Failed to load stock data for ${ticker}`);
-        lineSvg.selectAll("*").remove();
-        lineSvg.append("text")
-          .attr("x", lineWidth / 2)
-          .attr("y", lineHeight / 2)
-          .attr("text-anchor", "middle")
-          .text("Failed to load stock data");
-        return;
+      if (data) {
+        currentStockData = data;
+        currentStockData.symbol = ticker;
+        currentWeeklyData = data.weekly;
+        currentDailyData = data.daily;
       }
-      
-      currentStockData = data;
-      currentStockData.symbol = ticker;
-      
-      // Store the weekly and daily data
-      currentWeeklyData = data.weekly;
-      currentDailyData = data.daily;
     }
     
-    // Update the line chart with current data
-    lineSvg.selectAll("*").remove(); // Clear the loading spinner
+    // Clear spinner
+    lineSvg.selectAll("*").remove();
   }
   
-  // Calculate start and end indices based on slider positions
+  // Calculate data range for display
   const totalDataPoints = currentWeeklyData.length;
   const startIndex = Math.floor(startPercent / 100 * (totalDataPoints - 1));
   const endIndex = Math.floor(endPercent / 100 * (totalDataPoints - 1));
   
-  // Get the selected date range for the API call
+  // Get date range for API
   const startDate = d3.timeFormat("%Y-%m-%d")(currentWeeklyData[startIndex].date);
   const endDate = d3.timeFormat("%Y-%m-%d")(currentWeeklyData[endIndex].date);
   
-  // Show loading indicators in the performance and sentiment areas
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                // TO DO: CENTER THE SPINNER
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Show loading indicators
   d3.select("#performance-table tbody").style("opacity", 0.5);
   
-
   const sentimentMargin = {top: 20, right: 20, bottom: 20, left: 20};
   const sentimentWidth = 1300 - sentimentMargin.left - sentimentMargin.right;
   const sentimentHeight = 800 - sentimentMargin.top - sentimentMargin.bottom;
-
-
 
   d3.select("#sentimentChart").selectAll("*").remove();
   createLoadingSpinner(
@@ -521,7 +504,7 @@ async function updateDashboard(isSliderUpdate = false) {
   // Fetch calculation data from the API
   const calculationData = await fetchCalculationData(ticker, startDate, endDate);
   
-  // Get the selected date range for display in the info
+  // Get the selected data range for info display
   const selectedData = currentWeeklyData.slice(startIndex, endIndex + 1);
   
   // Get stock info
@@ -535,22 +518,6 @@ async function updateDashboard(isSliderUpdate = false) {
   
   // Update all components
   await updateAllComponents(ticker, calculationData, startIndex, endIndex, startDate, endDate);
-}
-
-// Display loading indicators for components
-function displayLoadingIndicators() {
-  // Show loading for performance table
-  d3.select("#performance-table tbody").style("opacity", 0.5);
-  
-  // Show loading for sentiment chart
-  d3.select("#sentimentChart").selectAll("*").remove();
-  createLoadingSpinner(
-    d3.select("#sentimentChart").append("svg")
-      .attr("width", sentimentWidth)
-      .attr("height", sentimentHeight),
-    sentimentWidth,
-    sentimentHeight
-  );
 }
 
 // Update all dashboard components
@@ -596,10 +563,8 @@ async function updateAllComponents(ticker, calculationData, startIndex, endIndex
     correlationDependencies
   );
   
-  // Update the sentiment chart with API data or placeholder visualization
+  // Update the sentiment chart with API data
   await updateWordBubbles(ticker, startDate, endDate);
-
-
 }
 
 // Attach event listeners for interactivity
@@ -608,12 +573,42 @@ d3.select("#searchTicker").on("focus", function() {
   // When clicking in the search box, we're definitely not using the slider
   sliderInUse = false;
 });
+
+// Moving average toggle handlers
 d3.select("#maToggle").on("change", function() {
-  updateDashboard(false); // Full update when changing moving average toggle
+  // Only update the line chart - no need to reload data
+  updateLineChartOnly();
 });
+
 d3.selectAll('input[name="maType"]').on("change", function() {
-  updateDashboard(false); // Full update when changing moving average type
+  // Only update the line chart - no need to reload data
+  updateLineChartOnly();
 });
+
+// Function to update only the line chart without reloading data
+function updateLineChartOnly() {
+  const totalDataPoints = currentWeeklyData.length;
+  const startIndex = Math.floor(startPercent / 100 * (totalDataPoints - 1));
+  const endIndex = Math.floor(endPercent / 100 * (totalDataPoints - 1));
+  
+  // Create dependencies object to pass to component functions
+  const commonDependencies = {
+    lineSvg,
+    formatMonthYear,
+    formatDate,
+    DISPLAY_START_DATE,
+    DISPLAY_END_DATE,
+    tooltip,
+    currentWeeklyData,
+    loadStockData,
+    createLoadingSpinner,
+    stocksDatabase
+  };
+  
+  // Clear previous chart and redraw with current settings
+  lineSvg.selectAll("*").remove();
+  drawlineChart(currentWeeklyData, currentDailyData, startIndex, endIndex, commonDependencies);
+}
 
 // Stock suggestion dropdown functionality
 function handleSearchInput() {
@@ -671,53 +666,34 @@ function getFilteredStockSuggestions(input) {
 }
 
 // Initialize the dashboard
-initializeSlider();
-const initialTicker = "V"; // Set the current ticker
-currentTicker = initialTicker;
-d3.select("#searchTicker").property("value", currentTicker);
-
-
-async function initWordBubbleChart() {
-  try {
-    const [topWords, bottomWords, adjMatrix] = await Promise.all([
-      d3.json("tmp_data/top_words.json"),
-      d3.json("tmp_data/bottom_words.json"),
-      d3.json("tmp_data/adjacency_matrix.json"),
-    ]);
-
-    const wordData = [...topWords, ...bottomWords];
-
-    const links = [];
-    Object.keys(adjMatrix).forEach(source => {
-      Object.keys(adjMatrix[source]).forEach(target => {
-        const weight = adjMatrix[source][target];
-        if (weight > 0) {
-          links.push({ source, target, weight });
-        }
-      });
-    });
-
-    const width = 1300;
-    const height = 800;
-
-    const bubbles = wordBubbles()
-      .width(width)
-      .height(height)
-      .data(wordData)
-      .links(links)
-      .margin({ top: 20, right: 20, bottom: 20, left: 20 });
-
-    d3.select("#wordBubbleChart").call(bubbles);
-  } catch (error) {
-    console.error("Error loading word bubble data:", error);
+async function initDashboard() {
+  // Load initial stock data
+  const initialTicker = "V";
+  currentTicker = initialTicker;
+  d3.select("#searchTicker").property("value", currentTicker);
+  
+  // Show loading spinner
+  lineSvg.selectAll("*").remove();
+  createLoadingSpinner(lineSvg, lineWidth, lineHeight);
+  
+  // Load data for the initial ticker
+  const data = await loadStockData(initialTicker);
+  if (data) {
+    currentStockData = data;
+    currentStockData.symbol = initialTicker;
+    currentWeeklyData = data.weekly;
+    currentDailyData = data.daily;
+    
+    // Initialize slider
+    initializeSlider();
+    
+    // Update dashboard
+    await updateDashboard(false);
   }
 }
 
-
-// to initialize the bubbles
-initWordBubbleChart();
-
-updateDashboard(false); // Full update for initial load
+// Start the application
+initDashboard();
 
 // Close dropdown when clicking outside
 window.addEventListener("click", function(event) {

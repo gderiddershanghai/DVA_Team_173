@@ -1,8 +1,8 @@
 // Correlation chart structure and functionality
 // Set up dimensions for correlation chart
-const correlationMargin = {top: 20, right: 20, bottom: 20, left: 20};
-const correlationWidth = 1080 - correlationMargin.left - correlationMargin.right;
-const correlationHeight = 460 - correlationMargin.top - correlationMargin.bottom - 30; // Account for title area
+const correlationMargin = {top: 0, right: 0, bottom: 0, left: 0}; // Remove container margins
+const correlationWidth = 1080;
+const correlationHeight = 460;
 
 // Function to update the correlation section with API data
 async function updateCorrelationChart(correlationData, symbol, startDate, endDate, selectedStartIdx, selectedEndIdx, dependencies) {
@@ -29,55 +29,61 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
   // Clear previous content
   corrContainer.selectAll("*").remove();
   
-  // Create container div with flex layout for the two charts
+  // Create container div with flex layout for the two charts with spacing between them
   const chartContainer = corrContainer.append("div")
     .style("display", "flex")
     .style("width", "100%")
     .style("height", "100%")
-    .style("justify-content", "space-between");
+    .style("justify-content", "flex-start")
+    .style("padding", "0")
+    .style("border", "0");
     
-  // Create the two chart areas
+  // Create the two chart areas - exactly 520px wide with 40px margin between them (1080 = 520 + 40 + 520)
   const mostCorrChart = chartContainer.append("div")
     .attr("id", "most-correlated-chart")
     .style("width", "520px")
-    .style("height", "100%");
+    .style("height", "100%")
+    .style("background-color", "white")
+    .style("border-radius", "60px")
+    .style("border", "0");
     
   const leastCorrChart = chartContainer.append("div")
     .attr("id", "least-correlated-chart")
     .style("width", "520px")
-    .style("height", "100%");
+    .style("margin-left", "40px")
+    .style("height", "100%")
+    .style("background-color", "white")
+    .style("border-radius", "60px")
+    .style("border", "0");
   
   // Create SVGs within the chart areas
   const mostSvg = mostCorrChart.append("svg")
     .attr("width", 520)
-    .attr("height", correlationHeight);
+    .attr("height", 460);
     
   const leastSvg = leastCorrChart.append("svg")
     .attr("width", 520)
-    .attr("height", correlationHeight);
+    .attr("height", 460);
   
   // Add titles to the charts
   mostSvg.append("text")
     .attr("x", 520 / 2)
-    .attr("y", 20)
+    .attr("y", 60)
     .attr("text-anchor", "middle")
     .style("font-weight", "bold")
-    .style("font-size", "14px")
+    .style("font-size", "32px")
     .text("Most Correlated Stock");
     
   leastSvg.append("text")
     .attr("x", 520 / 2)
-    .attr("y", 20)
+    .attr("y", 60)
     .attr("text-anchor", "middle")
     .style("font-weight", "bold")
-    .style("font-size", "14px")
+    .style("font-size", "32px")
     .text("Least Correlated Stock");
   
   // If no correlation data, show placeholders
   if (!correlationData) {
-    d3.select("#mostCorrelated").text("Most Correlated: N/A");
-    d3.select("#leastCorrelated").text("Least Correlated: N/A");
-    
     // Show "No Data" message in both charts
     mostSvg.append("text")
       .attr("x", 520 / 2)
@@ -94,24 +100,17 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     return;
   }
   
-  // Update correlation text information
-  const mostCorrelatedText = `Most Correlated: ${correlationData.most_correlated_stock} (${correlationData.most_correlated_stock_correlation.toFixed(4)})`;
-  const leastCorrelatedText = `Least Correlated: ${correlationData.least_correlated_stock} (${correlationData.least_correlated_stock_correlation.toFixed(4)})`;
-  
-  d3.select("#mostCorrelated").text(mostCorrelatedText);
-  d3.select("#leastCorrelated").text(leastCorrelatedText);
-  
   // Show loading spinners while data is being fetched
   const mostSpinner = createLoadingSpinner(
     mostSvg,
-    correlationWidth / 2 - 10,
-    correlationHeight
+    520 / 2,
+    correlationHeight / 2
   );
   
   const leastSpinner = createLoadingSpinner(
     leastSvg,
-    correlationWidth / 2 - 10,
-    correlationHeight
+    520 / 2,
+    correlationHeight / 2
   );
   
   // Load data for the most and least correlated stocks
@@ -151,7 +150,11 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
           minDate,
           maxDate,
           true,
-          { tooltip }
+          { 
+            tooltip,
+            correlationValue: correlationData.most_correlated_stock_correlation,
+            stocksDatabase: dependencies.stocksDatabase
+          }
         );
       }
     } else {
@@ -186,7 +189,11 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
           minDate,
           maxDate,
           false,
-          { tooltip }
+          { 
+            tooltip,
+            correlationValue: correlationData.least_correlated_stock_correlation,
+            stocksDatabase: dependencies.stocksDatabase
+          }
         );
       }
     } else {
@@ -221,18 +228,23 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
 
 // Function to draw a single correlation chart
 function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correlatedSymbol, minDate, maxDate, isMostCorrelated, dependencies) {
-  const { tooltip } = dependencies;
+  const { tooltip, correlationValue, stocksDatabase } = dependencies;
   
   // Set chart dimensions
   const width = +svg.attr("width");
   const height = +svg.attr("height");
-  const margin = {top: 40, right: 10, bottom: 40, left: 40};
-  const chartWidth = width - margin.left - margin.right;
-  const chartHeight = height - margin.top - margin.bottom;
+  
+  // Position chart elements - no internal margins reducing the chart height
+  const titleHeight = 60;  // Space for title
+  const bottomSpace = 140; // Space for boxes and company name below chart
+  const chartTop = titleHeight + 20; // Increased by 20
+  const chartHeight = 240;   // Decreased by 20
+  const chartWidth = 460 - 40; // Chart width with only left margin for y-axis
+  const leftMargin = 40;    // Space for y-axis
   
   // Create the chart area
   const chart = svg.append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+    .attr("transform", `translate(${(width - 460) / 2 + leftMargin},${chartTop})`);
   
   // Create normalized data for better comparison
   const normalizeData = (data) => {
@@ -248,7 +260,7 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
   const normalizedMainData = normalizeData(mainData);
   const normalizedCorrelatedData = normalizeData(correlatedData);
   
-  // Find min and max of normalized values
+  // Find min and max of normalized values for both stocks
   const allValues = [
     ...normalizedMainData.map(d => d.value),
     ...normalizedCorrelatedData.map(d => d.value)
@@ -266,33 +278,33 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .domain([yMin, yMax])
     .range([chartHeight, 0]);
   
-  // Add axes
+  // Create the tick values for the y-axis
+  const yTickValues = yScale.ticks(5);
+  
+  // Add horizontal grid lines that match the tick values
+  yTickValues.forEach(tickValue => {
+    chart.append("line")
+      .attr("x1", 0)
+      .attr("y1", yScale(tickValue))
+      .attr("x2", chartWidth)
+      .attr("y2", yScale(tickValue))
+      .attr("stroke", "#D9D9D9")
+      .attr("stroke-width", "1px");
+  });
+  
+  // Add axes with text labels but hide the lines
   chart.append("g")
     .attr("class", "x-axis")
     .attr("transform", `translate(0,${chartHeight})`)
-    .call(d3.axisBottom(xScale).ticks(4).tickFormat(d3.timeFormat("%b %Y")));
+    .call(d3.axisBottom(xScale).ticks(4).tickFormat(d3.timeFormat("%b '%y")))
+    .call(g => g.select(".domain").remove()) // Remove x-axis line
+    .call(g => g.selectAll(".tick line").remove()); // Remove tick lines
     
   chart.append("g")
     .attr("class", "y-axis")
-    .call(d3.axisLeft(yScale).ticks(5).tickFormat(d => `${d.toFixed(0)}%`));
-  
-  // Add grid lines
-  chart.append("g")
-    .attr("class", "grid")
-    .attr("transform", `translate(0,${chartHeight})`)
-    .call(d3.axisBottom(xScale)
-      .tickSize(-chartHeight)
-      .tickFormat("")
-    )
-    .style("opacity", 0.1);
-    
-  chart.append("g")
-    .attr("class", "grid")
-    .call(d3.axisLeft(yScale)
-      .tickSize(-chartWidth)
-      .tickFormat("")
-    )
-    .style("opacity", 0.1);
+    .call(d3.axisLeft(yScale).ticks(5).tickFormat(d => `${d.toFixed(0)}`))
+    .call(g => g.select(".domain").remove()) // Remove y-axis line
+    .call(g => g.selectAll(".tick line").remove()); // Remove tick lines
   
   // Line generator
   const line = d3.line()
@@ -300,59 +312,102 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .y(d => yScale(d.value))
     .curve(d3.curveMonotoneX);
   
-  // Add lines
-  // Main stock line
+  // Colors based on whether this is most or least correlated
+  const lineColor = isMostCorrelated ? "#00BF7F" : "#DB5167";
+  const fillColor = isMostCorrelated ? "#B6E2D3" : "#F5B9C3";
+  const boxColor = isMostCorrelated ? "#7ECCB1" : "#E77C8D";
+  
+  // Create an area generator for the fill
+  const area = d3.area()
+    .x(d => xScale(d.date))
+    .y0(chartHeight)
+    .y1(d => yScale(d.value))
+    .curve(d3.curveMonotoneX);
+  
+  // Add area fill under the line
+  chart.append("path")
+    .datum(normalizedCorrelatedData)
+    .attr("class", "area")
+    .attr("fill", fillColor)
+    .attr("d", area);
+  
+  // Add the main stock line in a neutral color
   chart.append("path")
     .datum(normalizedMainData)
     .attr("class", "line main-line")
     .attr("fill", "none")
-    .attr("stroke", "#2196F3")
-    .attr("stroke-width", 2)
+    .attr("stroke", "#888888")
+    .attr("stroke-width", 1.5)
+    .attr("stroke-dasharray", "3,3")
     .attr("d", line);
   
-  // Correlated stock line
+  // Add the correlated stock line
   chart.append("path")
     .datum(normalizedCorrelatedData)
     .attr("class", "line correlated-line")
     .attr("fill", "none")
-    .attr("stroke", isMostCorrelated ? "#4CAF50" : "#F44336")
+    .attr("stroke", lineColor)
     .attr("stroke-width", 2)
     .attr("d", line);
   
-  // Add legend
-  const legend = chart.append("g")
-    .attr("class", "legend")
-    .attr("transform", `translate(10,10)`);
+  // Find company name for the ticker
+  const company = stocksDatabase?.find(s => s.symbol === correlatedSymbol);
+  const companyName = company ? company.name : "Microsoft Corp NASDAQ";
   
-  // Main stock
-  legend.append("rect")
-    .attr("x", 0)
-    .attr("y", 0)
-    .attr("width", 15)
-    .attr("height", 3)
-    .attr("fill", "#2196F3");
-    
-  legend.append("text")
-    .attr("x", 20)
-    .attr("y", 3)
-    .attr("dominant-baseline", "middle")
-    .style("font-size", "10px")
-    .text(mainSymbol);
+  // Create the boxes for ticker and correlation value
+  const boxGroup = svg.append("g")
+    .attr("transform", `translate(${width/2}, ${chartTop + chartHeight + 50})`);
   
-  // Correlated stock
-  legend.append("rect")
-    .attr("x", 0)
-    .attr("y", 15)
-    .attr("width", 15)
-    .attr("height", 3)
-    .attr("fill", isMostCorrelated ? "#4CAF50" : "#F44336");
-    
-  legend.append("text")
-    .attr("x", 20)
-    .attr("y", 18)
-    .attr("dominant-baseline", "middle")
-    .style("font-size", "10px")
+  // Large background box (320x70)
+  boxGroup.append("rect")
+    .attr("x", -160)
+    .attr("y", -10)
+    .attr("width", 320)
+    .attr("height", 70)
+    .attr("rx", 35)
+    .attr("ry", 35)
+    .attr("fill", fillColor);
+  
+  // Smaller box for ticker (160x70)
+  boxGroup.append("rect")
+    .attr("x", -160)
+    .attr("y", -10)
+    .attr("width", 160)
+    .attr("height", 70)
+    .attr("rx", 35)
+    .attr("ry", 35)
+    .attr("fill", boxColor);
+  
+  // Format correlation value
+  const corrValue = correlationValue.toFixed(2);
+  
+  // Add ticker to the left box
+  boxGroup.append("text")
+    .attr("x", -80)
+    .attr("y", 38)
+    .attr("text-anchor", "middle")
+    .attr("fill", "white")
+    .style("font-size", "40px")
+    .style("font-weight", "bold")
     .text(correlatedSymbol);
+  
+  // Add correlation value to the right box
+  boxGroup.append("text")
+    .attr("x", 75)
+    .attr("y", 38)
+    .attr("text-anchor", "middle")
+    .attr("fill", "white")
+    .style("font-size", "40px")
+    .style("font-weight", "bold")
+    .text(corrValue);
+  
+  // Add company name below
+  boxGroup.append("text")
+    .attr("text-anchor", "middle")
+    .attr("y", 77)
+    .attr("fill", "#555")
+    .style("font-size", "13px")
+    .text(companyName);
 }
 
 // Export the functions and constants

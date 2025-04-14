@@ -12,6 +12,14 @@ const parameterDescriptions = {
   "treynor_ratio": "Earnings compared to market risk."
 };
 
+// Parameter range limits
+const parameterRanges = {
+  "alpha": 3,         // -3 to +3 from S&P value
+  "beta": 1,          // -1 to +1 from S&P value
+  "sharpe_ratio": 3,  // -3 to +3 from S&P value
+  "treynor_ratio": 1  // -1 to +1 from S&P value
+};
+
 // Function to update the performance table with API data
 function updatePerformanceTable(performanceData, dependencies) {
   const { stocksDatabase } = dependencies;
@@ -25,7 +33,8 @@ function updatePerformanceTable(performanceData, dependencies) {
     .text("Stock Information")
     .style("margin-bottom", "15px")
     .style("color", "#333")
-    .style("font-size", "22px");
+    .style("font-size", "36px")
+    .style("margin-left", "50px");
   
   if (!performanceData) {
     performanceTable.append("p")
@@ -51,8 +60,10 @@ function updatePerformanceTable(performanceData, dependencies) {
   const metricsContainer = performanceTable.append("div")
     .style("display", "grid")
     .style("grid-template-columns", "repeat(2, 1fr)")
-    .style("grid-gap", "15px")
-    .style("max-height", "380px"); // Ensure it fits within container
+    .style("grid-gap", "20px")
+    .style("max-height", "380px")
+    .style("padding-left", "60px")
+    .style("padding-right", "60px"); // Ensure it fits within container
   
   // Get current ticker from the search box
   const currentTicker = d3.select("#searchTicker").property("value").toUpperCase() || "AAPL";
@@ -113,7 +124,7 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
     .style("padding", "15px")
     .style("display", "flex")
     .style("flex-direction", "column")
-    .style("height", "165px");
+    .style("height", "130px");
   
   // Create first row with circle and description
   const topRow = card.append("div")
@@ -172,12 +183,13 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
   
   // Add horizontal line for the scale
   svg.append("line")
-    .attr("x1", "10%")
-    .attr("x2", "90%")
+    .attr("x1", "5%")
+    .attr("x2", "95%")
     .attr("y1", 25)
     .attr("y2", 25)
     .attr("stroke", "#E9E5E1")
-    .attr("stroke-width", 2);
+    .attr("stroke-width", 8)
+    .attr("stroke-linecap", "round");
   
   // Add benchmark marker (S&P500) - center at 50%
   const benchmarkX = "50%";
@@ -186,18 +198,18 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
   svg.append("rect")
     .attr("x", benchmarkX)
     .attr("y", 15)
-    .attr("width", 2)
+    .attr("width", 10)
     .attr("height", 20)
-    .attr("transform", "translate(-1, 0)")
+    .attr("transform", "translate(-5, 0)")
     .attr("fill", "#A38E79");
   
   // Add benchmark label
   svg.append("text")
     .attr("x", benchmarkX)
-    .attr("y", 45)
+    .attr("y", 50)
     .attr("text-anchor", "middle")
     .attr("fill", "#666")
-    .attr("font-size", "12px")
+    .attr("font-size", "14px")
     .text("S&P500");
   
   // Add benchmark value
@@ -206,18 +218,25 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
     .attr("y", 10)
     .attr("text-anchor", "middle")
     .attr("fill", "#333")
-    .attr("font-size", "12px")
+    .attr("font-size", "14px")
     .text(benchmarkValue.toFixed(1));
   
-  // Calculate stock position based on value relative to benchmark
-  // Normalize position between 10% and 90% of the available width
-  const range = Math.max(Math.abs(value - benchmarkValue) * 3, 0.5);
-  const maxPos = Math.min(90, 50 + range * 20);
-  const minPos = Math.max(10, 50 - range * 20);
+  // Get the fixed range for this parameter
+  const fixedRange = parameterRanges[paramKey];
   
-  const stockX = value > benchmarkValue 
-    ? `${50 + (value - benchmarkValue) / range * (maxPos - 50)}%`
-    : `${50 - (benchmarkValue - value) / range * (50 - minPos)}%`;
+  // Calculate stock value relative to benchmark, capped at the parameter's range
+  let relativeDiff = value - benchmarkValue;
+  
+  // Cap the difference if it exceeds the range
+  if (relativeDiff > fixedRange) {
+    relativeDiff = fixedRange;
+  } else if (relativeDiff < -fixedRange) {
+    relativeDiff = -fixedRange;
+  }
+  
+  // Calculate position percentage (10% to 90% of available width)
+  // With 50% being the benchmark position
+  const stockX = `${50 + (relativeDiff / fixedRange) * 40}%`;
   
   // Add path/line connecting benchmark to stock value
   svg.append("line")
@@ -225,32 +244,33 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
     .attr("x2", stockX)
     .attr("y1", 25)
     .attr("y2", 25)
+    .attr("transform", "translate(5, 0)")
     .attr("stroke", isBelowAverage ? "rgba(239, 124, 142, 0.3)" : "rgba(102, 194, 163, 0.3)")
-    .attr("stroke-width", 2);
+    .attr("stroke-width", 20);
   
   // Add stock marker
   svg.append("circle")
     .attr("cx", stockX)
     .attr("cy", 25)
-    .attr("r", 6)
+    .attr("r", 10)
     .attr("fill", circleColor);
   
   // Add stock ticker
   svg.append("text")
     .attr("x", stockX)
-    .attr("y", 45)
+    .attr("y", 50)
     .attr("text-anchor", "middle")
     .attr("fill", "#666")
-    .attr("font-size", "12px")
+    .attr("font-size", "14px")
     .text(stockTicker);
   
-  // Add stock value
+  // Use original value for display (not the capped value)
   svg.append("text")
     .attr("x", stockX)
     .attr("y", 10)
     .attr("text-anchor", "middle")
     .attr("fill", "#333")
-    .attr("font-size", "12px")
+    .attr("font-size", "14px")
     .text(value.toFixed(1));
 }
 

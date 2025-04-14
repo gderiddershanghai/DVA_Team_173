@@ -3,7 +3,7 @@ import json
 import os
 import time
 import numpy as np
-from src.components.dashboard.calculations.word_mapping import WORD_MAPPING
+from word_mapping import WORD_MAPPING
 import pandas as pd
 from itertools import combinations
 
