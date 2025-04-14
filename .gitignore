@@ -11,4 +11,4 @@ convert_csv_to_json.py
 
 word_cloud_data.json
 app.py
-clean_data
+clean_data/
