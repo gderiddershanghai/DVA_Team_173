@@ -1,3 +1,11 @@
+/* Import Roboto font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+/* Global font setting */
+* {
+  font-family: 'Roboto', sans-serif;
+}
+
 /* Dashboard container */
 #dashboard {
     width: 2560px;
@@ -27,16 +35,329 @@
     height: 800px;
     border: 0;
     position: relative;
-    border-radius: 60px;
     overflow: hidden;
     box-sizing: border-box;
+    background-color: transparent;
+    padding: 0px;
+    display: flex;
+    flex-direction: column;
   }
   
-  #lineChart {
+  /* Chart top row styling */
+  #chart-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  /* Ticker box styling */
+  #ticker-box {
+    width: 200px;
+    height: 80px;
+    background-color: #D6CDC4;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  #ticker-symbol {
+    font-size: 48px;
+    font-weight: bold;
+    color: #000;
+  }
+  
+  /* Stock info styling */
+  #stock-info {
+    display: flex;
+    flex-direction: column;
+    margin-left: 20px;
+    flex-grow: 1;
+  }
+  
+  #stockName {
+    font-size: 24px;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 5px;
+  }
+  
+  #stockPrice {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .price-up {
+    color: #66C2A3;
+  }
+  
+  .price-down {
+    color: #DB5167;
+  }
+  
+  /* Search container styling */
+  .search-container {
+    position: relative;
+    width: 250px;
+    display: flex;
+    align-items: center;
+  }
+  
+  #searchTicker {
     width: 100%;
-    height: 100%;
+    padding: 10px 40px 10px 15px;
+    border-radius: 20px;
+    border: 1px solid #D6CDC4;
+    font-size: 16px;
   }
   
+  #search-icon {
+    position: absolute;
+    right: 15px;
+    color: #A38E79;
+  }
+  
+  /* Chart bottom row styling */
+  #chart-bottom-row {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    position: relative;
+    background-color: #FFF;
+    border-radius: 60px;
+    width: 100%;
+    height: 700px;
+  }
+  
+  /* Chart content wrapper with consistent margins */
+  #chart-content-wrapper {
+    padding: 20px 0px 40px 0px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Chart header with title and controls */
+  #chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin: 10px 0 20px 0;
+    padding-left: 50px;
+    padding-right: 50px;
+  }
+  
+  #chart-title h2 {
+    font-size: 36px;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    transform: translateX(30px);
+  }
+  
+  #priceChange {
+    font-size: 18px;
+    font-weight: bold;
+    transform: translateX(30px);
+  }
+  
+  /* Moving average controls */
+  #ma-controls-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  
+  .ma-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  
+  .toggle {
+    position: relative;
+    display: inline-block;
+    font-size: 20px;
+    width: 180px;
+    height: 40px;
+    margin-right: 0;
+    margin-bottom: 10px;
+    text-align: right;
+  }
+  
+  .toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 40px;
+    background-color: #A38E79;
+    transition: .4s;
+    border-radius: 34px;
+  }
+  
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 32px;
+    width: 32px;
+    right: 84px;
+    bottom: 4px;
+    background-color: #F1EEEB;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  
+  input:checked + .toggle-slider {
+    background-color: #2196F3;
+  }
+  
+  input:checked + .toggle-slider:before {
+    transform: translateX(80px);
+  }
+  
+  .toggle-label {
+    position: absolute;
+    left: -60px;
+    top: 5px;
+    white-space: nowrap;
+  }
+  
+  /* Moving average options */
+  .ma-options {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+  }
+  
+  .ma-button {
+    width: 120px;
+    height: 40px;
+    background-color: #F1EEEB;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 24px;
+    transition: background-color 0.3s;
+  }
+  
+  .ma-button.selected {
+    background-color: #D6CDC4;
+  }
+  
+  /* Line chart styling */
+  #lineChart {
+    flex-grow: 1;
+    width: 1080px;
+    height: 500px;
+    position: relative;
+    margin: 0;
+  }
+  
+  /* SVG styling for the chart */
+  #lineChart svg {
+    width: 100%;
+    height: 500px;
+    background-color: transparent;
+  }
+  
+  /* Hide axis lines but keep ticks */
+  .x-axis path, .y-axis path {
+    display: none;
+  }
+  
+  .x-axis line, .y-axis line {
+    display: none;
+  }
+  
+  /* Fill styles for the line area */
+  .area-up {
+    fill: #B6E2D3;
+    opacity: 0.7;
+  }
+  
+  .area-down {
+    fill: #F5B9C3;
+    opacity: 0.7;
+  }
+  
+  /* Line styles */
+  .price-line-up {
+    stroke: #00BF7F;
+    stroke-width: 2;
+    fill: none;
+  }
+  
+  .price-line-down {
+    stroke: #DB5167;
+    stroke-width: 2;
+    fill: none;
+  }
+  
+  /* Date slider styling */
+  #date-sliders {
+    position: relative;
+    bottom: 10px;
+    width: 930px;
+    margin-top: 10px;
+    margin-left: 50px;
+    box-sizing: border-box;
+    padding-bottom: 60px;
+  }
+  
+  #date-range-slider {
+    position: relative;
+    height: 25px;
+    width: 100%;
+  }
+  
+  .slider-track {
+    position: absolute;
+    height: 8px;
+    width: 100%;
+    background-color: #F1EEEB;
+    border-radius: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  
+  .slider-range {
+    position: absolute;
+    height: 8px;
+    background-color: #D6CDC4;
+    border-radius: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  
+  .slider-handle {
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    background-color: #A38E79;
+    border-radius: 12.5px;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 3;
+  }
+  
+  /* Date label styling for better font rendering */
+  .date-label-text {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    dominant-baseline: middle;
+  }
+  
+  /* Performance table */
   #performance-table {
     width: 1300px;
     height: 460px;
@@ -45,7 +366,7 @@
     overflow-y: auto;
     border-radius: 60px;
     box-sizing: border-box;
-    background-color: #f9f9f9;
+    background-color: #FFF;
   }
   
   /* Performance table title */
@@ -74,8 +395,9 @@
     height: 800px;
     border: 0;
     position: relative;
-    padding: 0;
+    padding: 50px;
     border-radius: 60px;
+    background-color: #FFF;
     box-sizing: border-box;
   }
   
@@ -96,36 +418,6 @@
     margin-right: 40px;
   }
   
-  /* Controls for line chart */
-  #controls {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    right: 10px;
-    z-index: 2;
-    background: rgba(255,255,255,0.8);
-    padding: 10px;
-    border-radius: 5px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  /* Search container */
-  .search-container {
-    position: relative;
-    width: 150px;
-  }
-  
-  /* Stock ticker input */
-  #searchTicker {
-    width: 100%;
-    padding: 5px;
-    border-radius: 4px;
-    border: 0;
-  }
-  
   /* Suggestion dropdown */
   .suggestion-dropdown {
     display: none;
@@ -135,15 +427,17 @@
     overflow-y: auto;
     border: 0;
     border-top: none;
-    border-radius: 0 0 4px 4px;
+    border-radius: 0 0 15px 15px;
     z-index: 10;
+    background-color: white;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    top: 100%;
   }
   
   .suggestion {
-    padding: 8px;
+    padding: 10px 15px;
     cursor: pointer;
-    border-bottom: 0;
+    border-bottom: 1px solid #f0f0f0;
     font-size: 14px;
   }
   
@@ -152,173 +446,45 @@
   }
   
   .suggestion:hover {
-    background-color: #f0f0f0;
+    background-color: #f7f5f3;
   }
   
-  /* Moving average toggle switch */
-  .ma-controls {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-left: 20px;
+  /* Data point styling */
+  .data-point {
+    r: 3;
+    transition: r 0.2s, fill 0.2s;
   }
   
-  .toggle {
-    position: relative;
-    display: inline-block;
-    width: 60px;
-    height: 24px;
-    margin-right: 10px;
+  .data-point-up {
+    fill: #00BF7F;
   }
   
-  .toggle input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+  .data-point-down {
+    fill: #DB5167;
   }
   
-  .toggle-slider {
+  .data-point:hover {
+    r: 5;
+  }
+  
+  /* Tooltip for line chart */
+  .tooltip {
     position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 34px;
-  }
-  
-  .toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 4px;
-    bottom: 4px;
+    padding: 10px;
     background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-  }
-  
-  input:checked + .toggle-slider {
-    background-color: #2196F3;
-  }
-  
-  input:checked + .toggle-slider:before {
-    transform: translateX(36px);
-  }
-  
-  .toggle-label {
-    margin-left: 70px;
-    white-space: nowrap;
-  }
-  
-  /* Moving average options */
-  .ma-options {
-    display: flex;
-    margin-left: 10px;
-  }
-  
-  .ma-options label {
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-  }
-  
-  .ma-options input[type="radio"] {
-    margin-right: 5px;
-  }
-  
-  /* Date sliders */
-  #date-sliders {
-    position: absolute;
-    bottom: 20px;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  /* Custom range slider */
-  #date-range-slider {
-    position: relative;
-    height: 10px;
-    margin: 10px 0;
-    width: 100%;
-  }
-  
-  .slider-track {
-    position: absolute;
-    height: 6px;
-    width: 100%;
-    background-color: #ddd;
-    border-radius: 3px;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  
-  .slider-range {
-    position: absolute;
-    height: 6px;
-    background-color: #2196F3;
-    border-radius: 3px;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  
-  .slider-handle {
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    background-color: #fff;
-    border: 0;
-    border-radius: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    cursor: pointer;
-    z-index: 3;
-  }
-  
-  .slider-handle:hover,
-  .slider-handle:active {
-    background-color: #e6f2ff;
-  }
-  
-  .start-handle {
-    left: 10%;
-  }
-  
-  .end-handle {
-    left: 90%;
-  }
-  
-  .slider-labels {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 5px;
-    font-size: 12px;
-    color: #666;
-  }
-  
-  /* Shaded area on chart for unselected regions */
-  .chart-shade {
-    fill: rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0,70.2);
     pointer-events: none;
+    font-size: 14px;
+    z-index: 100;
+    max-width: 200px;
   }
   
-  .chart-shade-left, .chart-shade-right {
-    fill: rgba(0, 0, 0, 0.15);
-    pointer-events: none;
-  }
-  
-  /* Selection indicator */
-  .selection-indicator {
-    stroke: #2196F3;
-    stroke-width: 2;
-    stroke-dasharray: 5,5;
-    fill: none;
-    pointer-events: none;
+  /* Sentiment bubbles */
+  #sentimentChart svg {
+    background-color: transparent;
+    width: 1200px;
+    height: 700px;
   }
   
   /* Table styling */
@@ -328,41 +494,12 @@
   }
   
   #performance-table th, #performance-table td {
-    border: 0;
     padding: 8px;
     text-align: center;
   }
   
   #performance-table th {
     background-color: #f2f2f2;
-  }
-  
-  /* Correlation section */
-  #correlation-info {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-  
-  /* Sentiment bubbles */
-  #sentimentChart svg {
-    background-color: #f9f9f9;
-    border-radius: 60px;
-    width: 100%;
-    height: calc(100% - 40px);
-  }
-  
-  /* Tooltip for line chart */
-  .tooltip {
-    position: absolute;
-    padding: 10px;
-    border: 0;
-    border-radius: 5px;
-    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
-    pointer-events: none;
-    font-size: 14px;
-    z-index: 100;
-    max-width: 200px;
   }
   
   /* Grid styling */
@@ -377,35 +514,13 @@
   }
   
   /* Axis styling */
-  .x-axis, .y-axis {
+  .x-axis text, .y-axis text {
     font-size: 12px;
-  }
-  
-  .x-axis path, .y-axis path,
-  .x-axis line, .y-axis line {
-    stroke: #888;
-    shape-rendering: crispEdges;
-  }
-  
-  /* line styling */
-  .line .body {
-    stroke-width: 1;
-  }
-  
-  .line .wick {
-    stroke-linecap: round;
+    fill: #888;
   }
   
   /* Moving average line */
   .ma-line {
     stroke-width: 2;
-  }
-  
-  /* Remove borders from correlation chart elements */
-  #correlationChart div,
-  #most-correlated-chart,
-  #least-correlated-chart {
-    border: 0;
-    box-sizing: border-box;
   }
   

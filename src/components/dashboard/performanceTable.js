@@ -6,10 +6,10 @@ const tableHeight = 460 - tableMargin.top - tableMargin.bottom;
 
 // Parameter descriptions
 const parameterDescriptions = {
-  "alpha": "Earnings more than market average.",
-  "beta": "Moves with market, shows risk.",
-  "sharpe_ratio": "Earnings compared to total risk.",
-  "treynor_ratio": "Earnings compared to market risk."
+  "alpha": "Excess return relative to market benchmark. Higher is better.",
+  "beta": "Stock's volatility compared to market. >1 = more volatile, <1 = less volatile.",
+  "sharpe_ratio": "Return per unit of risk. Higher values indicate better risk-adjusted performance.",
+  "treynor_ratio": "Return per unit of market risk. Higher values show better market risk management."
 };
 
 // Parameter range limits
@@ -31,17 +31,20 @@ function updatePerformanceTable(performanceData, dependencies) {
   // Add title
   performanceTable.append("h2")
     .text("Stock Information")
+    .style("font-weight", "bold")
     .style("margin-bottom", "15px")
     .style("color", "#333")
     .style("font-size", "36px")
-    .style("margin-left", "50px");
+    .style("margin-left", "50px")
+    .style("font-family", "'Roboto', sans-serif");
   
   if (!performanceData) {
     performanceTable.append("p")
       .text("No performance data available")
       .style("text-align", "center")
       .style("color", "#666")
-      .style("font-style", "italic");
+      .style("font-style", "italic")
+      .style("font-family", "'Roboto', sans-serif");
     return;
   }
   
@@ -120,7 +123,7 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
   const card = container.append("div")
     .style("background-color", "white")
     .style("border-radius", "8px")
-    .style("box-shadow", "0 2px 6px rgba(0,0,0,0.1)")
+    .style("box-shadow", "0 4px 10px rgba(0,0,0,0.1)")
     .style("padding", "15px")
     .style("display", "flex")
     .style("flex-direction", "column")
@@ -146,6 +149,7 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
     .style("color", "white")
     .style("font-weight", "bold")
     .style("font-size", "24px")
+    .style("font-family", "'Roboto', sans-serif")
     .text(rank);
   
   // Create title and description
@@ -158,11 +162,13 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
   textContainer.append("div")
     .style("font-size", "20px")
     .style("font-weight", "500")
+    .style("font-family", "'Roboto', sans-serif")
     .style("color", "black")
     .text(title);
   
   textContainer.append("div")
     .style("font-size", "16px")
+    .style("font-family", "'Roboto', sans-serif")
     .style("color", "#D6CDC4")
     .style("margin-top", "3px")
     .text(parameterDescriptions[paramKey]);
@@ -210,6 +216,7 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
     .attr("text-anchor", "middle")
     .attr("fill", "#666")
     .attr("font-size", "14px")
+    .attr("font-family", "'Roboto', sans-serif")
     .text("S&P500");
   
   // Add benchmark value
@@ -219,6 +226,7 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
     .attr("text-anchor", "middle")
     .attr("fill", "#333")
     .attr("font-size", "14px")
+    .attr("font-family", "'Roboto', sans-serif")
     .text(benchmarkValue.toFixed(1));
   
   // Get the fixed range for this parameter
@@ -262,6 +270,7 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
     .attr("text-anchor", "middle")
     .attr("fill", "#666")
     .attr("font-size", "14px")
+    .attr("font-family", "'Roboto', sans-serif")
     .text(stockTicker);
   
   // Use original value for display (not the capped value)
@@ -271,6 +280,7 @@ function createMetricCard(container, title, value, rank, avgRank, totalStocks, p
     .attr("text-anchor", "middle")
     .attr("fill", "#333")
     .attr("font-size", "14px")
+    .attr("font-family", "'Roboto', sans-serif")
     .text(value.toFixed(1));
 }
 
