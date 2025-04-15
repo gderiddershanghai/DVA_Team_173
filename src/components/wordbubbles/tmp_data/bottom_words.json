@@ -1,50 +1,50 @@
 [
   {
-    "word":"James",
-    "counts":215,
-    "total_score":-3.9099765512,
-    "average_score":-0.0181859374
+    "word":"SEC",
+    "counts":9745,
+    "total_score":-3137.135005638,
+    "average_score":-0.321922525
   },
   {
-    "word":"Gunn",
-    "counts":242,
-    "total_score":-4.1778336941,
-    "average_score":-0.0172637756
+    "word":"TSLAQ (anti-Tesla)",
+    "counts":87593,
+    "total_score":-14986.6371057332,
+    "average_score":-0.1710940042
   },
   {
-    "word":"Nickelodeon",
-    "counts":284,
-    "total_score":0.0194426407,
-    "average_score":0.00006846
+    "word":"never",
+    "counts":9949,
+    "total_score":-1433.154525131,
+    "average_score":-0.1440501081
   },
   {
-    "word":"network",
-    "counts":303,
-    "total_score":1.2269778139,
-    "average_score":0.0040494317
+    "word":"sales",
+    "counts":11104,
+    "total_score":-1230.015896827,
+    "average_score":-0.110772325
   },
   {
-    "word":"cartoon",
-    "counts":323,
-    "total_score":2.6061444805,
-    "average_score":0.0080685588
+    "word":"company",
+    "counts":22076,
+    "total_score":-1907.453473717,
+    "average_score":-0.0864039443
   },
   {
-    "word":"Marvel",
-    "counts":142,
-    "total_score":7.2990419303,
-    "average_score":0.0514017037
+    "word":"production",
+    "counts":12496,
+    "total_score":-420.0379727483,
+    "average_score":-0.0336137942
   },
   {
-    "word":"channel",
-    "counts":390,
-    "total_score":21.6977290071,
-    "average_score":0.0556352026
+    "word":"news",
+    "counts":13980,
+    "total_score":-452.1927599758,
+    "average_score":-0.032345691
   },
   {
-    "word":"star",
-    "counts":165,
-    "total_score":13.2561844637,
-    "average_score":0.0803405119
+    "word":"China",
+    "counts":11280,
+    "total_score":-267.4778885245,
+    "average_score":-0.0237125788
   }
 ]

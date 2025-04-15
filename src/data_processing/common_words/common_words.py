@@ -241,13 +241,13 @@ if __name__ == "__main__":
         
         
         ######################################
-    idx = 5 # 5 is a good one  "2017-01-01" "2019-12-21"
+    idx = 0 # 5 is a good one  "2017-01-01" "2019-12-21"
     print(tickers[idx])
     analyzer = CommonWords(
         ticker=tickers[idx],
         data_dir=input_dir,
         start_date="2017-01-01",
-        end_date="2019-12-21",
+        end_date="2039-12-21",
         min_count_percentage=0.015,
         top_n_words=8,
         filter_metric='average_score'

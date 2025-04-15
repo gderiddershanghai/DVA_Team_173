@@ -1,50 +1,50 @@
 [
   {
-    "word":"princess",
-    "counts":313,
-    "total_score":26.9568064574,
-    "average_score":0.0861239823
+    "word":"ev",
+    "counts":9653,
+    "total_score":965.6972492188,
+    "average_score":0.1000411529
   },
   {
-    "word":"world",
-    "counts":447,
-    "total_score":49.9054737855,
-    "average_score":0.1116453552
+    "word":"earnings",
+    "counts":10443,
+    "total_score":1045.4157629013,
+    "average_score":0.1001068431
   },
   {
-    "word":"need",
-    "counts":143,
-    "total_score":18.4916017316,
-    "average_score":0.1293119002
+    "word":"QQQ (Stock)",
+    "counts":16687,
+    "total_score":1697.1262861788,
+    "average_score":0.1017034989
   },
   {
-    "word":"show",
-    "counts":151,
-    "total_score":23.9510651154,
-    "average_score":0.1586163253
+    "word":"well",
+    "counts":13101,
+    "total_score":1938.7752695382,
+    "average_score":0.1479868155
   },
   {
-    "word":"US",
-    "counts":197,
-    "total_score":31.6336940837,
-    "average_score":0.1605771273
+    "word":"SPY (Fund)",
+    "counts":28801,
+    "total_score":5165.1954432279,
+    "average_score":0.1793408369
   },
   {
-    "word":"air",
-    "counts":148,
-    "total_score":27.4146473665,
-    "average_score":0.1852341038
+    "word":"Goldman",
+    "counts":19565,
+    "total_score":8308.9425775856,
+    "average_score":0.424684006
   },
   {
-    "word":"movies",
-    "counts":601,
-    "total_score":122.1168908638,
-    "average_score":0.2031895023
+    "word":"NVIDIA",
+    "counts":32534,
+    "total_score":14774.3454775512,
+    "average_score":0.4541201659
   },
   {
-    "word":"favorite",
-    "counts":207,
-    "total_score":89.3354978355,
-    "average_score":0.4315724533
+    "word":"profits",
+    "counts":13673,
+    "total_score":6405.6678674817,
+    "average_score":0.4684902997
   }
 ]
