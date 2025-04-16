@@ -11,8 +11,8 @@ export const wordBubbles = () => {
 
 
 
-    let width = 1300;
-    let height = 800;
+    let width = 1200;
+    let height = 700;
     let data;
     let links = [];
     let margin = { top: 20, right: 20, bottom: 20, left: 20 };
@@ -76,7 +76,7 @@ export const wordBubbles = () => {
         });
 
         const centerX = width / 2;
-        const centerY = height * .1;
+        const centerY = height * .4;
         processedData.forEach((d, i) => {
             const angle = (i / processedData.length) * 2 * Math.PI;
             const r = width * .5; // reduce!!
@@ -153,7 +153,7 @@ export const wordBubbles = () => {
             .force('link', d3.forceLink(processedLinks).id(d => d.word)
                 .distance(d => 100 + Math.min(d.source.radius + d.target.radius, 100)))
             .force('charge', d3.forceManyBody().strength(d => Math.min(d.charge, -350)))
-            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('center', d3.forceCenter(width / 2, height * 0.7))
             .force('x', d3.forceX().strength(0.08))
             .force('y', d3.forceY().strength(0.18))
             .force('collision', d3.forceCollide().radius(d => d.radius +25)) // makes them spread out more
@@ -307,27 +307,27 @@ export const wordBubbles = () => {
 
         colorLegend.append('text')
             .attr('x', 2)
-            .attr('y', 0)
-            .text('Word Mean Sentiment Score')
+            .attr('y', 10)
+            .text('Tweet Sentiment Analysis')
             .style('font-weight', 'bold')
-            .style('font-size', '12px');
+            .style('font-size', '20px');
 
         colorLegend.append('rect')
-            .attr('x', 0)
-            .attr('y', 10)
+            .attr('x', 20)
+            .attr('y', 40)
             .attr('width', 200)
             .attr('height', 20)
             .style('fill', 'url(#viridis-gradient)');
 
         colorLegend.append('text')
-            .attr('x', 0)
-            .attr('y', 45)
+            .attr('x', 20)
+            .attr('y', 75)
             .text('(Negative)')
             .style('font-size', '10px');
 
         colorLegend.append('text')
-            .attr('x', 200)
-            .attr('y', 45)
+            .attr('x', 220)
+            .attr('y', 75)
             .text('(Positive)')
             .style('text-anchor', 'end')
             .style('font-size', '10px');
@@ -530,7 +530,7 @@ export const wordBubbles = () => {
                 .style("position", "absolute")
                 .style("text-align", "center")
                 .style("padding", "5px 8px")
-                .style("font", "12px sans-serif")
+                .style("font", "12px 'Roboto', sans-serif")
                 .style("background", "#f8f8f8")
                 .style("border", "1px solid #ccc")
                 .style("border-radius", "4px")

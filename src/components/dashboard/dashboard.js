@@ -7,6 +7,7 @@ import { wordBubbles } from './wordbubbles.js';
 // Format date for display
 const formatDate = d3.timeFormat("%b %d, %Y");
 const formatMonthYear = d3.timeFormat("%b %Y");
+const formatDateLabel = d3.timeFormat("%d, %b '%y");
 const parseDate = d3.timeParse("%Y-%m-%d");
 
 // Define chart date range constants
@@ -20,9 +21,9 @@ const API_BASE_URL = "http://localhost:8001";
 // Create SVG for the line chart
 const lineSvg = d3.select("#lineChart")
   .append("svg")
-  .attr("width", lineWidth)
-  .attr("height", lineHeight)
-  .style("background-color", "#f9f9f9");
+  .attr("width", 1080)
+  .attr("height", 500)
+  .style("background-color", "transparent");
 
 // Create tooltip for lines
 const tooltip = d3.select("body").append("div")
@@ -40,7 +41,7 @@ let sliderInUse = false; // Track if slider is in use
 let currentDailyData = null;
 let currentWeeklyData = null;
 let currentStockData = null;
-let currentTicker = "V"; // Default ticker
+let currentTicker = "MSFT"; // Default ticker
 
 // Function to aggregate daily data into weekly lines
 function aggregateToWeekly(dailyData) {
@@ -222,7 +223,7 @@ function initializeSlider() {
   // Adjust slider width to match the chart's plotting area width
   const sliderContainer = document.getElementById('date-sliders');
   if (sliderContainer) {
-    sliderContainer.style.width = `${lineWidth - lineMargin.left - lineMargin.right}px`;
+    sliderContainer.style.width = `${1080 - lineMargin.left - lineMargin.right}px`;
     sliderContainer.style.marginLeft = `${lineMargin.left}px`;
     sliderContainer.style.marginRight = `${lineMargin.right}px`;
   }
@@ -252,22 +253,24 @@ function initializeSlider() {
   // Unified mouseup handler
   document.addEventListener('mouseup', handleSliderRelease);
   
-  // Initialize word bubble chart with the initial ticker and date range
-  const initialTicker = currentTicker; // Use the current ticker (set to "V" by default)
+  // Initialize MA buttons
+  initializeMAButtons();
+}
+
+// Initialize MA buttons
+function initializeMAButtons() {
+  // Add click handler for MA buttons
+  const maButtons = document.querySelectorAll('.ma-button');
   
-  // Get initial date range based on slider positions
-  const totalDataPoints = currentWeeklyData ? currentWeeklyData.length : 0;
-  if (totalDataPoints > 0) {
-    const startIndex = Math.floor(startPercent / 100 * (totalDataPoints - 1));
-    const endIndex = Math.floor(endPercent / 100 * (totalDataPoints - 1));
-    
-    // Get the selected date range for the API call
-    const startDate = d3.timeFormat("%Y-%m-%d")(currentWeeklyData[startIndex].date);
-    const endDate = d3.timeFormat("%Y-%m-%d")(currentWeeklyData[endIndex].date);
-    
-    // Initialize word bubbles with API data for the initial ticker
-    updateWordBubbles(initialTicker, startDate, endDate);
-  }
+  maButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      // Toggle selected class
+      this.classList.toggle('selected');
+      
+      // Update chart
+      updateLineChartOnly();
+    });
+  });
 }
 
 // Handle slider movement
@@ -395,8 +398,8 @@ async function updateWordBubbles(ticker, startDate, endDate) {
   d3.select("#sentimentChart").selectAll("*").remove();
 
   const bubbles = wordBubbles()
-    .width(1300)
-    .height(800)
+    .width(1200)
+    .height(700)
     .data(wordData)
     .links(links)
     .margin({ top: 20, right: 20, bottom: 20, left: 20 });
@@ -448,6 +451,9 @@ async function updateDashboard(isSliderUpdate = false) {
        document.activeElement.matches(".suggestion"))) {
     currentTicker = searchTickerValue;
   }
+  
+  // Update ticker symbol display
+  d3.select("#ticker-symbol").text(currentTicker);
   
   // Use the current ticker
   const ticker = currentTicker;
@@ -512,9 +518,7 @@ async function updateDashboard(isSliderUpdate = false) {
                     { symbol: ticker, name: "Unknown Stock" };
   
   // Update the stock info display
-  d3.select("#stockName").text(`${stockInfo.name} (${stockInfo.symbol})`);
-  d3.select("#priceRange").text("Selected: $" + d3.min(selectedData, d => d.low).toFixed(2) + 
-                             " - $" + d3.max(selectedData, d => d.high).toFixed(2));
+  d3.select("#stockName").text(stockInfo.name);
   
   // Update all components
   await updateAllComponents(ticker, calculationData, startIndex, endIndex, startDate, endDate);
@@ -527,6 +531,7 @@ async function updateAllComponents(ticker, calculationData, startIndex, endIndex
     lineSvg,
     formatMonthYear,
     formatDate,
+    formatDateLabel,
     DISPLAY_START_DATE,
     DISPLAY_END_DATE,
     tooltip,
@@ -580,11 +585,6 @@ d3.select("#maToggle").on("change", function() {
   updateLineChartOnly();
 });
 
-d3.selectAll('input[name="maType"]').on("change", function() {
-  // Only update the line chart - no need to reload data
-  updateLineChartOnly();
-});
-
 // Function to update only the line chart without reloading data
 function updateLineChartOnly() {
   const totalDataPoints = currentWeeklyData.length;
@@ -596,6 +596,7 @@ function updateLineChartOnly() {
     lineSvg,
     formatMonthYear,
     formatDate,
+    formatDateLabel,
     DISPLAY_START_DATE,
     DISPLAY_END_DATE,
     tooltip,
@@ -668,9 +669,10 @@ function getFilteredStockSuggestions(input) {
 // Initialize the dashboard
 async function initDashboard() {
   // Load initial stock data
-  const initialTicker = "V";
+  const initialTicker = "MSFT";
   currentTicker = initialTicker;
   d3.select("#searchTicker").property("value", currentTicker);
+  d3.select("#ticker-symbol").text(currentTicker);
   
   // Show loading spinner
   lineSvg.selectAll("*").remove();

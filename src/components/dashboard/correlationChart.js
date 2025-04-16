@@ -72,6 +72,7 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     .attr("text-anchor", "middle")
     .style("font-weight", "bold")
     .style("font-size", "32px")
+    .style("font-family", "'Roboto', sans-serif")
     .text("Most Correlated Stock");
     
   leastSvg.append("text")
@@ -80,6 +81,7 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     .attr("text-anchor", "middle")
     .style("font-weight", "bold")
     .style("font-size", "32px")
+    .style("font-family", "'Roboto', sans-serif")
     .text("Least Correlated Stock");
   
   // If no correlation data, show placeholders
@@ -389,6 +391,7 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .attr("fill", "white")
     .style("font-size", "40px")
     .style("font-weight", "bold")
+    .style("font-family", "'Roboto', sans-serif")
     .text(correlatedSymbol);
   
   // Add correlation value to the right box
@@ -399,6 +402,7 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .attr("fill", "white")
     .style("font-size", "40px")
     .style("font-weight", "bold")
+    .style("font-family", "'Roboto', sans-serif")
     .text(corrValue);
   
   // Add company name below
@@ -407,6 +411,7 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .attr("y", 77)
     .attr("fill", "#555")
     .style("font-size", "13px")
+    .style("font-family", "'Roboto', sans-serif")
     .text(companyName);
 }
 
