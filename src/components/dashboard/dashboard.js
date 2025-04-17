@@ -30,6 +30,44 @@ const tooltip = d3.select("body").append("div")
   .attr("class", "tooltip")
   .style("opacity", 0);
 
+// Create notification container for popup messages
+const notification = d3.select("body").append("div")
+  .attr("class", "notification")
+  .style("position", "fixed")
+  .style("top", "20px")
+  .style("left", "50%")
+  .style("transform", "translateX(-50%)")
+  .style("background-color", "#f8d7da")
+  .style("color", "#721c24")
+  .style("padding", "10px 20px")
+  .style("border-radius", "4px")
+  .style("box-shadow", "0 4px 8px rgba(0,0,0,0.1)")
+  .style("z-index", "1000")
+  .style("display", "none")
+  .style("text-align", "center")
+  .style("font-family", "'Roboto', sans-serif")
+  .style("font-size", "14px");
+
+// Function to show notification popup
+function showNotification(message, duration = 5000) {
+  notification
+    .html(message)
+    .style("display", "block")
+    .style("opacity", "1");
+    
+  // Hide notification after duration
+  setTimeout(() => {
+    notification
+      .style("opacity", "0")
+      .style("transition", "opacity 0.5s ease-out");
+      
+    // After fade out, hide the element
+    setTimeout(() => {
+      notification.style("display", "none");
+    }, 500);
+  }, duration);
+}
+
 // Range slider variables
 let startPercent = 0; // Start at beginning of display range
 let endPercent = 100; // End at end of display range
@@ -41,7 +79,7 @@ let sliderInUse = false; // Track if slider is in use
 let currentDailyData = null;
 let currentWeeklyData = null;
 let currentStockData = null;
-let currentTicker = "MSFT"; // Default ticker
+let currentTicker = "DIS"; // Default ticker
 
 // Function to aggregate daily data into weekly lines
 function aggregateToWeekly(dailyData) {
@@ -169,8 +207,99 @@ async function loadStockData(symbol, updateGlobalState = true) {
       weekly: displayWeeklyData
     };
   } catch (error) {
-    console.error(`Error loading data for ${symbol}`);
-    return null;
+    console.error(`Error loading data for ${symbol}. Falling back to local data.`);
+    
+    // Fallback to local data
+    try {
+      // Try to load data from local CSV file for the specific stock first
+      let csvFile = `tmp_data/${symbol}.csv`;
+      let useDefault = false;
+      
+      try {
+        // Test if the file exists by trying to load it
+        await d3.csv(csvFile);
+        console.log(`Using ${csvFile} as fallback data for ${symbol}`);
+      } catch (fileError) {
+        // If not available, fall back to DIS.csv
+        useDefault = true;
+        csvFile = "tmp_data/DIS.csv";
+        console.log(`Stock data for ${symbol} not available, using ${csvFile} instead`);
+        
+        // Show notification popup if not the default stock and we're updating global state
+        if (symbol !== "DIS" && updateGlobalState) {
+          showNotification(`Stock data for ${symbol} not available, showing default dashboard`);
+        }
+      }
+      
+      const rawData = await d3.csv(csvFile);
+      
+      // Calculate date range
+      const calculationStartDate = new Date(DISPLAY_START_DATE);
+      calculationStartDate.setDate(calculationStartDate.getDate() - CALCULATION_DAYS_BEFORE);
+      
+      // Transform CSV data to our format
+      const transformedData = rawData.map(d => {
+        const parsedDate = parseDate(d.Date.split(' ')[0]) || new Date(d.Date);
+        return {
+          date: parsedDate,
+          open: +d.Open,
+          high: +d.High,
+          low: +d.Low,
+          close: +d.Close,
+          volume: +d.Volume,
+          dividends: d.Dividends ? +d.Dividends : 0,
+          stockSplits: d['Stock Splits'] ? +d['Stock Splits'] : 0
+        };
+      }).filter(d => d.date instanceof Date);
+      
+      // Sort by date
+      transformedData.sort((a, b) => a.date - b.date);
+      
+      // Filter for data within our display range plus calculation period
+      const filteredDailyData = transformedData.filter(d => 
+        d.date >= calculationStartDate && d.date <= DISPLAY_END_DATE
+      );
+      
+      // Aggregate to weekly data
+      const weeklyData = aggregateToWeekly(filteredDailyData);
+      
+      // Filter weekly data to match display range
+      const displayWeeklyData = weeklyData.filter(d => 
+        d.date >= DISPLAY_START_DATE && d.date <= DISPLAY_END_DATE
+      );
+      
+      // Only update global state if requested
+      if (updateGlobalState) {
+        currentDailyData = filteredDailyData;
+        currentWeeklyData = displayWeeklyData;
+        
+        // If we're using default data, update the ticker display to show the default
+        if (useDefault) {
+          currentTicker = "DIS";
+          d3.select("#ticker-symbol").text(currentTicker);
+          d3.select("#searchTicker").property("value", currentTicker);
+          
+          // Update stock name to match the default ticker
+          const disStockInfo = stocksDatabase.find(stock => stock.symbol === "DIS") || 
+                              { symbol: "DIS", name: "Walt Disney Co." };
+          d3.select("#stockName").text(disStockInfo.name);
+        }
+      }
+      
+      return {
+        daily: filteredDailyData,
+        weekly: displayWeeklyData
+      };
+    } catch (fallbackError) {
+      console.error("Error loading fallback data:", fallbackError);
+      
+      // Show error notification
+      if (updateGlobalState) {
+        showNotification(`Error loading data. Please check your connection.`, 7000);
+      }
+      
+      return null;
+    }
   }
 }
 
@@ -331,7 +460,28 @@ async function fetchCalculationData(symbol, startDate, endDate) {
     return data;
   } catch (error) {
     console.error("Error fetching calculation data:", error);
-    return null;
+    console.log("Falling back to local performance data");
+    
+    try {
+      // Load performance data from JSON file
+      const performanceData = await d3.json("tmp_data/performance.json");
+      
+      // Extract correlation data from performance.json
+      const correlationData = {
+        most_correlated_stock: performanceData.correlation.most_correlated_stock,
+        most_correlated_stock_correlation: performanceData.correlation.most_correlated_stock_correlation,
+        least_correlated_stock: performanceData.correlation.least_correlated_stock,
+        least_correlated_stock_correlation: performanceData.correlation.least_correlated_stock_correlation
+      };
+      
+      return {
+        performance: performanceData.performance,
+        correlation: correlationData
+      };
+    } catch (fallbackError) {
+      console.error("Error loading fallback calculation data:", fallbackError);
+      return null;
+    }
   }
 }
 
@@ -513,15 +663,15 @@ async function updateDashboard(isSliderUpdate = false) {
   // Get the selected data range for info display
   const selectedData = currentWeeklyData.slice(startIndex, endIndex + 1);
   
-  // Get stock info
-  const stockInfo = stocksDatabase.find(stock => stock.symbol === ticker) || 
-                    { symbol: ticker, name: "Unknown Stock" };
+  // Get stock info - use currentTicker instead of ticker as it might have been changed in loadStockData
+  const stockInfo = stocksDatabase.find(stock => stock.symbol === currentTicker) || 
+                    { symbol: currentTicker, name: "Unknown Stock" };
   
   // Update the stock info display
   d3.select("#stockName").text(stockInfo.name);
   
-  // Update all components
-  await updateAllComponents(ticker, calculationData, startIndex, endIndex, startDate, endDate);
+  // Update all components using currentTicker which may have been updated in loadStockData
+  await updateAllComponents(currentTicker, calculationData, startIndex, endIndex, startDate, endDate);
 }
 
 // Update all dashboard components
@@ -669,7 +819,7 @@ function getFilteredStockSuggestions(input) {
 // Initialize the dashboard
 async function initDashboard() {
   // Load initial stock data
-  const initialTicker = "MSFT";
+  const initialTicker = "DIS";
   currentTicker = initialTicker;
   d3.select("#searchTicker").property("value", currentTicker);
   d3.select("#ticker-symbol").text(currentTicker);

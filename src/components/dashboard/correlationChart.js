@@ -130,9 +130,11 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     // Filter the main data to the selected range
     const filteredMainData = localWeeklyData.slice(startIdx, endIdx + 1);
     
-    // Load data for the most correlated stock
-    if (correlationData.most_correlated_stock !== "None") {
-      const mostData = await loadCorrelatedStockData(correlationData.most_correlated_stock);
+    // Load data for the most correlated stock using ticker from performance.json
+    if (correlationData.most_correlated_stock && correlationData.most_correlated_stock !== "None") {
+      const mostCorrelatedTicker = correlationData.most_correlated_stock;
+      const mostData = await loadCorrelatedStockData(mostCorrelatedTicker);
+      
       if (mostData) {
         // Filter by date range
         mostCorrelatedData = mostData.weekly.filter(d => 
@@ -148,7 +150,7 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
           filteredMainData,
           mostCorrelatedData,
           symbol,
-          correlationData.most_correlated_stock,
+          mostCorrelatedTicker,
           minDate,
           maxDate,
           true,
@@ -158,9 +160,17 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
             stocksDatabase: dependencies.stocksDatabase
           }
         );
+      } else {
+        // Error loading data, remove spinner and show message
+        mostSpinner.remove();
+        mostSvg.append("text")
+          .attr("x", 520 / 2)
+          .attr("y", correlationHeight / 2)
+          .attr("text-anchor", "middle")
+          .text(`Error loading data for ${mostCorrelatedTicker}`);
       }
     } else {
-      // Remove spinner and show no data message
+      // No most correlated stock defined
       mostSpinner.remove();
       mostSvg.append("text")
         .attr("x", 520 / 2)
@@ -169,9 +179,11 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
         .text("No most correlated stock found");
     }
     
-    // Load data for the least correlated stock
-    if (correlationData.least_correlated_stock !== "None") {
-      const leastData = await loadCorrelatedStockData(correlationData.least_correlated_stock);
+    // Load data for the least correlated stock using ticker from performance.json
+    if (correlationData.least_correlated_stock && correlationData.least_correlated_stock !== "None") {
+      const leastCorrelatedTicker = correlationData.least_correlated_stock;
+      const leastData = await loadCorrelatedStockData(leastCorrelatedTicker);
+      
       if (leastData) {
         // Filter by date range
         leastCorrelatedData = leastData.weekly.filter(d => 
@@ -187,7 +199,7 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
           filteredMainData,
           leastCorrelatedData,
           symbol,
-          correlationData.least_correlated_stock,
+          leastCorrelatedTicker,
           minDate,
           maxDate,
           false,
@@ -197,9 +209,17 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
             stocksDatabase: dependencies.stocksDatabase
           }
         );
+      } else {
+        // Error loading data, remove spinner and show message
+        leastSpinner.remove();
+        leastSvg.append("text")
+          .attr("x", 520 / 2)
+          .attr("y", correlationHeight / 2)
+          .attr("text-anchor", "middle")
+          .text(`Error loading data for ${leastCorrelatedTicker}`);
       }
     } else {
-      // Remove spinner and show no data message
+      // No least correlated stock defined
       leastSpinner.remove();
       leastSvg.append("text")
         .attr("x", 520 / 2)
