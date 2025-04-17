@@ -3,84 +3,14 @@
 # the frontend will send the stock ticker, start date, and end date
 # the backend will calculate the performance, correlation, and sentiment of the stock
 
-# the frontend will send the following data:
-# {
-#     "stock_ticker": xx,
-#     "start_date": xx,
-#     "end_date": xx,
-# }
-
-# the backend will return the results to the frontend with the following format:
-# {
-#     "performance": {
-#         "alpha": xx,
-#         "alpha_rank": xx,
-#         "market_alpha": xx,
-#         "beta": xx,
-#         "beta_rank": xx,
-#         "market_beta": xx,
-#         "sharpe_ratio": xx,
-#         "sharpe_ratio_rank": xx,
-#         "market_sharpe_ratio": xx,
-#         "treynor_ratio": xx,
-#         "treynor_ratio_rank": xx,
-#         "market_treynor_ratio": xx,
-#     },
-#     "correlation": {
-#         "most_correlated_stock": xx,
-#         "most_correlated_stock_correlation": xx,
-#         "least_correlated_stock": xx,
-#         "least_correlated_stock_correlation": xx,
-#     },
-#     "sentiment": {
-#         "keywords" : {
-#             "keyword1": {
-#                 "sentiment_score": xx,
-#                 "count": xx,
-#                 "keyword2": xx, number of times keyword 1 appears with keyword 2 in the tweets
-#                 "keyword3": xx, number of times keyword 1 appears with keyword 3 in the tweets
-#                 ...
-#             },
-#             "keyword2": {
-#                 "sentiment_score": xx,    
-#                 "count": xx,
-#                 "keyword1": xx, number of times keyword 2 appears with keyword 1 in the tweets
-#                 "keyword3": xx, number of times keyword 2 appears with keyword 3 in the tweets
-#                 ...
-#             },
-#             ...
-#         }
-#     }
-# }
-
-
-# Dir of the tweet data - @Kenny, might have to change this
+# Dir of the data by for local use, *need to change when deploying*
 TWEET_DATA_DIR = "clean_data/twit_data/non_neutral" # non neutral is neutral tweets are filtered out
-
-# stock data is saved in the following path with individual csv files for each stock with the ticker as the name
-# the csv file contains the following columns:
-# Date, Open, High, Low, Close, Volume
 STOCK_DATA_PATH = "clean_data/stock_data"
 
-# twitter data is saved in the following path with individual csv files for each stock with the ticker as the name
-# twit data to be used for sentiment analysis
-# the csv file contains the following columns:
-# Date, Tweet, Ticker, Score
-# the tweet column is already cleaned to remove unneeded text and has space as the separator
-TWITTER_DATA_PATH = "clean_data/twit_data"
-
+# List of all the stock tickers to be used for the calculations and visualization
 STOCK_TICKERS = ["CSCO", "BA", "V", "T", "BAC", "F", "PEP", "COST", "MRK", "ORCL", "SBUX", "PG", "MCD", "AMZN", "INTC", "KO", "PYPL", "UPS", "MSFT", "AMD", "HD", "XOM", "CVX", "CMCSA", "NKE", "KR", "IBM", "DIS", "NFLX", "JPM", "TSLA", "SPY", "GOOGL", "META", "PFE", "UNH", "MA", "AAPL", "WMT", "JNJ"]
 
-# the performance metrics will be calculated with using SPY as the benchmark
-# when a data is received, all metrics will be calculated for all the stocks in the STOCK_TICKERS list and get the rank accoring to the results
-# risk_free_rate is 0.02 per year
 RISK_FREE_RATE = 0.02
-
-# the sentiment analysis will be done by repeating the following steps:
-# 1. get the tweets for the given stock and date range
-# 2. make a dictionary of the keywords that appear in the tweets
-# 3. for each tweet and its sentiment score, add the sentiment score to the dictionary for each keyword from the given tweet to the previous sentiment score
-# 4. export the dictionary to the given format for the top 10 keywords by count
 
 import os
 import pandas as pd
@@ -88,12 +18,8 @@ import numpy as np
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
-from datetime import datetime
-import re
 from fastapi.middleware.cors import CORSMiddleware
-from collections import defaultdict
 from get_common_words import CommonWords
-
 
 app = FastAPI()
 
@@ -134,61 +60,38 @@ def load_stock_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Stock data for {ticker} not found")
 
-def load_twitter_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame:
-    file_path = os.path.join(TWITTER_DATA_PATH, f"{ticker}.csv")
-    try:
-        df = pd.read_csv(file_path)
-        df['Date'] = pd.to_datetime(df['Date'], utc=True)
-        # Convert string dates to datetime
-        start_date_dt = pd.to_datetime(start_date, utc=True)
-        end_date_dt = pd.to_datetime(end_date, utc=True)
-        # Filter by date range
-        df = df[(df['Date'] >= start_date_dt) & (df['Date'] <= end_date_dt)]
-        return df
-    except FileNotFoundError:
-        # Return empty DataFrame if no Twitter data exists
-        return pd.DataFrame(columns=['Date', 'Tweet', 'Ticker', 'Score'])
-
 def calculate_returns(stock_data: pd.DataFrame) -> float:
-    # Calculate total return over the period
+    # Calculate total return over the period for performance metrics calculations
     first_price = stock_data['Close'].iloc[0]
     last_price = stock_data['Close'].iloc[-1]
     total_return = (last_price / first_price) - 1
     return total_return
 
 def calculate_performance_metrics(stock_return: float, market_return: float, stock_data: pd.DataFrame, market_data: pd.DataFrame) -> dict:
-    # Convert annual risk-free rate to the period return
-    # Assuming 252 trading days in a year
-    
     # Calculate period length in trading days
     period_days = len(stock_data)
     if period_days < 1:
         period_days = 1  # Default to 1 if no data available
     
     # Calculate the period's risk-free rate
-    period_risk_free_rate = RISK_FREE_RATE * (period_days / 252)
+    period_risk_free_rate = RISK_FREE_RATE * (period_days / 252) # assume 252 trading days in a year
     
     # Calculate excess returns for the period
     excess_stock_return = stock_return - period_risk_free_rate
     excess_market_return = market_return - period_risk_free_rate
-    
-    # Since we have daily data, we can calculate beta properly using the daily returns
+
     # Calculate daily returns for beta calculation
     daily_stock_returns = stock_data['Close'].pct_change().dropna().values
     daily_market_returns = market_data['Close'].pct_change().dropna().values
     
-    # Ensure arrays are the same length
     min_length = min(len(daily_stock_returns), len(daily_market_returns))
     if min_length > 1:
         beta = np.cov(daily_stock_returns[:min_length], daily_market_returns[:min_length])[0, 1] / np.var(daily_market_returns[:min_length])
     else:
         beta = 1.0  # Default value
     
-    # Alpha: stock return - (risk-free rate + beta * (market return - risk-free rate))
     alpha = stock_return - (period_risk_free_rate + beta * (market_return - period_risk_free_rate))
     
-    # Calculate Sharpe ratio using the period return and annualized volatility
-    # For more accurate Sharpe, we use daily returns to estimate volatility
     if min_length > 1:
         # Annualize the volatility
         daily_volatility = np.std(daily_stock_returns)
@@ -197,7 +100,6 @@ def calculate_performance_metrics(stock_return: float, market_return: float, sto
     else:
         sharpe_ratio = excess_stock_return / period_risk_free_rate if period_risk_free_rate != 0 else 0
     
-    # Calculate Treynor ratio
     treynor_ratio = excess_stock_return / beta if beta != 0 else 0
     
     return {
@@ -208,7 +110,6 @@ def calculate_performance_metrics(stock_return: float, market_return: float, sto
     }
 
 def calculate_correlation(request_ticker: str, stock_data: pd.DataFrame, all_stocks_data: Dict[str, pd.DataFrame]) -> dict:
-    """Calculate true Pearson correlation between stocks using daily returns."""
     if not stock_data.empty and len(all_stocks_data) > 0:
         # Calculate daily returns for the requested stock
         stock_returns = stock_data['Close'].pct_change().dropna()
@@ -216,7 +117,7 @@ def calculate_correlation(request_ticker: str, stock_data: pd.DataFrame, all_sto
         # Calculate correlations with all other stocks
         correlations = {}
         for ticker, data in all_stocks_data.items():
-            # Skip the requested stock itself and SPY (benchmark)
+            # Skip the requested stock itself and SPY (S&P 500)
             if ticker == request_ticker or ticker == "SPY" or data.empty:
                 continue
                 
@@ -262,78 +163,10 @@ def calculate_correlation(request_ticker: str, stock_data: pd.DataFrame, all_sto
         "least_correlated_stock_correlation": 0
     }
 
-# def extract_keywords(tweet: str) -> List[str]:
-#     # Tweet column already contains cleaned keywords separated by spaces
-#     # Ensure the tweet is a string before splitting
-#     if not isinstance(tweet, str):
-#         tweet = str(tweet)
-#     return tweet.split()
-
-# def analyze_sentiment(twitter_data: pd.DataFrame) -> dict:
-#     if twitter_data.empty:
-#         return {"keywords": {}}
-    
-#     # Initialize data structures
-#     keyword_data = defaultdict(lambda: {"sentiment_score": 0, "count": 0})  # Track sentiment and count for each keyword
-#     keyword_tweets = defaultdict(set)  # Using sets instead of lists for faster intersection operations
-    
-#     # First pass: Process each tweet to extract keywords and track their tweets
-#     for idx, row in twitter_data.iterrows():
-#         tweet = row['Tweet']
-#         score = row['Score']
-        
-#         # Extract keywords
-#         keywords = extract_keywords(tweet)
-        
-#         # Update keyword data and track which tweet index the keyword appears in
-#         for keyword in keywords:
-#             keyword_data[keyword]["sentiment_score"] += score
-#             keyword_data[keyword]["count"] += 1
-#             keyword_tweets[keyword].add(idx)
-    
-#     # Sort keywords by count and take top 8
-#     top_keywords = sorted(keyword_data.items(), key=lambda x: x[1]["count"], reverse=True)[:8]
-#     top_keyword_names = [k for k, _ in top_keywords]
-    
-#     # Prepare final format with precalculated average sentiment
-#     result = {"keywords": {}}
-    
-#     # Calculate average sentiment and add base data for each top keyword
-#     for keyword, data in top_keywords:
-#         avg_sentiment = data["sentiment_score"] / data["count"] if data["count"] > 0 else 0
-#         result["keywords"][keyword] = {
-#             "sentiment_score": float(avg_sentiment),
-#             "count": data["count"]
-#         }
-    
-#     # Precompute co-occurrences matrix for top keywords only - much more efficient
-#     # Create a dictionary to store precomputed intersections
-#     co_occurrences = {}
-    
-#     # For each pair of top keywords, calculate intersection once
-#     for i, keyword1 in enumerate(top_keyword_names):
-#         for keyword2 in top_keyword_names[i+1:]:  # Only compute each pair once
-#             # Find intersection of tweet indices
-#             common_count = len(keyword_tweets[keyword1] & keyword_tweets[keyword2])
-#             if common_count > 0:
-#                 co_occurrences[(keyword1, keyword2)] = common_count
-#                 co_occurrences[(keyword2, keyword1)] = common_count  # Store both directions
-    
-#     # Add co-occurrence data to result
-#     for keyword in top_keyword_names:
-#         for other_keyword in top_keyword_names:
-#             if keyword != other_keyword:
-#                 count = co_occurrences.get((keyword, other_keyword), 0)
-#                 if count > 0:
-#                     result["keywords"][keyword][other_keyword] = count
-    
-#     return result
-
 @app.post("/api/word-bubbles")
 async def word_bubbles_endpoint(req: WordBubbleRequest):
-    print('TRYING TO GET SENTIMENT DATAAAAA')
+    print('TRYING TO GET SENTIMENT DATA')
     try:
-        print('what does a man gotta ado to get some sentiment data around here')
         analyzer = CommonWords(
             ticker=req.ticker.upper(),
             data_dir=TWEET_DATA_DIR,
@@ -350,8 +183,6 @@ async def word_bubbles_endpoint(req: WordBubbleRequest):
             raise HTTPException(status_code=404, detail="No data found for this query.")
 
         top_words, bottom_words, adj_matrix = result
-        # print('WRONG FUCKING WORDS', top_words,  bottom_words)
-        # print("TYPE OF top_words[0]:", type(top_words[0]))
 
         return {
             "top_words": top_words,
@@ -360,10 +191,8 @@ async def word_bubbles_endpoint(req: WordBubbleRequest):
         }
 
     except FileNotFoundError as e:
-        # print('404 could not get that data')
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        # print('oopsies internal error')
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
@@ -373,12 +202,11 @@ async def word_bubbles_endpoint(req: WordBubbleRequest):
 async def stock_data(request: StockRequest):
     try:
         stock_df = load_stock_data(request.stock_ticker, request.start_date, request.end_date)
-        # Convert DataFrame to list of dictionaries (records format) for JSON serialization
         stock_data_list = stock_df.to_dict(orient='records')
         return stock_data_list
     except Exception as e:
         import traceback
-        traceback.print_exc() # Print full traceback for debugging
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error processing stock data: {str(e)}")
 
 @app.post("/api/calculate")
@@ -387,7 +215,6 @@ async def calculate(request: StockRequest):
         # Load data
         stock_data = load_stock_data(request.stock_ticker, request.start_date, request.end_date)
         market_data = load_stock_data("SPY", request.start_date, request.end_date)
-        twitter_data = load_twitter_data(request.stock_ticker, request.start_date, request.end_date)
         
         # Calculate total returns over the period
         stock_return = calculate_returns(stock_data)
@@ -402,7 +229,6 @@ async def calculate(request: StockRequest):
         all_stocks_data = {}
         
         for ticker in STOCK_TICKERS:
-            # Skip the requested stock - we already calculated its metrics
             if ticker == request.stock_ticker:
                 continue
                 
@@ -419,7 +245,6 @@ async def calculate(request: StockRequest):
                 continue
         
         # Calculate ranks
-        # Include the requested stock in the metrics for ranking
         combined_metrics = all_metrics.copy()
         combined_metrics[request.stock_ticker] = performance_metrics
         
@@ -437,11 +262,9 @@ async def calculate(request: StockRequest):
         sharpe_rank = sorted(sharpe_ratios.keys(), key=lambda x: sharpe_ratios[x], reverse=True).index(request.stock_ticker) + 1 if request.stock_ticker in sharpe_ratios else 0
         treynor_rank = sorted(treynor_ratios.keys(), key=lambda x: treynor_ratios[x], reverse=True).index(request.stock_ticker) + 1 if request.stock_ticker in treynor_ratios else 0
         
-        # Calculate correlation using time series data, not just total returns
         all_stocks_data[request.stock_ticker] = stock_data
         correlation_data = calculate_correlation(request.stock_ticker, stock_data, all_stocks_data)
         
-        # Format response
         response = {
             "performance": {
                 "alpha": performance_metrics["alpha"],
@@ -469,4 +292,4 @@ async def calculate(request: StockRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=8001) # port can be changed, when deploying or for any local troubleshooting

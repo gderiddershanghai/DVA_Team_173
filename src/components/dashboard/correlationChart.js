@@ -1,20 +1,16 @@
-// Correlation chart structure and functionality
-// Set up dimensions for correlation chart
-const correlationMargin = {top: 0, right: 0, bottom: 0, left: 0}; // Remove container margins
+// Dimensions for the correlation chart
+const correlationMargin = {top: 0, right: 0, bottom: 0, left: 0}; 
 const correlationWidth = 1080;
 const correlationHeight = 460;
 
-// Function to update the correlation section with API data
 async function updateCorrelationChart(correlationData, symbol, startDate, endDate, selectedStartIdx, selectedEndIdx, dependencies) {
   const { currentWeeklyData, loadStockData, createLoadingSpinner, tooltip } = dependencies;
   
-  // Make a local copy of the data to avoid affecting the original
   const localWeeklyData = [...currentWeeklyData];
   
-  // Create a local stock data loading function that doesn't affect the global state
+  // This part loads the most/least correlated stock data since only the ticker is passed from the dashboard
   const loadCorrelatedStockData = async (correlatedSymbol) => {
     try {
-      // Use the original loadStockData but return only the result without storing it globally
       const data = await loadStockData(correlatedSymbol, false);
       return data;
     } catch (error) {
@@ -23,13 +19,11 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     }
   };
   
-  // Create SVGs for the two correlation charts
   const corrContainer = d3.select("#correlationChart");
   
-  // Clear previous content
   corrContainer.selectAll("*").remove();
   
-  // Create container div with flex layout for the two charts with spacing between them
+  // Make space for the two charts
   const chartContainer = corrContainer.append("div")
     .style("display", "flex")
     .style("width", "100%")
@@ -38,7 +32,6 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     .style("padding", "0")
     .style("border", "0");
     
-  // Create the two chart areas - exactly 520px wide with 40px margin between them (1080 = 520 + 40 + 520)
   const mostCorrChart = chartContainer.append("div")
     .attr("id", "most-correlated-chart")
     .style("width", "520px")
@@ -56,7 +49,6 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     .style("border-radius", "60px")
     .style("border", "0");
   
-  // Create SVGs within the chart areas
   const mostSvg = mostCorrChart.append("svg")
     .attr("width", 520)
     .attr("height", 460);
@@ -65,7 +57,6 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     .attr("width", 520)
     .attr("height", 460);
   
-  // Add titles to the charts
   mostSvg.append("text")
     .attr("x", 520 / 2)
     .attr("y", 60)
@@ -84,9 +75,7 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     .style("font-family", "'Roboto', sans-serif")
     .text("Least Correlated Stock");
   
-  // If no correlation data, show placeholders
   if (!correlationData) {
-    // Show "No Data" message in both charts
     mostSvg.append("text")
       .attr("x", 520 / 2)
       .attr("y", correlationHeight / 2)
@@ -102,7 +91,6 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     return;
   }
   
-  // Show loading spinners while data is being fetched
   const mostSpinner = createLoadingSpinner(
     mostSvg,
     520 / 2,
@@ -115,36 +103,31 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
     correlationHeight / 2
   );
   
-  // Load data for the most and least correlated stocks
   let mostCorrelatedData = null;
   let leastCorrelatedData = null;
   
+  // try loading data and draw the charts
   try {
-    // Get the selected date range
     const startIdx = Math.max(0, Math.min(selectedStartIdx, localWeeklyData.length - 1));
     const endIdx = Math.max(0, Math.min(selectedEndIdx, localWeeklyData.length - 1));
     
     const minDate = localWeeklyData[startIdx].date;
     const maxDate = localWeeklyData[endIdx].date;
     
-    // Filter the main data to the selected range
     const filteredMainData = localWeeklyData.slice(startIdx, endIdx + 1);
     
-    // Load data for the most correlated stock using ticker from performance.json
+    // try most correlated stock data
     if (correlationData.most_correlated_stock && correlationData.most_correlated_stock !== "None") {
       const mostCorrelatedTicker = correlationData.most_correlated_stock;
       const mostData = await loadCorrelatedStockData(mostCorrelatedTicker);
       
       if (mostData) {
-        // Filter by date range
         mostCorrelatedData = mostData.weekly.filter(d => 
           d.date >= minDate && d.date <= maxDate
         );
         
-        // Remove the loading spinner for most correlated chart
         mostSpinner.remove();
         
-        // Draw the most correlated chart
         drawCorrelationChart(
           mostSvg,
           filteredMainData,
@@ -161,7 +144,6 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
           }
         );
       } else {
-        // Error loading data, remove spinner and show message
         mostSpinner.remove();
         mostSvg.append("text")
           .attr("x", 520 / 2)
@@ -170,7 +152,6 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
           .text(`Error loading data for ${mostCorrelatedTicker}`);
       }
     } else {
-      // No most correlated stock defined
       mostSpinner.remove();
       mostSvg.append("text")
         .attr("x", 520 / 2)
@@ -179,21 +160,18 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
         .text("No most correlated stock found");
     }
     
-    // Load data for the least correlated stock using ticker from performance.json
+    // try least correlated stock data
     if (correlationData.least_correlated_stock && correlationData.least_correlated_stock !== "None") {
       const leastCorrelatedTicker = correlationData.least_correlated_stock;
       const leastData = await loadCorrelatedStockData(leastCorrelatedTicker);
       
       if (leastData) {
-        // Filter by date range
         leastCorrelatedData = leastData.weekly.filter(d => 
           d.date >= minDate && d.date <= maxDate
         );
         
-        // Remove the loading spinner for least correlated chart
         leastSpinner.remove();
         
-        // Draw the least correlated chart
         drawCorrelationChart(
           leastSvg,
           filteredMainData,
@@ -210,7 +188,6 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
           }
         );
       } else {
-        // Error loading data, remove spinner and show message
         leastSpinner.remove();
         leastSvg.append("text")
           .attr("x", 520 / 2)
@@ -219,7 +196,6 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
           .text(`Error loading data for ${leastCorrelatedTicker}`);
       }
     } else {
-      // No least correlated stock defined
       leastSpinner.remove();
       leastSvg.append("text")
         .attr("x", 520 / 2)
@@ -230,7 +206,6 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
   } catch (error) {
     console.error("Error loading correlated stock data:", error);
     
-    // Remove spinners and show error message
     mostSpinner.remove();
     leastSpinner.remove();
     
@@ -248,15 +223,12 @@ async function updateCorrelationChart(correlationData, symbol, startDate, endDat
   }
 }
 
-// Function to draw a single correlation chart
 function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correlatedSymbol, minDate, maxDate, isMostCorrelated, dependencies) {
   const { tooltip, correlationValue, stocksDatabase } = dependencies;
   
-  // Set chart dimensions
   const width = +svg.attr("width");
   const height = +svg.attr("height");
   
-  // Position chart elements - no internal margins reducing the chart height
   const titleHeight = 60;  // Space for title
   const bottomSpace = 140; // Space for boxes and company name below chart
   const chartTop = titleHeight + 20; // Increased by 20
@@ -264,30 +236,28 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
   const chartWidth = 460 - 40; // Chart width with only left margin for y-axis
   const leftMargin = 40;    // Space for y-axis
   
-  // Create the chart area
   const chart = svg.append("g")
     .attr("transform", `translate(${(width - 460) / 2 + leftMargin},${chartTop})`);
   
-  // Create normalized data for better comparison
   const normalizeData = (data) => {
     if (!data || data.length === 0) return [];
     
     const firstValue = data[0].close;
     return data.map(d => ({
       date: d.date,
-      value: (d.close / firstValue) * 100 // Percentage of initial value
+      value: (d.close / firstValue) * 100
     }));
   };
   
   const normalizedMainData = normalizeData(mainData);
   const normalizedCorrelatedData = normalizeData(correlatedData);
   
-  // Find min and max of normalized values for both stocks
   const allValues = [
     ...normalizedMainData.map(d => d.value),
     ...normalizedCorrelatedData.map(d => d.value)
   ];
   
+  // range for the y-axis
   const yMin = d3.min(allValues) * 0.95;
   const yMax = d3.max(allValues) * 1.05;
   
@@ -300,10 +270,9 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .domain([yMin, yMax])
     .range([chartHeight, 0]);
   
-  // Create the tick values for the y-axis
   const yTickValues = yScale.ticks(5);
   
-  // Add horizontal grid lines that match the tick values
+  // for tick visuals
   yTickValues.forEach(tickValue => {
     chart.append("line")
       .attr("x1", 0)
@@ -314,46 +283,42 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
       .attr("stroke-width", "1px");
   });
   
-  // Add axes with text labels but hide the lines
   chart.append("g")
     .attr("class", "x-axis")
     .attr("transform", `translate(0,${chartHeight})`)
     .call(d3.axisBottom(xScale).ticks(4).tickFormat(d3.timeFormat("%b '%y")))
-    .call(g => g.select(".domain").remove()) // Remove x-axis line
-    .call(g => g.selectAll(".tick line").remove()); // Remove tick lines
+    .call(g => g.select(".domain").remove())
+    .call(g => g.selectAll(".tick line").remove());
     
   chart.append("g")
     .attr("class", "y-axis")
     .call(d3.axisLeft(yScale).ticks(5).tickFormat(d => `${d.toFixed(0)}`))
-    .call(g => g.select(".domain").remove()) // Remove y-axis line
-    .call(g => g.selectAll(".tick line").remove()); // Remove tick lines
+    .call(g => g.select(".domain").remove())
+    .call(g => g.selectAll(".tick line").remove());
   
-  // Line generator
   const line = d3.line()
     .x(d => xScale(d.date))
     .y(d => yScale(d.value))
     .curve(d3.curveMonotoneX);
   
-  // Colors based on whether this is most or least correlated
+  // colors for the lines
   const lineColor = isMostCorrelated ? "#00BF7F" : "#DB5167";
   const fillColor = isMostCorrelated ? "#B6E2D3" : "#F5B9C3";
   const boxColor = isMostCorrelated ? "#7ECCB1" : "#E77C8D";
   
-  // Create an area generator for the fill
+  // fills the area under the line
   const area = d3.area()
     .x(d => xScale(d.date))
     .y0(chartHeight)
     .y1(d => yScale(d.value))
     .curve(d3.curveMonotoneX);
   
-  // Add area fill under the line
   chart.append("path")
     .datum(normalizedCorrelatedData)
     .attr("class", "area")
     .attr("fill", fillColor)
     .attr("d", area);
   
-  // Add the main stock line in a neutral color
   chart.append("path")
     .datum(normalizedMainData)
     .attr("class", "line main-line")
@@ -363,7 +328,6 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .attr("stroke-dasharray", "3,3")
     .attr("d", line);
   
-  // Add the correlated stock line
   chart.append("path")
     .datum(normalizedCorrelatedData)
     .attr("class", "line correlated-line")
@@ -372,15 +336,14 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .attr("stroke-width", 2)
     .attr("d", line);
   
-  // Find company name for the ticker
+  // find company name for the ticker
   const company = stocksDatabase?.find(s => s.symbol === correlatedSymbol);
-  const companyName = company ? company.name : "Microsoft Corp NASDAQ";
+  const companyName = company ? company.name : "N/A";
   
-  // Create the boxes for ticker and correlation value
+  // make box to show the ticker and correlation value
   const boxGroup = svg.append("g")
     .attr("transform", `translate(${width/2}, ${chartTop + chartHeight + 50})`);
   
-  // Large background box (320x70)
   boxGroup.append("rect")
     .attr("x", -160)
     .attr("y", -10)
@@ -390,7 +353,6 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .attr("ry", 35)
     .attr("fill", fillColor);
   
-  // Smaller box for ticker (160x70)
   boxGroup.append("rect")
     .attr("x", -160)
     .attr("y", -10)
@@ -400,10 +362,8 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .attr("ry", 35)
     .attr("fill", boxColor);
   
-  // Format correlation value
   const corrValue = correlationValue.toFixed(2);
   
-  // Add ticker to the left box
   boxGroup.append("text")
     .attr("x", -80)
     .attr("y", 38)
@@ -414,7 +374,6 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .style("font-family", "'Roboto', sans-serif")
     .text(correlatedSymbol);
   
-  // Add correlation value to the right box
   boxGroup.append("text")
     .attr("x", 75)
     .attr("y", 38)
@@ -435,7 +394,6 @@ function drawCorrelationChart(svg, mainData, correlatedData, mainSymbol, correla
     .text(companyName);
 }
 
-// Export the functions and constants
 export { 
   correlationMargin, 
   correlationWidth, 

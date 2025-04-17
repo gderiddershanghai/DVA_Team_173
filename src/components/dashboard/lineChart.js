@@ -1,10 +1,8 @@
-// Line chart structure and functionality
-// Set up dimensions for line chart
+
 const lineMargin = {top: 0, right: 50, bottom: 30, left: 100};
 const lineWidth = 1080 - lineMargin.left - lineMargin.right;
 const lineHeight = 500 - lineMargin.top - lineMargin.bottom;
 
-// Calculate moving average
 function calculateMovingAverage(displayDailyData, period) {
   const dailyMA = [];
   for (let i = period - 1; i < displayDailyData.length; i++) {
@@ -17,11 +15,8 @@ function calculateMovingAverage(displayDailyData, period) {
   return dailyMA;
 }
 
-// Map daily MA to weekly points
 function mapMovingAverageToWeekly(filteredData, dailyMA) {
-  // Find closest MA point to each weekly line
   return filteredData.map(weekData => {
-    // Find the closest daily MA point to this week's end date
     const closestMA = dailyMA.reduce((closest, current) => {
       const currentDiff = Math.abs(current.date - weekData.date);
       const closestDiff = Math.abs(closest.date - weekData.date);
@@ -35,14 +30,11 @@ function mapMovingAverageToWeekly(filteredData, dailyMA) {
   });
 }
 
-// Create a line chart
 function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, dependencies) {
   const { lineSvg, formatMonthYear, formatDate, DISPLAY_START_DATE, DISPLAY_END_DATE, tooltip } = dependencies;
   
-  // Clear previous chart
   lineSvg.selectAll("*").remove();
   
-  // Format dates and ensure numerical values (weeklyData is already formatted)
   const filteredData = weeklyData;
   
   // Check if we have data to display
@@ -51,7 +43,6 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
     return;
   }
   
-  // Ensure valid indices
   selectedStartIdx = Math.max(0, Math.min(selectedStartIdx, filteredData.length - 1));
   selectedEndIdx = Math.max(0, Math.min(selectedEndIdx, filteredData.length - 1));
   
@@ -72,7 +63,6 @@ function drawlineChart(weeklyData, dailyData, selectedStartIdx, selectedEndIdx, 
   d3.select("#priceChange")
     .html(`<span class="${priceIncreased ? "price-up" : "price-down"}">${Math.abs(percentChange)}%</span> ${priceIncreased ? "increases" : "decreases"} in ${dayCount} days`);
   
-  // Set up scales for the full date range
   const xScale = d3.scaleBand()
     .domain(filteredData.map(d => d.date))
     .range([lineMargin.left, lineWidth + lineMargin.left])

@@ -7,11 +7,8 @@
 </head>
 <body>
   <div id="dashboard">
-    <!-- Top Row -->
     <div id="top-row">
-      <!-- Left: line Chart with new layout -->
       <div id="line-container">
-        <!-- First Row of line chart section -->
         <div id="chart-top-row">
           <div id="ticker-box">
             <div id="ticker-symbol">V</div>
@@ -31,23 +28,20 @@
           </div>
         </div>
         
-        <!-- Second Row of line chart section -->
         <div id="chart-bottom-row">
           <div id="chart-content-wrapper">
             <div id="chart-header">
               <div id="chart-title">
                 <h2>Stock Overview</h2>
-                <div id="priceChange">13.2% increases in 56 days</div>
+                <div id="priceChange"></div>
               </div>
               <div id="ma-controls-container">
-                <!-- Moving Average Toggle -->
                 <div class="ma-controls">
                   <label class="toggle">
                     <span class="toggle-label">Moving Avg</span>
                     <input type="checkbox" id="maToggle">
                     <span class="toggle-slider"></span>
                   </label>
-                  <!-- Moving Average Buttons -->
                   <div class="ma-options">
                     <button class="ma-button" data-days="7">7 Days</button>
                     <button class="ma-button" data-days="14">14 Days</button>
@@ -58,10 +52,8 @@
               </div>
             </div>
             
-            <!-- Chart Area -->
             <div id="lineChart"></div>
             
-            <!-- Date Range Slider -->
             <div id="date-sliders">
               <div id="date-range-slider">
                 <div class="slider-track"></div>
@@ -74,25 +66,20 @@
         </div>
       </div>
       
-      <!-- Right: Sentiment Analysis Bubbles -->
       <div id="sentiment-container">
         <div id="sentimentChart"></div>
       </div>
     </div>
     
-    <!-- Bottom Row -->
     <div id="bottom-row">
-      <!-- Left: Correlation Section -->
       <div id="correlation-container">
         <div id="correlationChart"></div>
       </div>
       
-      <!-- Right: Performance Comparison Table -->
       <div id="performance-table">
       </div>
     </div>
   </div>
-  <!-- Include d3.js -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script type="module" src="dashboard.js"></script>
 </body>
