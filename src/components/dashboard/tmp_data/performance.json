@@ -1,0 +1,22 @@
+{
+    "performance": {
+    "alpha": -0.4,
+    "alpha_rank": 33,
+    "market_alpha": 0,
+    "beta": 1,
+    "beta_rank": 23,
+    "market_beta": 1,
+    "sharpe_ratio": 0.1,
+    "sharpe_ratio_rank": 34,
+    "market_sharpe_ratio": 2.2,
+    "treynor_ratio": 0.0,
+    "treynor_ratio_rank": 34,
+    "market_treynor_ratio": 0.5 
+    },
+    "correlation": {
+        "most_correlated_stock": "JPM",
+        "most_correlated_stock_correlation": 0.66,
+        "least_correlated_stock": "KR",
+        "least_correlated_stock_correlation": 0.13
+    }
+}
